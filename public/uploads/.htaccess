@@ -1,0 +1,10 @@
+# Safety: never execute scripts from the upload directory.
+# (Profile pictures are images only — PHP checks the real content type on
+# upload, and this blocks execution even if something slips through.)
+<FilesMatch "\.(?i:php|phtml|phar|cgi|pl|py|sh|htaccess)$">
+    Require all denied
+</FilesMatch>
+
+php_flag engine off
+
+Options -ExecCGI -Indexes
