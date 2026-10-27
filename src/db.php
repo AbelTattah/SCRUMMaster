@@ -46,12 +46,67 @@ if (!in_array('end_time', $columns, true)) {
 }
 
 // ---------------------------------------------------------------------------
-// Profile
+// Accounts: organizations + users
 // ---------------------------------------------------------------------------
-// Single-row table (id = 1 is enforced by the CHECK constraint): this is a
-// local, auth-less app — one profile per installation. Persisting the profile
-// in the database (rather than only in the session) means the name and avatar
-// survive session expiry; the browser cookie only identifies the visitor.
+// An organization is owned by exactly one user (organizations.owner_id) and
+// members are associated by setting users.organization_id. The two tables
+// reference each other, so integrity is enforced by the application (SQLite
+// does not enable foreign keys by default and this app never deletes a user
+// while keeping an organization alive).
+$db->exec("
+    CREATE TABLE IF NOT EXISTS organizations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        owner_id INTEGER NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+");
+
+// Email is stored lower-cased and is unique across the installation.
+// password_hash holds the output of password_hash() — never a plain password.
+$db->exec("
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        avatar TEXT,
+        organization_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+");
+
+$db->exec('CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users (email)');
+$db->exec('CREATE INDEX IF NOT EXISTS users_organization_id ON users (organization_id)');
+
+// Google sign-in: users.google_id holds the Google account id ("sub"). Accounts
+// created with Google have no password (password_hash stays ''), so signing in
+// with a password is refused for them until one is set on the profile page.
+$userColumns = array_column($db->query('PRAGMA table_info(users)')->fetchAll(), 'name');
+
+if (!in_array('google_id', $userColumns, true)) {
+    $db->exec('ALTER TABLE users ADD COLUMN google_id TEXT');
+}
+
+// SQLite allows any number of NULLs in a unique index, so unlinked accounts
+// are unaffected.
+$db->exec('CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_unique ON users (google_id)');
+
+// Every todo now belongs to one user. Existing rows (from before accounts
+// existed) keep user_id = NULL until the first account is created; that
+// account adopts them, so no task is ever lost.
+if (!in_array('user_id', $columns, true)) {
+    $db->exec('ALTER TABLE todos ADD COLUMN user_id INTEGER');
+}
+
+$db->exec('CREATE INDEX IF NOT EXISTS todos_user_id ON todos (user_id)');
+
+// ---------------------------------------------------------------------------
+// Legacy profile
+// ---------------------------------------------------------------------------
+// The single profile row from the pre-auth version. It is no longer used for
+// rendering: it only supplies the name/avatar of the very first account (the
+// one that adopts the existing tasks) and is kept untouched otherwise.
 $db->exec("
     CREATE TABLE IF NOT EXISTS profiles (
         id INTEGER PRIMARY KEY CHECK (id = 1),

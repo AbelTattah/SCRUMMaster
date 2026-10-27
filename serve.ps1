@@ -89,7 +89,7 @@ Write-Host "  URL     : $url"
 if (Test-Path $dbFile) {
     Write-Host "  Database: $dbFile"
 } else {
-    Write-Host "  Database: will be created on first visit (you'll see the welcome modal)" -ForegroundColor Yellow
+    Write-Host "  Database: will be created on first visit (you'll be asked to sign up)" -ForegroundColor Yellow
 }
 Write-Host ""
 Write-Host "  Stop the server with Ctrl+C." -ForegroundColor DarkGray

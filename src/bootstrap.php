@@ -31,13 +31,14 @@ error_reporting(E_ALL);
 // ---------------------------------------------------------------------------
 // Session (stored in the browser as the PHPSESSID cookie)
 // ---------------------------------------------------------------------------
-// No auth for now: the session only carries the CSRF token and lightweight
-// UI state. The user's profile itself is persisted in the database so it
-// survives session expiry — the cookie just identifies the browser.
+// The session carries the signed-in user id (see src/auth.php), the CSRF
+// token and one-shot flash messages. Everything else — name, avatar, todos —
+// lives in the database, so it survives session expiry.
 if (session_status() === PHP_SESSION_NONE) {
     session_start([
         'cookie_httponly' => true, // JS cannot read the session cookie
         'cookie_samesite' => 'Lax', // basic CSRF hardening for the cookie
+        'cookie_secure' => !empty($_SERVER['HTTPS']), // only over HTTPS when available
     ]);
 }
 
@@ -48,6 +49,12 @@ require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/repositories/TodoRepository.php';
 require_once __DIR__ . '/repositories/ProfileRepository.php';
+require_once __DIR__ . '/repositories/UserRepository.php';
+require_once __DIR__ . '/repositories/OrganizationRepository.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/google.php';
+require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/HomeController.php';
 require_once __DIR__ . '/controllers/TodoController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
+require_once __DIR__ . '/controllers/TeamController.php';

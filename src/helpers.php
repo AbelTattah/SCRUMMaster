@@ -102,6 +102,113 @@ function render(string $template, array $vars = []): void
 }
 
 /**
+ * Internal redirect (never accepts a full URL, so it cannot be used as an
+ * open redirect if a caller ever forwards user input).
+ */
+function redirect(string $path): never
+{
+    header('Location: ' . $path);
+    exit;
+}
+
+/**
+ * Queue a one-shot message for the next rendered page.
+ */
+function flash(string $message): void
+{
+    $_SESSION['flash'] = $message;
+}
+
+/**
+ * Read and clear the queued message (null when there is none).
+ */
+function take_flash(): ?string
+{
+    $message = $_SESSION['flash'] ?? null;
+    unset($_SESSION['flash']);
+
+    return is_string($message) && $message !== '' ? $message : null;
+}
+
+/**
+ * Public URL for a stored avatar path, falling back to the design's default.
+ */
+function avatar_url(?string $path): string
+{
+    return is_string($path) && $path !== '' ? $path : 'assets/img/default-avatar.png';
+}
+
+/**
+ * Validate and store an uploaded profile image.
+ *
+ * Checks (in order): PHP upload errors, size, real image content via
+ * getimagesize() (so a renamed .php file can never be uploaded), allowed
+ * MIME types, then moves it to public/uploads/avatars with a random name —
+ * the original filename is never trusted or reused. The previous photo is
+ * deleted once the new one is safely in place.
+ *
+ * @param array{name: string, error: int, size: int, tmp_name: string} $file
+ * @return string relative path to store in the user row
+ */
+function store_avatar(array $file, ?string $oldPath = null): string
+{
+    // Maximum avatar file size: 3 MB.
+    $maxBytes = 3 * 1024 * 1024;
+
+    // MIME types we accept, mapped to a safe file extension.
+    $types = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        throw new RuntimeException('Upload failed (error code ' . (int) $file['error'] . ').');
+    }
+
+    if ((int) $file['size'] > $maxBytes) {
+        throw new RuntimeException('Image is too large (max 3 MB).');
+    }
+
+    // getimagesize() works without the GD extension and verifies the file
+    // really is an image, regardless of its claimed filename/extension.
+    $info = @getimagesize($file['tmp_name']);
+    if ($info === false) {
+        throw new RuntimeException('That file is not a valid image.');
+    }
+
+    $mime = $info['mime'] ?? '';
+    if (!isset($types[$mime])) {
+        throw new RuntimeException('Only JPEG, PNG, WebP or GIF images are allowed.');
+    }
+
+    $directory = UPLOAD_PATH . '/avatars';
+    if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
+        throw new RuntimeException('Upload directory is missing.');
+    }
+
+    // Random name: no path traversal, no collisions, no user input.
+    $filename = bin2hex(random_bytes(16)) . '.' . $types[$mime];
+    $destination = $directory . '/' . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        throw new RuntimeException('Could not save the uploaded image.');
+    }
+
+    // Remove the previous photo so uploads don't pile up on disk. Only ever
+    // inside uploads/avatars (basename strips any directory components).
+    if (is_string($oldPath) && $oldPath !== '') {
+        $old = UPLOAD_PATH . '/avatars/' . basename($oldPath);
+        if (is_file($old)) {
+            @unlink($old);
+        }
+    }
+
+    return 'uploads/avatars/' . $filename;
+}
+
+/**
  * Greeting that follows the time of day: "Good morning Abel!".
  */
 function greeting_for(string $name): string

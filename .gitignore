@@ -1,0 +1,3 @@
+# Google OAuth client secret — copy config/google.example.php to
+# config/google.php and fill in your own credentials.
+config/google.php
