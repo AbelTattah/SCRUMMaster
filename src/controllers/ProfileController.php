@@ -3,157 +3,308 @@
 /**
  * ProfileController
  *
- * Onboarding (name from the welcome modal) and profile picture uploads.
- * No auth for now — the profile is a single database row and the browser is
- * identified only by its session cookie.
+ * The signed-in user's own account page: photo, name, email, password and
+ * organization membership (create an organization, add/remove members, leave).
+ * Every action is CSRF-checked and scoped to the current user.
  */
 
 declare(strict_types=1);
 
 final class ProfileController
 {
-    /** Maximum avatar file size: 3 MB. */
-    private const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
+    /** Minimum password length (characters). */
+    private const MIN_PASSWORD = 8;
 
-    /** MIME types we accept, mapped to a safe file extension. */
-    private const AVATAR_TYPES = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-        'image/gif' => 'gif',
-    ];
+    /** bcrypt silently ignores anything past 72 bytes — reject instead. */
+    private const MAX_PASSWORD_BYTES = 72;
 
-    /**
-     * POST from the welcome modal: name (required) + optional photo.
-     */
-    public static function save(): never
+    public static function show(): void
     {
-        verify_csrf();
+        global $db;
 
-        $name = trim((string) ($_POST['name'] ?? ''));
+        $user = require_auth();
+        $organization = user_organization($user);
 
-        if ($name === '' || str_len($name) > 60) {
-            $_SESSION['flash'] = 'Please enter your name (max 60 characters).';
-            redirect_back();
-        }
+        $users = new UserRepository($db);
 
-        $profiles = self::repository();
-        $profiles->saveName($name);
-
-        // The avatar is optional during onboarding.
-        if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] !== UPLOAD_ERR_NO_FILE) {
-            try {
-                $profiles->setAvatar(self::storeAvatar($_FILES['avatar']));
-            } catch (RuntimeException $e) {
-                $_SESSION['flash'] = $e->getMessage();
-                redirect_back();
-            }
-        }
-
-        $_SESSION['flash'] = "Welcome, {$name}!";
-        redirect_back();
+        render('layout', [
+            'view' => 'profile',
+            'title' => 'KPIMe — Profile',
+            'showTodoModal' => false,
+            'user' => $user,
+            'page' => 'home',
+            'q' => '',
+            'searchRoute' => '',
+            'counts' => (new TodoRepository($db))->counts((int) $user['id']),
+            'returnTo' => '',
+            'flash' => take_flash(),
+            'organization' => $organization,
+            'members' => $organization !== null ? $users->members($organization['id']) : [],
+            'isOwner' => is_org_owner($user),
+        ]);
     }
 
     /**
-     * POST from the top bar: replace the avatar with a new photo.
+     * Name + email.
+     */
+    public static function update(): never
+    {
+        verify_csrf();
+
+        $user = require_auth();
+        $userId = (int) $user['id'];
+
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+
+        if ($name === '' || str_len($name) > 60) {
+            flash('Please enter your name (max 60 characters).');
+            redirect('index.php?r=profile');
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || str_len($email) > 190) {
+            flash('Please enter a valid email address.');
+            redirect('index.php?r=profile');
+        }
+
+        $users = self::users();
+        $existing = $users->findByEmail($email);
+
+        if ($existing !== null && (int) $existing['id'] !== $userId) {
+            flash('That email is already registered to another account.');
+            redirect('index.php?r=profile');
+        }
+
+        $users->updateProfile($userId, $name, $email);
+
+        flash('Profile updated.');
+        redirect('index.php?r=profile');
+    }
+
+    /**
+     * Replace the profile picture (the form auto-submits when a file is
+     * chosen — see app.js).
      */
     public static function avatar(): never
     {
         verify_csrf();
 
-        if (!isset($_FILES['avatar'])) {
-            $_SESSION['flash'] = 'No file received.';
-            redirect_back();
+        $user = require_auth();
+
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] === UPLOAD_ERR_NO_FILE) {
+            flash('No file received.');
+            redirect('index.php?r=profile');
         }
 
         try {
-            $path = self::storeAvatar($_FILES['avatar']);
+            $path = store_avatar($_FILES['avatar'], $user['avatar'] ?? null);
         } catch (RuntimeException $e) {
-            $_SESSION['flash'] = $e->getMessage();
-            redirect_back();
+            flash($e->getMessage());
+            redirect('index.php?r=profile');
         }
 
-        $profiles = self::repository();
-        $profiles->setAvatar($path);
+        self::users()->updateAvatar((int) $user['id'], $path);
 
-        $_SESSION['flash'] = 'Profile picture updated.';
-        redirect_back();
+        flash('Profile picture updated.');
+        redirect('index.php?r=profile');
     }
 
     /**
-     * Validate and store an uploaded image.
-     *
-     * Checks (in order): PHP upload errors, size, real image content via
-     * getimagesize() (so a renamed .php file can never be uploaded), allowed
-     * MIME types, then moves it to public/uploads/avatars with a random
-     * name — the original filename is never trusted or reused.
-     *
-     * @param array{name: string, error: int, size: int, tmp_name: string} $file
-     * @return string relative path stored in the profile row
+     * Change the password: the current one must be known — except for accounts
+     * created with Google only, which have no password yet ("Set password").
      */
-    private static function storeAvatar(array $file): string
+    public static function password(): never
     {
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Upload failed (error code ' . (int) $file['error'] . ').');
+        verify_csrf();
+
+        $user = require_auth();
+
+        $current = (string) ($_POST['current_password'] ?? '');
+        $new = (string) ($_POST['new_password'] ?? '');
+        $confirm = (string) ($_POST['new_password_confirm'] ?? '');
+
+        $hash = (string) ($user['password_hash'] ?? '');
+
+        if ($hash !== '' && !password_verify($current, $hash)) {
+            flash('Your current password is incorrect.');
+            redirect('index.php?r=profile');
         }
 
-        if ((int) $file['size'] > self::MAX_AVATAR_BYTES) {
-            throw new RuntimeException('Image is too large (max 3 MB).');
+        if (str_len($new) < self::MIN_PASSWORD) {
+            flash('Your new password must be at least ' . self::MIN_PASSWORD . ' characters.');
+            redirect('index.php?r=profile');
         }
 
-        // getimagesize() works without the GD extension and verifies the file
-        // really is an image, regardless of its claimed filename/extension.
-        $info = @getimagesize($file['tmp_name']);
-        if ($info === false) {
-            throw new RuntimeException('That file is not a valid image.');
+        if (strlen($new) > self::MAX_PASSWORD_BYTES) {
+            flash('Your new password is too long (max 72 characters).');
+            redirect('index.php?r=profile');
         }
 
-        $mime = $info['mime'] ?? '';
-        if (!isset(self::AVATAR_TYPES[$mime])) {
-            throw new RuntimeException('Only JPEG, PNG, WebP or GIF images are allowed.');
+        if ($new !== $confirm) {
+            flash('The two new passwords do not match.');
+            redirect('index.php?r=profile');
         }
 
-        $directory = UPLOAD_PATH . '/avatars';
-        if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
-            throw new RuntimeException('Upload directory is missing.');
-        }
+        self::users()->updatePassword((int) $user['id'], password_hash($new, PASSWORD_DEFAULT));
 
-        // Random name: no path traversal, no collisions, no user input.
-        $filename = bin2hex(random_bytes(16)) . '.' . self::AVATAR_TYPES[$mime];
-        $destination = $directory . '/' . $filename;
-
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            throw new RuntimeException('Could not save the uploaded image.');
-        }
-
-        self::deleteOldAvatar();
-
-        return 'uploads/avatars/' . $filename;
+        flash($hash !== ''
+            ? 'Password changed.'
+            : 'Password set — you can now sign in with your email and password too.');
+        redirect('index.php?r=profile');
     }
 
     /**
-     * Remove the previously stored avatar so uploads don't pile up on disk.
+     * Turn a personal account into an organization account.
      */
-    private static function deleteOldAvatar(): void
+    public static function createOrganization(): never
     {
-        $current = self::repository()->get()['avatar'] ?? null;
+        verify_csrf();
 
-        if (!is_string($current) || $current === '') {
-            return;
+        $user = require_auth();
+        $userId = (int) $user['id'];
+
+        if (user_organization($user) !== null) {
+            flash('You already belong to an organization.');
+            redirect('index.php?r=profile');
         }
 
-        // Only ever delete inside uploads/avatars (basename strips any
-        // directory components a tampered value might contain).
-        $old = UPLOAD_PATH . '/avatars/' . basename($current);
-        if (is_file($old)) {
-            @unlink($old);
+        $name = trim((string) ($_POST['org_name'] ?? ''));
+
+        if (str_len($name) < 2 || str_len($name) > 80) {
+            flash('Please enter an organization name (2–80 characters).');
+            redirect('index.php?r=profile');
         }
+
+        global $db;
+
+        $organizationId = (new OrganizationRepository($db))->create($name, $userId);
+        self::users()->setOrganization($userId, $organizationId);
+
+        flash('Organization created. This account is now the organization account.');
+        redirect('index.php?r=profile');
     }
 
-    private static function repository(): ProfileRepository
+    /**
+     * Organization account: associate an existing account by email.
+     */
+    public static function associate(): never
+    {
+        verify_csrf();
+
+        $user = require_auth();
+        $organization = self::requireOwner($user);
+
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('Please enter a valid email address.');
+            redirect('index.php?r=profile');
+        }
+
+        $users = self::users();
+        $member = $users->findByEmail($email);
+
+        if ($member === null) {
+            flash('No account uses that email yet. Ask them to sign up first, then add them.');
+            redirect('index.php?r=profile');
+        }
+
+        if ((int) $member['id'] === (int) $user['id']) {
+            flash('That is your own account.');
+            redirect('index.php?r=profile');
+        }
+
+        if ((int) ($member['organization_id'] ?? 0) === $organization['id']) {
+            flash($member['name'] . ' is already in your organization.');
+            redirect('index.php?r=profile');
+        }
+
+        if (!empty($member['organization_id'])) {
+            flash($member['name'] . ' already belongs to another organization.');
+            redirect('index.php?r=profile');
+        }
+
+        $users->setOrganization((int) $member['id'], $organization['id']);
+
+        flash($member['name'] . ' was added to ' . $organization['name'] . '.');
+        redirect('index.php?r=profile');
+    }
+
+    /**
+     * Organization account: remove a member (their tasks stay with them).
+     */
+    public static function removeMember(): never
+    {
+        verify_csrf();
+
+        $user = require_auth();
+        $organization = self::requireOwner($user);
+
+        $memberId = (int) ($_POST['user_id'] ?? 0);
+
+        if ($memberId === (int) $user['id']) {
+            flash('You cannot remove your own account.');
+            redirect('index.php?r=profile');
+        }
+
+        $member = self::users()->findWithOrganization($memberId);
+
+        if ($member === null || (int) ($member['organization_id'] ?? 0) !== $organization['id']) {
+            flash('That account is not a member of your organization.');
+            redirect('index.php?r=profile');
+        }
+
+        self::users()->setOrganization($memberId, null);
+
+        flash($member['name'] . ' was removed from ' . $organization['name'] . '.');
+        redirect('index.php?r=profile');
+    }
+
+    /**
+     * A member (not the organization account) can leave.
+     */
+    public static function leaveOrganization(): never
+    {
+        verify_csrf();
+
+        $user = require_auth();
+        $organization = user_organization($user);
+
+        if ($organization === null) {
+            flash('You are not part of an organization.');
+            redirect('index.php?r=profile');
+        }
+
+        if (is_org_owner($user)) {
+            flash('The organization account cannot leave its own organization.');
+            redirect('index.php?r=profile');
+        }
+
+        self::users()->setOrganization((int) $user['id'], null);
+
+        flash('You left ' . $organization['name'] . '.');
+        redirect('index.php?r=profile');
+    }
+
+    /**
+     * @return array{id: int, name: string, owner_id: int}
+     */
+    private static function requireOwner(array $user): array
+    {
+        $organization = user_organization($user);
+
+        if ($organization === null || !is_org_owner($user)) {
+            flash('Only the organization account can manage members.');
+            redirect('index.php?r=profile');
+        }
+
+        return $organization;
+    }
+
+    private static function users(): UserRepository
     {
         global $db;
 
-        return new ProfileRepository($db);
+        return new UserRepository($db);
     }
 }

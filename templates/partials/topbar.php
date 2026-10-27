@@ -4,20 +4,25 @@
  * templates/partials/topbar.php
  *
  * Search box (a plain GET form — works without JS) + notifications bell +
- * the profile picture, which doubles as the "upload a new photo" control.
+ * the profile picture, which links to the account page.
  *
- * $profile, $q, $page are provided by the layout.
+ * Variables: $user, $q, $page, $searchRoute (set to 'team' to keep the search
+ * on the team page).
  */
 
-$avatar = $profile['avatar'] ?? null;
-$avatarUrl = is_string($avatar) && $avatar !== ''
-    ? $avatar
-    : 'assets/img/default-avatar.png';
+$q = $q ?? '';
+$page = $page ?? 'home';
+$searchRoute = $searchRoute ?? '';
 ?>
 <header class="topbar">
 
+    <?php // Phone header: the sidebar (and its logo) is hidden at that width. ?>
+    <a class="mobile-brand" href="index.php">KPIMe</a>
+
     <form class="search" method="get" action="index.php" role="search">
-        <?php if ($page !== 'home'): ?>
+        <?php if ($searchRoute !== ''): ?>
+            <input type="hidden" name="r" value="<?= e($searchRoute) ?>">
+        <?php elseif ($page !== 'home'): ?>
             <input type="hidden" name="page" value="<?= e($page) ?>">
         <?php endif; ?>
 
@@ -44,16 +49,9 @@ $avatarUrl = is_string($avatar) && $avatar !== ''
             </svg>
         </button>
 
-        <form class="avatar-form" method="post" action="index.php" enctype="multipart/form-data">
-            <?= csrf_field() ?>
-            <input type="hidden" name="action" value="profile.avatar">
-            <input type="hidden" name="return_to" value="<?= e($returnTo) ?>">
-
-            <label class="avatar" title="Change profile picture">
-                <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
-                <img src="<?= e($avatarUrl) ?>" alt="Profile picture">
-            </label>
-        </form>
+        <a class="avatar" href="index.php?r=profile" title="Your profile">
+            <img src="<?= e(avatar_url($user['avatar'] ?? null)) ?>" alt="Profile picture">
+        </a>
 
     </div>
 </header>

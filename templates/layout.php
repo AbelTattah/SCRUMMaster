@@ -3,19 +3,26 @@
 /**
  * templates/layout.php
  *
- * Master page: sidebar + top bar + content + modals.
+ * Shell for every signed-in page: sidebar + top bar + the page content +
+ * optional modals. The content itself lives in the template named by $view
+ * (home, profile, team) and is rendered inside <main>.
  *
- * Available variables (passed by HomeController):
- * $profile, $showOnboarding, $page, $q, $todos, $counts, $greeting,
- * $today, $editTodo, $openAdd, $returnTo, $flash
+ * Available variables (provided by the controllers):
+ * $user, $view, $title, $page, $q, $counts, $flash, $showTodoModal,
+ * $searchRoute, $returnTo
  */
+
+$view = isset($view) && preg_match('/^[a-z-]+$/', (string) $view) ? (string) $view : 'home';
+$title = $title ?? 'KPIMe';
+$searchRoute = $searchRoute ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>KPIMe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#FFFFFF">
+    <title><?= e($title) ?></title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
@@ -28,52 +35,16 @@
     <?php require ROOT_PATH . '/templates/partials/topbar.php'; ?>
 
     <main class="content">
-
-        <header class="page-header">
-            <div class="page-heading">
-                <h1 class="greeting"><?= e($greeting) ?></h1>
-                <p class="date-line"><?= e($today) ?></p>
-            </div>
-
-            <?php
-            // Opens the Add Todo modal. Without JS it is a normal link
-            // (?add=1 renders the modal server-side); app.js upgrades it to
-            // an in-page modal open.
-            $addHref = 'index.php' . $returnTo . ($returnTo === '' ? '?' : '&') . 'add=1';
-            ?>
-            <a class="btn-add" href="<?= e($addHref) ?>" data-modal-open="todo-modal">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
-                    <path d="M5 12h14"/>
-                    <path d="M12 5v14"/>
-                </svg>
-                Add Todo
-            </a>
-        </header>
-
-        <section class="panel" aria-label="Todos">
-            <?php if (!$todos): ?>
-                <p class="empty">
-                    <?php if ($q !== ''): ?>
-                        No todos match &ldquo;<?= e($q) ?>&rdquo;.
-                    <?php else: ?>
-                        Nothing here yet — press <strong>Add Todo</strong> to create your first task.
-                    <?php endif; ?>
-                </p>
-            <?php else: ?>
-                <?php foreach ($todos as $todo): ?>
-                    <?php require ROOT_PATH . '/templates/partials/todo-row.php'; ?>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </section>
-
+        <?php require ROOT_PATH . '/templates/' . $view . '.php'; ?>
     </main>
+
 </div>
 
-<?php require ROOT_PATH . '/templates/modals/todo-form.php'; ?>
+<?php if (!empty($showTodoModal)): ?>
+    <?php require ROOT_PATH . '/templates/modals/todo-form.php'; ?>
+<?php endif; ?>
 
-<?php if ($showOnboarding): ?>
-    <?php require ROOT_PATH . '/templates/modals/onboarding.php'; ?>
-<?php elseif ($flash !== null && $flash !== ''): ?>
+<?php if ($flash !== null && $flash !== ''): ?>
     <div class="toast" role="status"><?= e($flash) ?></div>
 <?php endif; ?>
 

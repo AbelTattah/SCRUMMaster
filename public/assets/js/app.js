@@ -85,7 +85,7 @@
        immediately (the row is re-rendered with the new state).
        ------------------------------------------------------------------ */
     document.addEventListener('change', function (event) {
-        // Avatar chosen in the top bar → submit the upload form right away.
+        // Avatar chosen on the profile page → submit the upload form right away.
         if (event.target.matches('.avatar-form input[type=file]')) {
             if (event.target.files && event.target.files.length) {
                 event.target.form.submit();
@@ -93,7 +93,7 @@
             return;
         }
 
-        // Onboarding photo → live preview before submitting the name.
+        // Sign-up photo → live preview before the account is created.
         if (event.target.matches('[data-avatar-input]')) {
             var file = event.target.files && event.target.files[0];
             var preview = document.querySelector('[data-avatar-preview]');
@@ -125,6 +125,41 @@
             }
         });
     }
+
+    /* ------------------------------------------------------------------
+       Sign-up: the organization name only applies to organization accounts
+       (the field stays visible without JS — the server ignores it then).
+       ------------------------------------------------------------------ */
+    var accountTypes = document.querySelectorAll('[data-account-type]');
+    var orgField = document.querySelector('[data-org-field]');
+
+    function syncOrgField() {
+        var selected = document.querySelector('[data-account-type]:checked');
+        if (orgField) {
+            orgField.hidden = !selected || selected.value !== 'organization';
+        }
+    }
+
+    if (accountTypes.length && orgField) {
+        accountTypes.forEach(function (input) {
+            input.addEventListener('change', syncOrgField);
+        });
+        syncOrgField();
+    }
+
+    /* ------------------------------------------------------------------
+       Destructive actions (remove member, leave organization) ask first.
+       ------------------------------------------------------------------ */
+    document.addEventListener('submit', function (event) {
+        var form = event.target;
+        var message = form.hasAttribute && form.hasAttribute('data-confirm')
+            ? form.getAttribute('data-confirm')
+            : null;
+
+        if (message && !window.confirm(message)) {
+            event.preventDefault();
+        }
+    });
 
     // Exposed for debugging in the console.
     window.KPIMe = { openModal: openModal, closeModal: closeModal, todoModal: todoModal };

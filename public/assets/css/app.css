@@ -64,9 +64,12 @@
    Base
    -------------------------------------------------------------------------- */
 
-/* Whole-app zoom: 1 = normal size, 0.75 = 25% smaller. */
-html {
-    zoom: 0.75;
+/* Whole-app zoom (desktop/tablet only): 1 = normal size, 0.75 = 25% smaller.
+   Phones (<= 700 px) always render 1:1 — see the phone section at the end. */
+@media (min-width: 701px) {
+    html {
+        zoom: 0.75;
+    }
 }
 
 *,
@@ -99,6 +102,18 @@ svg {
     display: block;
 }
 
+/* The hidden attribute must win over our own display rules (e.g. .field and
+   .seg label are display:block/flex, which would otherwise reveal an element
+   the page or app.js deliberately hid). */
+[hidden] {
+    display: none !important;
+}
+
+/* Wording that changes between desktop and phone (see the phone section) */
+.only-mobile {
+    display: none;
+}
+
 /* --------------------------------------------------------------------------
    Sidebar (293 px + 1 px rule, exactly as measured on the design)
    -------------------------------------------------------------------------- */
@@ -107,6 +122,8 @@ svg {
     top: 0;
     left: 0;
     bottom: 0;
+    display: flex;
+    flex-direction: column;
     width: var(--sidebar-w);
     background: var(--surface);
     border-right: 1px solid var(--sidebar-line);
@@ -197,6 +214,11 @@ svg {
     padding: 0 51px 0 33px;
     background: var(--surface);
     border-bottom: 1px solid var(--line);
+}
+
+/* Brand shown only in the phone header — larger screens carry it in the sidebar */
+.mobile-brand {
+    display: none;
 }
 
 .search {
@@ -346,6 +368,38 @@ svg {
     height: 14px;
 }
 
+/* Floating action button — the phone replacement for .btn-add (hidden on
+   larger screens; enabled in the phone media query at the end of this file). */
+.fab {
+    display: none;
+    position: fixed;
+    right: 18px;
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    z-index: 55;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--purple);
+    color: var(--surface);
+    box-shadow: 0 10px 26px rgba(33, 0, 93, 0.35);
+    text-decoration: none;
+    transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.fab svg {
+    width: 24px;
+    height: 24px;
+}
+
+.fab:hover {
+    background: var(--purple-hover);
+}
+
+.fab:active {
+    transform: scale(0.92);
+}
+
 /* --------------------------------------------------------------------------
    Task list panel
    -------------------------------------------------------------------------- */
@@ -489,7 +543,7 @@ svg {
     position: absolute;
     top: calc(100% + 6px);
     right: -4px;
-    z-index: 30;
+    z-index: 60; /* above the phone tab bar */
     min-width: 132px;
     padding: 6px;
     background: var(--surface);
@@ -632,6 +686,8 @@ svg {
 }
 
 .btn-primary {
+    height: 46px;
+    padding: 0 20px;
     border: 0;
     background: var(--purple);
     color: var(--surface);
@@ -773,9 +829,9 @@ svg {
         padding: 0;
     }
 
-    .nav-label,
-    .badge {
-        display: none;
+    .nav .nav-label,
+    .nav .badge {
+        display: none; /* collapsed rail: labels/badges live only in the desktop sidebar */
     }
 
     .topbar {
@@ -796,5 +852,1041 @@ svg {
 
     .greeting {
         font-size: 20px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Bottom tab bar (phone navigation) — hidden until the phone media query
+   below turns it on; the sidebar takes over on wider screens.
+   -------------------------------------------------------------------------- */
+.tabbar {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 58px;
+    padding: 7px 0 5px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.12s ease;
+}
+
+.tab-icon {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+}
+
+.tab-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.tab.is-active {
+    color: var(--purple);
+    font-weight: 600;
+}
+
+/* Soft pill behind the active tab's icon (Android-style selected state) */
+.tab.is-active .tab-icon::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -15px;
+    right: -15px;
+    bottom: -5px;
+    border-radius: 14px;
+    background: rgba(33, 0, 93, 0.10);
+}
+
+.tab .badge {
+    position: absolute;
+    top: -6px;
+    left: 14px;
+    z-index: 1;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border: 1.5px solid var(--surface);
+    border-radius: 8px;
+    font-size: 9px;
+}
+
+/* ==========================================================================
+   Phone layout (<= 700 px): app header, bottom tab bar, FAB, bottom-sheet
+   modals — behaves like a native mobile app at these widths.
+   ========================================================================== */
+@media (max-width: 700px) {
+
+    /* --- two-row app header: brand + actions, then full-width search --- */
+    .topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        row-gap: 10px;
+        height: auto;
+        padding: 12px 16px;
+    }
+
+    .mobile-brand {
+        display: block;
+        grid-row: 1;
+        grid-column: 1;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+        line-height: 1;
+        color: var(--ink);
+        text-decoration: none;
+    }
+
+    .topbar-right {
+        grid-row: 1;
+        grid-column: 2;
+        transform: none;
+        gap: 14px;
+    }
+
+    .search {
+        grid-row: 2;
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 44px;
+        padding: 0 14px;
+        gap: 10px;
+        border-radius: 10px;
+    }
+
+    .search input {
+        font-size: 15px;
+    }
+
+    .bell {
+        width: 36px;
+        height: 36px;
+    }
+
+    .avatar,
+    .avatar img {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* --- navigation: sidebar out, bottom tab bar in --- */
+    .sidebar {
+        display: none;
+    }
+
+    .main {
+        margin-left: 0;
+    }
+
+    .tabbar {
+        display: grid;
+    }
+
+    /* --- content --- */
+    .content {
+        padding: 18px 16px calc(84px + env(safe-area-inset-bottom));
+    }
+
+    .greeting {
+        font-size: 20px;
+    }
+
+    .date-line {
+        font-size: 14px;
+    }
+
+    .btn-add {
+        display: none;
+    }
+
+    .fab {
+        display: grid;
+    }
+
+    .panel {
+        margin: 16px 0 0;
+        padding: 12px 10px;
+        border-radius: 14px;
+    }
+
+    /* --- task rows: two lines (title / time) + larger touch targets --- */
+    .todo-item {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 72px;
+        margin-bottom: 8px;
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .todo-check {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+    }
+
+    .todo-check:checked::after {
+        left: 8px;
+        top: 3px;
+        width: 6px;
+        height: 12px;
+    }
+
+    .todo-title {
+        margin-left: 12px;
+        font-size: 16px;
+    }
+
+    /* Wraps onto its own line (order: 5) under the title */
+    .todo-time {
+        display: flex;
+        flex: 0 0 100%;
+        order: 5;
+        gap: 8px;
+        margin: 4px 0 0;
+        padding-left: 50px; /* aligns under the title: 12 pad + 26 box + 12 gap */
+        font-size: 13px;
+    }
+
+    .todo-time svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Bigger hit area, same visual dot position */
+    .kebab summary {
+        width: 36px;
+        height: 44px;
+        margin-right: -8px;
+    }
+
+    /* --- modals slide up as bottom sheets --- */
+    .modal-backdrop {
+        align-items: flex-end;
+        padding: 0;
+        animation: backdrop-in 0.2s ease;
+    }
+
+    .modal {
+        max-width: none;
+        max-height: 88vh;
+        padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25);
+        animation: sheet-in 0.25s ease;
+    }
+
+    /* Drag handle */
+    .modal::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        margin: 0 auto 14px;
+        border-radius: 2px;
+        background: #E0E0E0;
+    }
+
+    .toast {
+        top: 12px;
+        left: 16px;
+        right: 16px;
+    }
+
+    /* --- native-feeling interaction feedback --- */
+    body {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab:active,
+    .todo-item:active,
+    .mobile-brand:active {
+        opacity: 0.7;
+    }
+
+    .only-desktop {
+        display: none;
+    }
+
+    .only-mobile {
+        display: inline;
+    }
+}
+
+@keyframes sheet-in {
+    from { transform: translateY(48%); }
+    to   { transform: translateY(0); }
+}
+
+@keyframes backdrop-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ==========================================================================
+   Accounts: sign in / sign up, profile and team pages
+   ========================================================================== */
+
+/* --- standalone auth screens (no sidebar / top bar) --------------------- */
+.auth-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background: var(--page-bg);
+}
+
+.auth-wrap {
+    width: 100%;
+    max-width: 460px;
+}
+
+.auth-card {
+    padding: 40px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.08);
+}
+
+.auth-brand {
+    font-size: 34px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+}
+
+.auth-title {
+    margin: 18px 0 4px;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.auth-sub {
+    margin: 0 0 24px;
+    font-size: 15px;
+    color: var(--muted);
+}
+
+/* "Continue with Google" — bordered white button with the Google mark */
+.btn-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 46px;
+    border: 1.5px solid var(--field-line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-google:hover {
+    background: var(--search-bg);
+    border-color: #C9C9C9;
+}
+
+.btn-google svg {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+/* "or sign in with email" rule */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 18px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+}
+
+.auth-divider span {
+    white-space: nowrap;
+}
+
+/* Sign-up progress: 1 Your details → 2 Account type */
+.steps {
+    display: flex;
+    gap: 10px;
+    margin: 0 0 22px;
+    padding: 0;
+    list-style: none;
+}
+
+.step {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.step span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--panel-bg);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--nav-ink);
+}
+
+.step.is-current {
+    color: var(--ink);
+}
+
+.step.is-current span {
+    background: var(--purple);
+    color: var(--surface);
+}
+
+.step.is-done span {
+    background: #E9F5EE;
+    color: #1E7A46;
+}
+
+/* Who is signing up (step 2) */
+.signup-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--page-bg);
+}
+
+.signup-summary img {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.signup-summary-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.signup-summary-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+.signup-summary-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.signup-summary a {
+    flex: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--purple);
+    text-decoration: none;
+}
+
+.signup-summary a:hover {
+    text-decoration: underline;
+}
+
+.auth-form .btn-primary {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.auth-switch {
+    margin: 22px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.auth-switch a {
+    color: var(--purple);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-switch a:hover {
+    text-decoration: underline;
+}
+
+.auth-note,
+.auth-error {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.auth-note {
+    background: #F4F0FB;
+    border-left: 3px solid var(--purple);
+    color: var(--nav-ink);
+}
+
+.auth-error {
+    background: #FDECEC;
+    border-left: 3px solid #B3261E;
+    color: #8C1D18;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+/* Account type: two big radio "buttons" */
+.seg-wrap {
+    margin-bottom: 16px;
+}
+
+.seg-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--nav-ink);
+}
+
+.seg {
+    display: flex;
+    gap: 6px;
+}
+
+.seg label {
+    position: relative;
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    border: 1.5px solid var(--field-line);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--nav-ink);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.seg label:hover {
+    background: var(--search-bg);
+}
+
+.seg input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.seg label:has(input:checked) {
+    border-color: var(--purple);
+    background: #F4F0FB;
+    color: var(--purple);
+}
+
+.seg label:focus-within {
+    outline: 2px solid rgba(33, 0, 93, 0.25);
+    outline-offset: 2px;
+}
+
+/* --- profile page ------------------------------------------------------- */
+.profile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 22px;
+    margin-top: 22px;
+    align-items: start;
+}
+
+.card {
+    padding: 26px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.card-title {
+    margin: 0 0 4px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.card-sub {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.card-section {
+    margin-top: 26px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+}
+
+.hint-text {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.signout-form {
+    margin: 0;
+}
+
+.profile-photo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.profile-photo .avatar-picker {
+    margin: 0;
+}
+
+.profile-photo .avatar-picker img {
+    width: 76px;
+    height: 76px;
+}
+
+.profile-photo-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.profile-photo-text strong {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.stack-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.stack-form .field {
+    width: 100%;
+}
+
+.stack-form .form-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.form-row .field {
+    flex: 1;
+    min-width: 0;
+}
+
+.btn-small {
+    height: 38px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+.btn-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 18px;
+    text-decoration: none;
+}
+
+.btn-danger {
+    height: 38px;
+    padding: 0 14px;
+    background: var(--surface);
+    border: 1.5px solid #F0C4C4;
+    border-radius: var(--radius-sm);
+    color: #B3261E;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-danger:hover {
+    background: #FDECEC;
+}
+
+.inline-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.inline-form .field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.inline-form .btn-small {
+    flex: none;
+    margin-top: 26px; /* lines the button up with the input, not the label */
+}
+
+.member-list {
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.member {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+}
+
+.member:last-child {
+    border-bottom: 0;
+}
+
+.member > img {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.member-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.member-mail {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.member-remove {
+    margin: 0;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 12px;
+    background: var(--panel-bg);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--nav-ink);
+    white-space: nowrap;
+}
+
+.chip--owner {
+    background: #F4F0FB;
+    color: var(--purple);
+}
+
+.chip--google {
+    margin-left: 6px;
+    background: #EAF1FD;
+    color: #1A56B4;
+}
+
+/* --- team page ---------------------------------------------------------- */
+.member-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.member-chips .chip {
+    height: 34px;
+    padding: 0 12px 0 6px;
+    font-size: 13px;
+}
+
+.member-chips .chip img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.chip-count {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.filter-pills {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0 0;
+}
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 16px;
+    border: 1.5px solid var(--field-line);
+    border-radius: 17px;
+    background: var(--surface);
+    color: var(--nav-ink);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pill:hover {
+    background: var(--search-bg);
+}
+
+.pill.is-active {
+    border-color: var(--purple);
+    background: var(--purple);
+    color: var(--surface);
+}
+
+.todo-meta {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: none;
+    margin-right: 16px;
+}
+
+.todo-meta .todo-time {
+    margin-right: 0;
+}
+
+.todo-owner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.todo-owner img {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.team-row .todo-check {
+    cursor: default;
+}
+
+.team-row .todo-check:disabled:hover {
+    border-color: #A3A3A3;
+}
+
+.team-row .todo-check:checked:disabled {
+    border-color: var(--purple);
+}
+
+/* --- small screens ------------------------------------------------------ */
+@media (max-width: 700px) {
+
+    .auth-body {
+        align-items: flex-start;
+        padding: 28px 16px;
+    }
+
+    .auth-card {
+        padding: 28px 22px;
+        border-radius: 18px;
+    }
+
+    .auth-brand {
+        font-size: 30px;
+    }
+
+    .steps {
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .step {
+        font-size: 12px;
+    }
+
+    .signup-summary {
+        padding: 10px 12px;
+    }
+
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .card {
+        padding: 20px 18px;
+        border-radius: 14px;
+    }
+
+    .signout-form .btn-small {
+        height: 36px;
+    }
+
+    .stack-form .form-row,
+    .inline-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .inline-form .btn-small {
+        width: 100%;
+        margin-top: 4px;
+    }
+
+    .btn-block {
+        width: 100%;
+    }
+
+    .member-chips {
+        margin-top: 14px;
+    }
+
+    .filter-pills {
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .team-row .todo-meta {
+        flex: 0 0 100%;
+        order: 5;
+        gap: 12px;
+        margin: 6px 0 0;
+        padding-left: 38px;
+    }
+
+    .team-row .todo-meta .todo-time {
+        flex: none;
+        order: 0;
+        margin: 0;
+        padding-left: 0;
+        font-size: 13px;
+    }
+
+    .team-row .todo-meta .todo-time svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .team-row .todo-owner {
+        font-size: 13px;
+    }
+
+    .team-row .todo-owner img {
+        width: 20px;
+        height: 20px;
     }
 }
