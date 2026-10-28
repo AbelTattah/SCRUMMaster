@@ -55,7 +55,10 @@ $editHref = 'index.php' . $returnTo . ($returnTo === '' ? '?' : '&') . 'edit=' .
         <div class="kebab-menu">
             <a href="<?= e($editHref) ?>">Edit</a>
 
-            <form method="post" action="index.php">
+            <form method="post" action="index.php"
+                  data-confirm="Delete “<?= e($todo['title']) ?>”? This cannot be undone."
+                  data-confirm-title="Delete task?"
+                  data-confirm-label="Delete">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="todo.delete">
                 <input type="hidden" name="id" value="<?= (int) $todo['id'] ?>">

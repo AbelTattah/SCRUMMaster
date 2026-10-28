@@ -34,7 +34,7 @@ error_reporting(E_ALL);
 // The session carries the signed-in user id (see src/auth.php), the CSRF
 // token and one-shot flash messages. Everything else — name, avatar, todos —
 // lives in the database, so it survives session expiry.
-if (session_status() === PHP_SESSION_NONE) {
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     session_start([
         'cookie_httponly' => true, // JS cannot read the session cookie
         'cookie_samesite' => 'Lax', // basic CSRF hardening for the cookie
@@ -51,10 +51,15 @@ require_once __DIR__ . '/repositories/TodoRepository.php';
 require_once __DIR__ . '/repositories/ProfileRepository.php';
 require_once __DIR__ . '/repositories/UserRepository.php';
 require_once __DIR__ . '/repositories/OrganizationRepository.php';
+require_once __DIR__ . '/repositories/NotificationRepository.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/google.php';
+require_once __DIR__ . '/notifications.php';
+require_once __DIR__ . '/mailer.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/HomeController.php';
 require_once __DIR__ . '/controllers/TodoController.php';
 require_once __DIR__ . '/controllers/ProfileController.php';
 require_once __DIR__ . '/controllers/TeamController.php';
+require_once __DIR__ . '/controllers/SettingsController.php';
+require_once __DIR__ . '/controllers/NotificationsController.php';

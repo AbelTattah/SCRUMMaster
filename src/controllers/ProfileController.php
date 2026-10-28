@@ -25,6 +25,11 @@ final class ProfileController
         $user = require_auth();
         $organization = user_organization($user);
 
+        $tab = (string) ($_GET['tab'] ?? 'account');
+        if (!in_array($tab, ['account', 'organization'], true)) {
+            $tab = 'account';
+        }
+
         $users = new UserRepository($db);
 
         render('layout', [
@@ -41,6 +46,7 @@ final class ProfileController
             'organization' => $organization,
             'members' => $organization !== null ? $users->members($organization['id']) : [],
             'isOwner' => is_org_owner($user),
+            'tab' => $tab,
         ]);
     }
 
@@ -165,7 +171,7 @@ final class ProfileController
 
         if (user_organization($user) !== null) {
             flash('You already belong to an organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         $name = trim((string) ($_POST['org_name'] ?? ''));
@@ -181,7 +187,7 @@ final class ProfileController
         self::users()->setOrganization($userId, $organizationId);
 
         flash('Organization created. This account is now the organization account.');
-        redirect('index.php?r=profile');
+        redirect('index.php?r=profile&tab=organization');
     }
 
     /**
@@ -198,7 +204,7 @@ final class ProfileController
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             flash('Please enter a valid email address.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         $users = self::users();
@@ -206,28 +212,28 @@ final class ProfileController
 
         if ($member === null) {
             flash('No account uses that email yet. Ask them to sign up first, then add them.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         if ((int) $member['id'] === (int) $user['id']) {
             flash('That is your own account.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         if ((int) ($member['organization_id'] ?? 0) === $organization['id']) {
             flash($member['name'] . ' is already in your organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         if (!empty($member['organization_id'])) {
             flash($member['name'] . ' already belongs to another organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         $users->setOrganization((int) $member['id'], $organization['id']);
 
         flash($member['name'] . ' was added to ' . $organization['name'] . '.');
-        redirect('index.php?r=profile');
+        redirect('index.php?r=profile&tab=organization');
     }
 
     /**
@@ -244,20 +250,20 @@ final class ProfileController
 
         if ($memberId === (int) $user['id']) {
             flash('You cannot remove your own account.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         $member = self::users()->findWithOrganization($memberId);
 
         if ($member === null || (int) ($member['organization_id'] ?? 0) !== $organization['id']) {
             flash('That account is not a member of your organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         self::users()->setOrganization($memberId, null);
 
         flash($member['name'] . ' was removed from ' . $organization['name'] . '.');
-        redirect('index.php?r=profile');
+        redirect('index.php?r=profile&tab=organization');
     }
 
     /**
@@ -272,18 +278,18 @@ final class ProfileController
 
         if ($organization === null) {
             flash('You are not part of an organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         if (is_org_owner($user)) {
             flash('The organization account cannot leave its own organization.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         self::users()->setOrganization((int) $user['id'], null);
 
         flash('You left ' . $organization['name'] . '.');
-        redirect('index.php?r=profile');
+        redirect('index.php?r=profile&tab=organization');
     }
 
     /**
@@ -295,7 +301,7 @@ final class ProfileController
 
         if ($organization === null || !is_org_owner($user)) {
             flash('Only the organization account can manage members.');
-            redirect('index.php?r=profile');
+            redirect('index.php?r=profile&tab=organization');
         }
 
         return $organization;

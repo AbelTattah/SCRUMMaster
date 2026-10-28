@@ -198,6 +198,104 @@ svg {
 .badge--purple { background: var(--purple); }
 .badge--amber  { background: var(--amber); }
 
+/* --- signed-in identity + account actions at the bottom of the sidebar --- */
+.sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: auto;
+    padding: 16px 20px 22px;
+    border-top: 1px solid var(--sidebar-line);
+}
+
+.sidebar-user {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.sidebar-user img {
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.sidebar-user-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sidebar-user-name {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-user-meta {
+    overflow: hidden;
+    font-size: 12px;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-footer-actions {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+}
+
+.sidebar-footer-actions form {
+    margin: 0;
+}
+
+.icon-btn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover {
+    background: var(--search-bg);
+    color: var(--ink);
+}
+
+.icon-btn.is-active {
+    background: var(--purple);
+    color: var(--surface);
+}
+
+.icon-btn--danger:hover {
+    background: #FDECEC;
+    color: #B3261E;
+}
+
+.icon-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
 /* --------------------------------------------------------------------------
    Main column + top bar
    -------------------------------------------------------------------------- */
@@ -266,6 +364,7 @@ svg {
 }
 
 .bell {
+    position: relative;
     display: grid;
     place-items: center;
     width: 30px;
@@ -276,6 +375,7 @@ svg {
     border-radius: 50%;
     color: var(--nav-ink);
     cursor: pointer;
+    text-decoration: none;
     transition: background-color 0.15s ease;
 }
 
@@ -283,9 +383,41 @@ svg {
     background: var(--search-bg);
 }
 
+.bell.has-unread {
+    border-color: var(--purple);
+    color: var(--purple);
+}
+
 .bell svg {
     width: 15px;
     height: 15px;
+}
+
+.bell-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border: 2px solid var(--surface);
+    border-radius: 9px;
+    background: #C0392B;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The sidebar is hidden on phones, so the settings gear moves into the header. */
+.topbar-settings {
+    display: none;
+    width: 36px;
+    height: 36px;
 }
 
 .avatar-form {
@@ -621,6 +753,20 @@ svg {
     text-align: center;
 }
 
+/* Confirmation dialog: same sheet, slightly tighter and with no form fields. */
+.modal--confirm {
+    max-width: 404px;
+}
+
+.modal--confirm h2 {
+    font-size: 21px;
+}
+
+.modal--confirm .modal-sub {
+    margin-bottom: 22px;
+    line-height: 1.55;
+}
+
 .modal-form .btn-primary {
     width: 100%;
     height: 46px;
@@ -832,6 +978,31 @@ svg {
     .nav .nav-label,
     .nav .badge {
         display: none; /* collapsed rail: labels/badges live only in the desktop sidebar */
+    }
+
+    /* Rail: avatar on top, then the gear and sign-out icons. */
+    .sidebar-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px 0 18px;
+    }
+
+    .sidebar-user {
+        justify-content: center;
+    }
+
+    .sidebar-user-text {
+        display: none;
+    }
+
+    .sidebar-user img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .sidebar-footer-actions {
+        flex-direction: column;
+        gap: 4px;
     }
 
     .topbar {
@@ -1459,12 +1630,55 @@ svg {
 }
 
 /* --- profile page ------------------------------------------------------- */
+.page-tabs {
+    display: flex;
+    gap: 28px;
+    margin-top: 22px;
+    border-bottom: 1px solid var(--line);
+}
+
+.page-tab {
+    position: relative;
+    padding: 0 2px 10px;
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.page-tab:hover {
+    color: var(--ink);
+}
+
+.page-tab.is-active {
+    color: var(--purple);
+    font-weight: 600;
+}
+
+.page-tab.is-active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--purple);
+}
+
 .profile-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     gap: 22px;
     margin-top: 22px;
     align-items: start;
+}
+
+/* Both account tabs show a single card, kept at a comfortable reading width. */
+.profile-grid--single {
+    display: block;
+    max-width: 780px;
 }
 
 .card {
@@ -1790,6 +2004,312 @@ svg {
     border-color: var(--purple);
 }
 
+/* --- settings page ------------------------------------------------------ */
+.settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 780px;
+    margin-top: 22px;
+}
+
+.settings-form {
+    margin: 0;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.setting-row:first-of-type {
+    padding-top: 2px;
+}
+
+.setting-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.setting-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.setting-hint {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.setting-hint strong {
+    color: var(--nav-ink);
+    font-weight: 600;
+}
+
+.setting-lead {
+    margin-top: 18px;
+}
+
+.setting-lead .input {
+    max-width: 300px;
+}
+
+.setting-status {
+    margin: 0 0 14px;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.setting-status[data-state="granted"] {
+    color: #1E7A46;
+}
+
+.setting-status[data-state="denied"] {
+    color: #B3261E;
+}
+
+.settings-stack code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--panel-bg);
+    font-size: 12px;
+    color: var(--nav-ink);
+}
+
+/* Toggle switch (checkbox stays focusable/accessible) */
+.switch {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    width: 46px;
+    height: 26px;
+}
+
+.switch input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.switch-track {
+    width: 100%;
+    height: 100%;
+    border-radius: 13px;
+    background: #D9D9D9;
+    transition: background-color 0.15s ease;
+}
+
+.switch-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease;
+}
+
+.switch input:checked + .switch-track {
+    background: var(--purple);
+}
+
+.switch input:checked + .switch-track::after {
+    transform: translateX(20px);
+}
+
+.switch input:focus-visible + .switch-track {
+    outline: 2px solid rgba(33, 0, 93, 0.25);
+    outline-offset: 2px;
+}
+
+/* --- notifications screen ---------------------------------------------- */
+.mark-all-form {
+    margin: 6px 0 0;
+}
+
+.notification-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 860px;
+    margin-top: 22px;
+}
+
+.notification-group {
+    overflow: hidden;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.notification-group-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 22px 14px;
+}
+
+.notification-group-title {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.notification-group-hint {
+    margin: 2px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.notification-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    flex: none;
+    border-radius: 13px;
+    background: var(--panel-bg);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.notification-list {
+    border-top: 1px solid var(--line);
+}
+
+.notification-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+}
+
+.notification-item:last-child {
+    border-bottom: 0;
+}
+
+.notification-item.is-unread {
+    background: #FCFAFF;
+}
+
+.notification-dot {
+    width: 10px;
+    height: 10px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--muted);
+}
+
+.notification-dot--overdue  { background: #C0392B; }
+.notification-dot--reminder { background: var(--amber); }
+.notification-dot--upcoming { background: var(--purple); }
+
+.notification-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notification-detail {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.notification-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: none;
+}
+
+.notification-actions form {
+    margin: 0;
+}
+
+.notification-open,
+.notification-read {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--purple);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.notification-open:hover,
+.notification-read:hover {
+    text-decoration: underline;
+}
+
+.notification-read-state {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.empty-card {
+    max-width: 640px;
+    margin-top: 22px;
+    padding: 42px 28px;
+    text-align: center;
+}
+
+.empty-card svg {
+    width: 36px;
+    height: 36px;
+    color: var(--purple);
+}
+
+.empty-card h2 {
+    margin: 14px 0 6px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.empty-card p {
+    margin: 0 auto 20px;
+    max-width: 380px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
 /* --- small screens ------------------------------------------------------ */
 @media (max-width: 700px) {
 
@@ -1888,5 +2408,68 @@ svg {
     .team-row .todo-owner img {
         width: 20px;
         height: 20px;
+    }
+
+    /* --- settings + notifications on phones --- */
+    .topbar-settings {
+        display: grid;
+    }
+
+    .page-tabs {
+        gap: 22px;
+        margin-top: 18px;
+    }
+
+    .page-tab {
+        font-size: 14px;
+    }
+
+    .profile-grid--single,
+    .settings-stack,
+    .notification-groups {
+        margin-top: 16px;
+    }
+
+    .setting-row {
+        gap: 14px;
+        padding: 14px 0;
+    }
+
+    .setting-hint {
+        font-size: 12px;
+    }
+
+    .setting-lead .input {
+        max-width: none;
+    }
+
+    .notification-item {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px 16px;
+    }
+
+    .notification-group-head {
+        padding: 16px 16px 12px;
+    }
+
+    .notification-title {
+        white-space: normal;
+    }
+
+    .notification-actions {
+        flex: 0 0 100%;
+        gap: 18px;
+        padding-left: 24px;
+    }
+
+    .empty-card {
+        margin-top: 16px;
+        padding: 34px 20px;
+    }
+
+    .mark-all-form {
+        margin-top: 10px;
     }
 }

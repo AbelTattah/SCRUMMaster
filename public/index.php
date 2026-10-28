@@ -14,11 +14,16 @@
  *   GET  /?r=auth.google      → start Google sign-in
  *   GET  /?r=auth.google.callback → Google sends the visitor back here
  *   GET  /?r=profile          → account + organization page
+ *   GET  /?r=settings         → notification settings
+ *   GET  /?r=notifications    → overdue / reminders / coming up
+ *   GET  /?r=notifications.feed → JSON feed for browser notifications
  *   GET  /?r=team             → organization account: all members' todos
  *   POST action=auth.*        → sign in / sign up / sign out
  *   POST action=todo.*        → create / toggle / update / delete
  *   POST action=profile.*     → name, email, photo, password
  *   POST action=org.*         → create organization, add/remove members, leave
+ *   POST action=settings.*    → notification preferences, test email
+ *   POST action=notifications.* → mark one / all as read
  *
  * Keeping all entry points in one place means redirects, CSRF checks and
  * error handling are applied consistently — and no endpoint can ever be
@@ -97,6 +102,23 @@ if ($action !== '') {
         case 'org.leave':
             ProfileController::leaveOrganization();
             break;
+
+        // --- settings / notifications --------------------------------------
+        case 'settings.save':
+            SettingsController::saveNotifications();
+            break;
+
+        case 'settings.test_email':
+            SettingsController::testEmail();
+            break;
+
+        case 'notifications.read':
+            NotificationsController::markRead();
+            break;
+
+        case 'notifications.read_all':
+            NotificationsController::markAllRead();
+            break;
     }
 
     // Unknown actions fall through to the page renderer below.
@@ -128,6 +150,18 @@ switch ((string) ($_GET['r'] ?? '')) {
 
     case 'profile':
         ProfileController::show();
+        break;
+
+    case 'settings':
+        SettingsController::show();
+        break;
+
+    case 'notifications':
+        NotificationsController::index();
+        break;
+
+    case 'notifications.feed':
+        NotificationsController::feed();
         break;
 
     case 'team':

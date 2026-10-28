@@ -1,3 +1,10 @@
 # Google OAuth client secret — copy config/google.example.php to
 # config/google.php and fill in your own credentials.
 config/google.php
+
+# Email transport settings — copy config/mail.example.php to config/mail.php
+# and fill in your own credentials.
+config/mail.php
+
+# Development mail transport output (see src/mailer.php).
+storage/mail.log

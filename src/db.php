@@ -72,6 +72,9 @@ $db->exec("
         password_hash TEXT NOT NULL,
         avatar TEXT,
         organization_id INTEGER,
+        notify_browser INTEGER NOT NULL DEFAULT 1,
+        notify_email INTEGER NOT NULL DEFAULT 1,
+        notify_lead_minutes INTEGER NOT NULL DEFAULT 30,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
 ");
@@ -91,6 +94,37 @@ if (!in_array('google_id', $userColumns, true)) {
 // SQLite allows any number of NULLs in a unique index, so unlinked accounts
 // are unaffected.
 $db->exec('CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_unique ON users (google_id)');
+
+// Notification preferences. Existing accounts keep both channels on and get
+// the default 30-minute reminder window.
+if (!in_array('notify_browser', $userColumns, true)) {
+    $db->exec('ALTER TABLE users ADD COLUMN notify_browser INTEGER NOT NULL DEFAULT 1');
+}
+
+if (!in_array('notify_email', $userColumns, true)) {
+    $db->exec('ALTER TABLE users ADD COLUMN notify_email INTEGER NOT NULL DEFAULT 1');
+}
+
+if (!in_array('notify_lead_minutes', $userColumns, true)) {
+    $db->exec('ALTER TABLE users ADD COLUMN notify_lead_minutes INTEGER NOT NULL DEFAULT 30');
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+// Notifications are derived from the clock and the open todos on every
+// request; only the "read" and "emailed" markers are stored. The key is
+// "todo:{id}:{kind}" so one task can be a reminder today and overdue later
+// without the two states overwriting each other.
+$db->exec("
+    CREATE TABLE IF NOT EXISTS notification_state (
+        user_id INTEGER NOT NULL,
+        notification_key TEXT NOT NULL,
+        read_at TEXT,
+        emailed_at TEXT,
+        PRIMARY KEY (user_id, notification_key)
+    )
+");
 
 // Every todo now belongs to one user. Existing rows (from before accounts
 // existed) keep user_id = NULL until the first account is created; that
