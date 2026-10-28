@@ -131,6 +131,39 @@ final class UserRepository
     }
 
     /**
+     * Notification preferences (the lead time is validated by the caller).
+     */
+    public function updateNotifications(int $id, bool $browser, bool $email, int $leadMinutes): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE users
+             SET notify_browser = :browser,
+                 notify_email = :email,
+                 notify_lead_minutes = :lead
+             WHERE id = :id'
+        );
+
+        $stmt->execute([
+            ':browser' => $browser ? 1 : 0,
+            ':email' => $email ? 1 : 0,
+            ':lead' => $leadMinutes,
+            ':id' => $id,
+        ]);
+    }
+
+    /**
+     * Everyone who wants an email digest (used by bin/notify.php).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function notificationRecipients(): array
+    {
+        return $this->db->query(
+            'SELECT * FROM users WHERE notify_email = 1 ORDER BY id ASC'
+        )->fetchAll();
+    }
+
+    /**
      * Members of an organization, owner first, with their task counters.
      */
     public function members(int $organizationId): array

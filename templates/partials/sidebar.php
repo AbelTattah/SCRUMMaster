@@ -19,6 +19,8 @@ $icons = [
     'in-progress' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
     'team' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     'user' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    'settings' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+    'logout' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>',
 ];
 
 $query = $q !== '' ? '?q=' . urlencode($q) : '';
@@ -36,6 +38,10 @@ $isCompleted = $view === 'home' && $page === 'completed';
 $isInProgress = $view === 'home' && $page === 'in-progress';
 $isTeam = $view === 'team';
 $isProfile = $view === 'profile';
+$isSettings = $view === 'settings';
+
+$orgName = (string) ($user['organization_name'] ?? '');
+$userMeta = $orgName !== '' ? $orgName : (string) ($user['email'] ?? '');
 ?>
 <aside class="sidebar">
 
@@ -91,6 +97,38 @@ $isProfile = $view === 'profile';
         </a>
 
     </nav>
+
+    <?php // Signed-in identity: name, organization and the account actions. ?>
+    <div class="sidebar-footer">
+        <a class="sidebar-user" href="<?= e($profileHref) ?>" title="Your account">
+            <img src="<?= e(avatar_url($user['avatar'] ?? null)) ?>" alt="">
+            <span class="sidebar-user-text">
+                <span class="sidebar-user-name"><?= e($user['name'] ?? '') ?></span>
+                <span class="sidebar-user-meta"><?= e($userMeta) ?></span>
+            </span>
+        </a>
+
+        <div class="sidebar-footer-actions">
+            <a class="icon-btn<?= $isSettings ? ' is-active' : '' ?>"
+               href="index.php?r=settings"
+               aria-label="Settings"
+               title="Settings"
+               <?= $isSettings ? 'aria-current="page"' : '' ?>>
+                <?= $icons['settings'] ?>
+            </a>
+
+            <form method="post" action="index.php"
+                  data-confirm="You will need to sign in again to see your tasks."
+                  data-confirm-title="Sign out of KPIMe?"
+                  data-confirm-label="Sign out">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="auth.logout">
+                <button class="icon-btn icon-btn--danger" type="submit" aria-label="Sign out" title="Sign out">
+                    <?= $icons['logout'] ?>
+                </button>
+            </form>
+        </div>
+    </div>
 </aside>
 
 <?php // Phone navigation: a bottom tab bar (the sidebar is hidden at that width). ?>

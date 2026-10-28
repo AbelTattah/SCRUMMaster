@@ -5,7 +5,8 @@
  *
  * Shell for every signed-in page: sidebar + top bar + the page content +
  * optional modals. The content itself lives in the template named by $view
- * (home, profile, team) and is rendered inside <main>.
+ * (home, profile, team, settings, notifications) and is rendered inside
+ * <main>. The shared confirmation dialog is always available.
  *
  * Available variables (provided by the controllers):
  * $user, $view, $title, $page, $q, $counts, $flash, $showTodoModal,
@@ -15,6 +16,8 @@
 $view = isset($view) && preg_match('/^[a-z-]+$/', (string) $view) ? (string) $view : 'home';
 $title = $title ?? 'KPIMe';
 $searchRoute = $searchRoute ?? '';
+$unread = notification_unread_count($user ?? null);
+$browserNotifications = (int) ($user['notify_browser'] ?? 0) === 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +29,9 @@ $searchRoute = $searchRoute ?? '';
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/app.css">
 </head>
-<body>
+<body
+    data-notifications-feed="index.php?r=notifications.feed"
+    data-browser-notifications="<?= $browserNotifications ? '1' : '0' ?>">
 
 <?php require ROOT_PATH . '/templates/partials/sidebar.php'; ?>
 
@@ -43,6 +48,9 @@ $searchRoute = $searchRoute ?? '';
 <?php if (!empty($showTodoModal)): ?>
     <?php require ROOT_PATH . '/templates/modals/todo-form.php'; ?>
 <?php endif; ?>
+
+<?php // Reusable confirmation dialog for forms with data-confirm. ?>
+<?php require ROOT_PATH . '/templates/partials/confirm-modal.php'; ?>
 
 <?php if ($flash !== null && $flash !== ''): ?>
     <div class="toast" role="status"><?= e($flash) ?></div>
