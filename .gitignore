@@ -1,10 +1,24 @@
-# Google OAuth client secret — copy config/google.example.php to
-# config/google.php and fill in your own credentials.
+# Legacy PHP configuration (kept for reference in legacy/)
 config/google.php
-
-# Email transport settings — copy config/mail.example.php to config/mail.php
-# and fill in your own credentials.
+legacy/config/google.php
 config/mail.php
-
-# Development mail transport output (see src/mailer.php).
 storage/mail.log
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env*.local
+!.env.example
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Local tooling output
+legacy/migration-reset-links.txt
+storage/
+*.tsbuildinfo
+next-env.d.ts

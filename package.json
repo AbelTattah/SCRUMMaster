@@ -1,0 +1,29 @@
+{
+  "name": "kpime",
+  "version": "2.0.0",
+  "private": true,
+  "description": "KPIMe — task manager with organizations, reminders and notifications",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "notify": "node --env-file=.env.local --import tsx scripts/notify.ts",
+    "migrate:legacy": "node --env-file=.env.local scripts/migrate-legacy.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.118.0",
+    "next": "16.4.4",
+    "nodemailer": "10.3.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "@types/nodemailer": "7.0.11",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}
