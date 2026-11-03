@@ -24,8 +24,8 @@ require ROOT_PATH . '/templates/partials/auth-top.php';
 ?>
 <div class="auth-card">
 
-    <div class="auth-brand">KPIMe</div>
-    <h1 class="auth-title">How will you use KPIMe?</h1>
+    <div class="auth-brand">Scrum Master</div>
+    <h1 class="auth-title">How will you use Scrum Master?</h1>
     <p class="auth-sub">Step 2 of 2 — choose your account type.</p>
 
     <ol class="steps" aria-label="Sign-up progress">
@@ -45,24 +45,6 @@ require ROOT_PATH . '/templates/partials/auth-top.php';
         <p class="auth-error" role="alert"><?= e($error) ?></p>
     <?php endif; ?>
 
-    <div class="signup-summary">
-        <img src="<?= e($summaryPicture) ?>" alt="">
-
-        <div class="signup-summary-text">
-            <strong><?= e($draft['name']) ?></strong>
-            <span><?= e($draft['email']) ?></span>
-        </div>
-
-        <?php if (!$isGoogle): ?>
-            <a href="index.php?r=register">Edit</a>
-        <?php endif; ?>
-    </div>
-
-    <?php if ($isGoogle): ?>
-        <p class="auth-note">
-            Connected to Google. Your name, email and photo come from your Google account.
-        </p>
-    <?php endif; ?>
 
     <form method="post" action="index.php" class="auth-form">
         <?= csrf_field() ?>

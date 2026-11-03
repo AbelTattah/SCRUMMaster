@@ -34,7 +34,7 @@ final class ProfileController
 
         render('layout', [
             'view' => 'profile',
-            'title' => 'KPIMe — Profile',
+            'title' => 'Scrum Master — Profile',
             'showTodoModal' => false,
             'user' => $user,
             'page' => 'home',

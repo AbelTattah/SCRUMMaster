@@ -18,7 +18,7 @@ $unread = $unread ?? notification_unread_count($user ?? null);
 <header class="topbar">
 
     <?php // Phone header: the sidebar (and its logo) is hidden at that width. ?>
-    <a class="mobile-brand" href="index.php">KPIMe</a>
+    <a class="mobile-brand" href="index.php">Scrum Master</a>
 
     <form class="search" method="get" action="index.php" role="search">
         <?php if ($searchRoute !== ''): ?>

@@ -29,8 +29,8 @@ export default async function RegisterTypePage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">KPIMe</div>
-      <h1 className="auth-title">How will you use KPIMe?</h1>
+      <div className="auth-brand">Scrum Master</div>
+      <h1 className="auth-title">How will you use Scrum Master?</h1>
       <p className="auth-sub">Step 2 of 2 — choose your account type.</p>
 
       <ol className="steps" aria-label="Sign-up progress">

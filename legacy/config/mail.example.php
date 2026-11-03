@@ -19,8 +19,8 @@
 return [
     'transport' => 'log',
 
-    'from_email' => 'no-reply@kpime.local',
-    'from_name' => 'KPIMe',
+    'from_email' => 'no-reply@scrummaster.local',
+    'from_name' => 'Scrum Master',
 
     // Only used when transport is 'smtp'.
     'smtp_host' => '',

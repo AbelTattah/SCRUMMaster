@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Starts the KPIMe todo app with the correct document root.
+    Starts the Scrum Master todo app with the correct document root.
 
 .DESCRIPTION
     The app's web root is the public/ folder (that is where index.php lives).
@@ -82,7 +82,7 @@ $storage = Join-Path $projectRoot 'storage'
 $dbFile = Join-Path $storage 'database.sqlite'
 
 Write-Host ""
-Write-Host "  KPIMe" -ForegroundColor Magenta
+Write-Host "  Scrum Master" -ForegroundColor Magenta
 Write-Host "  PHP    : $php"
 Write-Host "  Web root: $webRoot"
 Write-Host "  URL     : $url"

@@ -31,7 +31,7 @@ export function PermissionPanel() {
   const message = !checked
     ? "Checking permission…"
     : permission === "granted"
-      ? "Browser notifications are allowed. Alerts appear while KPIMe is open."
+      ? "Browser notifications are allowed. Alerts appear while Scrum Master is open."
       : permission === "denied"
         ? "Notifications are blocked for this site. Allow them in your browser's site settings."
         : permission === "unsupported"

@@ -1,5 +1,5 @@
 -- ---------------------------------------------------------------------------
--- KPIMe schema
+-- Scrum Master schema
 --
 -- accounts live in Supabase Auth (auth.users); public.profiles holds the
 -- display name, photo, organization and notification preferences.

@@ -7,7 +7,7 @@ import { saveTodo } from "@/app/actions/todos";
 import { Icon } from "@/components/icons";
 import type { Todo } from "@/lib/types";
 
-const OPEN_EVENT = "kpime:todo:open";
+const OPEN_EVENT = "Scrum Master:todo:open";
 
 interface OpenDetail {
   todo: Todo | null;

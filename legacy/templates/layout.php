@@ -14,7 +14,7 @@
  */
 
 $view = isset($view) && preg_match('/^[a-z-]+$/', (string) $view) ? (string) $view : 'home';
-$title = $title ?? 'KPIMe';
+$title = $title ?? 'Scrum Master';
 $searchRoute = $searchRoute ?? '';
 $unread = notification_unread_count($user ?? null);
 $browserNotifications = (int) ($user['notify_browser'] ?? 0) === 1;

@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return user
     ? { title: "Home" }
-    : { title: { absolute: "KPIMe — tasks, reminders and your team" } };
+    : { title: { absolute: "Scrum Master — tasks, reminders and your team" } };
 }
 
 export default async function HomePage({

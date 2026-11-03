@@ -19,7 +19,7 @@ export default async function ForgotPasswordPage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">KPIMe</div>
+      <div className="auth-brand">Scrum Master</div>
       <h1 className="auth-title">Reset your password</h1>
       <p className="auth-sub">We will email you a link to choose a new password.</p>
 

@@ -20,7 +20,7 @@ export default async function RegisterPage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">KPIMe</div>
+      <div className="auth-brand">Scrum Master</div>
       <h1 className="auth-title">Create your account</h1>
       <p className="auth-sub">Step 1 of 2 — your details.</p>
 

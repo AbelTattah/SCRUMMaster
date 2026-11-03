@@ -33,7 +33,7 @@ export default async function SettingsPage() {
         <section className="card">
           <h2 className="card-title">Notifications</h2>
           <p className="card-sub">
-            Choose how KPIMe reminds you about overdue tasks, tasks that start soon and
+            Choose how Scrum Master reminds you about overdue tasks, tasks that start soon and
             everything coming up later today.
           </p>
 
@@ -98,7 +98,7 @@ export default async function SettingsPage() {
         <section className="card">
           <h2 className="card-title">Browser permission</h2>
           <p className="card-sub">
-            KPIMe asks the browser once. If alerts do not appear, allow notifications for this
+            Scrum Master asks the browser once. If alerts do not appear, allow notifications for this
             site in your browser&rsquo;s settings.
           </p>
 
@@ -129,7 +129,7 @@ export default async function SettingsPage() {
 
           <ConfirmForm
             action={signOut}
-            confirmTitle="Sign out of KPIMe?"
+            confirmTitle="Sign out of Scrum Master?"
             confirmMessage="You will need to sign in again to see your tasks."
             confirmLabel="Sign out"
           >

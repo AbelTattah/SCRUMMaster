@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="auth-body">
       <header className="auth-topbar">
         <Link className="auth-logo" href="/">
-          KPIMe
+          Scrum Master
         </Link>
         <Link className="auth-home-link" href="/">
           ← Back to home
@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <main className="auth-wrap">{children}</main>
 
       <footer className="auth-foot">
-        © {new Date().getFullYear()} KPIMe · Tasks, reminders and your team
+        © {new Date().getFullYear()} Scrum Master · Tasks, reminders and your team
       </footer>
     </div>
   );

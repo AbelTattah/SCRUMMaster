@@ -25,7 +25,7 @@ $mailConfigured = (bool) ($mailConfigured ?? mail_is_configured());
     <section class="card">
         <h2 class="card-title">Notifications</h2>
         <p class="card-sub">
-            Choose how KPIMe reminds you about overdue tasks, tasks that start soon
+            Choose how Scrum Master reminds you about overdue tasks, tasks that start soon
             and everything coming up later today.
         </p>
 
@@ -83,7 +83,7 @@ $mailConfigured = (bool) ($mailConfigured ?? mail_is_configured());
     <section class="card">
         <h2 class="card-title">Browser permission</h2>
         <p class="card-sub">
-            KPIMe asks the browser once. If alerts do not appear, allow notifications
+            Scrum Master asks the browser once. If alerts do not appear, allow notifications
             for this site in your browser's settings.
         </p>
 
@@ -118,7 +118,7 @@ $mailConfigured = (bool) ($mailConfigured ?? mail_is_configured());
 
         <form method="post" action="index.php"
               data-confirm="You will need to sign in again to see your tasks."
-              data-confirm-title="Sign out of KPIMe?"
+              data-confirm-title="Sign out of Scrum Master?"
               data-confirm-label="Sign out">
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="auth.logout">

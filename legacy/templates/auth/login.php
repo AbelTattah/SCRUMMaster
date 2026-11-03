@@ -13,7 +13,7 @@ require ROOT_PATH . '/templates/partials/auth-top.php';
 ?>
 <div class="auth-card">
 
-    <div class="auth-brand">KPIMe</div>
+    <div class="auth-brand">Scrum Master</div>
     <h1 class="auth-title">Welcome back</h1>
     <p class="auth-sub">Sign in to pick up where you left off.</p>
 
@@ -25,9 +25,7 @@ require ROOT_PATH . '/templates/partials/auth-top.php';
         <p class="auth-error" role="alert"><?= e($error) ?></p>
     <?php endif; ?>
 
-    <?php require ROOT_PATH . '/templates/partials/google-button.php'; ?>
 
-    <p class="auth-divider"><span>or sign in with email</span></p>
 
     <form method="post" action="index.php" class="auth-form">
         <?= csrf_field() ?>
@@ -60,8 +58,10 @@ require ROOT_PATH . '/templates/partials/auth-top.php';
         <button class="btn-primary" type="submit">Sign in</button>
     </form>
 
+    <?php require ROOT_PATH . '/templates/partials/google-button.php'; ?>
+
     <p class="auth-switch">
-        New to KPIMe? <a href="index.php?r=register">Create an account</a>
+        New to Scrum Master? <a href="index.php?r=register">Create an account</a>
     </p>
 
 </div>

@@ -40,7 +40,7 @@ final class HomeController
 
         render('layout', [
             'view' => 'home',
-            'title' => 'KPIMe — Home',
+            'title' => 'Scrum Master — Home',
             'showTodoModal' => true,
             'user' => $user,
             'page' => $page,
