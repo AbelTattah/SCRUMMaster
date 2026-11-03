@@ -1,8 +1,8 @@
 {
-  "name": "kpime",
+  "name": "Scrum Master",
   "version": "2.0.0",
   "private": true,
-  "description": "KPIMe — task manager with organizations, reminders and notifications",
+  "description": "Scrum Master — task manager with organizations, reminders and notifications",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

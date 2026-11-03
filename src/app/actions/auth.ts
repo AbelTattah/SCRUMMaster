@@ -120,7 +120,7 @@ export async function completeRegistration(formData: FormData): Promise<void> {
       back("/register/type", "error", error);
     }
 
-    redirect("/?notice=Welcome%20to%20KPIMe!");
+    redirect("/?notice=Welcome%20to%20Scrum Master!");
   }
 
   const orgName = field(formData, "org_name").trim();
@@ -169,17 +169,17 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
       const link = `${siteUrl()}/auth/confirm?token_hash=${encodeURIComponent(tokenHash)}&type=recovery&next=%2Freset-password`;
       const result = await sendMail({
         to: email,
-        subject: "Reset your KPIMe password",
+        subject: "Reset your Scrum Master password",
         text:
           `Hello ${profile.name},\n\n` +
-          "We received a request to reset your KPIMe password.\n\n" +
+          "We received a request to reset your Scrum Master password.\n\n" +
           `Open this link to choose a new password:\n${link}\n\n` +
-          "If you did not ask for this, you can ignore the email.\n\nKPIMe",
+          "If you did not ask for this, you can ignore the email.\n\nScrum Master",
         html:
           '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">' +
-          '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">KPIMe</h1>' +
+          '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">Scrum Master</h1>' +
           `<p style="font-size:14px;line-height:1.6;">Hello ${escapeHtml(profile.name)},</p>` +
-          '<p style="font-size:14px;line-height:1.6;">We received a request to reset your KPIMe password.</p>' +
+          '<p style="font-size:14px;line-height:1.6;">We received a request to reset your Scrum Master password.</p>' +
           `<p style="font-size:14px;line-height:1.6;"><a href="${link}">Choose a new password</a></p>` +
           '<p style="font-size:12px;color:#727272;">If you did not ask for this, you can ignore the email.</p></div>',
         userId: profile.id,

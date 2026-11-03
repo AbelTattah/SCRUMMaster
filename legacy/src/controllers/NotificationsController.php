@@ -36,7 +36,7 @@ final class NotificationsController
 
         render('layout', [
             'view' => 'notifications',
-            'title' => 'KPIMe — Notifications',
+            'title' => 'Scrum Master — Notifications',
             'showTodoModal' => false,
             'user' => $user,
             'page' => 'home',

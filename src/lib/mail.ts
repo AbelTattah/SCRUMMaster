@@ -22,7 +22,7 @@ export interface MailMessage {
 }
 
 function fromAddress(): string {
-  return process.env.MAIL_FROM || "KPIMe <no-reply@kpime.local>";
+  return process.env.MAIL_FROM || "Scrum Master <no-reply@scrummaster.local>";
 }
 
 export function mailTransport(): MailTransport {

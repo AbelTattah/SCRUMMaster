@@ -43,21 +43,21 @@ export async function sendTestEmail(): Promise<void> {
 
   const text =
     `Hello ${name},\n\n` +
-    "This is a test notification from KPIMe.\n\n" +
+    "This is a test notification from Scrum Master.\n\n" +
     "Email delivery is working. Reminders, overdue tasks and tasks coming up later today will arrive here when they need your attention.\n\n" +
-    "KPIMe";
+    "Scrum Master";
 
   const html =
     '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">' +
-    '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">KPIMe</h1>' +
+    '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">Scrum Master</h1>' +
     `<p style="font-size:14px;line-height:1.6;">Hello ${escapeHtml(name)},</p>` +
-    '<p style="font-size:14px;line-height:1.6;">This is a test notification from KPIMe.</p>' +
+    '<p style="font-size:14px;line-height:1.6;">This is a test notification from Scrum Master.</p>' +
     '<p style="font-size:14px;line-height:1.6;">Email delivery is working. Reminders, overdue tasks and tasks coming up later today will arrive here when they need your attention.</p>' +
     "</div>";
 
   const result = await sendMail({
     to: current.profile.email,
-    subject: "KPIMe test notification",
+    subject: "Scrum Master test notification",
     text,
     html,
     userId: current.id,

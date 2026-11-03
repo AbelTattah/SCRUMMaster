@@ -19,7 +19,7 @@ final class SettingsController
 
         render('layout', [
             'view' => 'settings',
-            'title' => 'KPIMe — Settings',
+            'title' => 'Scrum Master — Settings',
             'showTodoModal' => false,
             'user' => $user,
             'page' => 'home',
@@ -72,18 +72,18 @@ final class SettingsController
 
         $name = (string) ($user['name'] ?? 'there');
         $body = "Hello {$name},\n\n"
-            . "This is a test notification from KPIMe.\n\n"
+            . "This is a test notification from Scrum Master.\n\n"
             . 'Email delivery is working. Reminders, overdue tasks and tasks coming up later today will arrive here when they need your attention.' . "\n\n"
-            . "KPIMe";
+            . "Scrum Master";
 
         $html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">'
-            . '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">KPIMe</h1>'
+            . '<h1 style="font-size:20px;font-weight:600;margin:0 0 12px;">Scrum Master</h1>'
             . '<p style="font-size:14px;line-height:1.6;">Hello ' . e($name) . ',</p>'
-            . '<p style="font-size:14px;line-height:1.6;">This is a test notification from KPIMe.</p>'
+            . '<p style="font-size:14px;line-height:1.6;">This is a test notification from Scrum Master.</p>'
             . '<p style="font-size:14px;line-height:1.6;">Email delivery is working. Reminders, overdue tasks and tasks coming up later today will arrive here when they need your attention.</p>'
             . '</div>';
 
-        $error = send_mail((string) $user['email'], 'KPIMe test notification', $body, $html);
+        $error = send_mail((string) $user['email'], 'Scrum Master test notification', $body, $html);
 
         if ($error !== null) {
             flash('Test email failed: ' . $error);

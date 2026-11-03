@@ -259,7 +259,7 @@ function http_request(string $url, array $options = []): ?string
         CURLOPT_TIMEOUT => 15,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_SSL_VERIFYHOST => 2,
-        CURLOPT_USERAGENT => 'KPIMe/1.0',
+        CURLOPT_USERAGENT => 'Scrum Master/1.0',
     ]);
 
     $body = curl_exec($ch);

@@ -138,10 +138,10 @@ export function notificationDigest(
 
   const subject =
     actionable === 0
-      ? "KPIMe — your day at a glance"
+      ? "Scrum Master — your day at a glance"
       : actionable === 1
-        ? "KPIMe — 1 task needs your attention"
-        : `KPIMe — ${actionable} tasks need your attention`;
+        ? "Scrum Master — 1 task needs your attention"
+        : `Scrum Master — ${actionable} tasks need your attention`;
 
   const intro =
     actionable === 0
@@ -151,7 +151,7 @@ export function notificationDigest(
   let text = `Hello ${name},\n\n${intro}\n\n`;
   let html =
     '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">' +
-    '<h1 style="font-size:20px;font-weight:600;margin:0 0 4px;">KPIMe</h1>' +
+    '<h1 style="font-size:20px;font-weight:600;margin:0 0 4px;">Scrum Master</h1>' +
     `<p style="font-size:14px;color:#727272;margin:0 0 8px;">Hello ${escapeHtml(name)},</p>` +
     `<p style="font-size:14px;color:#727272;margin:0 0 20px;">${escapeHtml(intro)}</p>`;
 
@@ -185,10 +185,10 @@ export function notificationDigest(
     html += "</ul>";
   }
 
-  text += "Change these emails in KPIMe → Settings.\n";
+  text += "Change these emails in Scrum Master → Settings.\n";
   html +=
     '<p style="font-size:12px;color:#727272;margin:26px 0 0;">' +
-    "Change these emails in KPIMe → Settings.</p></div>";
+    "Change these emails in Scrum Master → Settings.</p></div>";
 
   return { subject, text, html };
 }

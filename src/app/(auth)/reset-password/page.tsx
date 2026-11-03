@@ -26,7 +26,7 @@ export default async function ResetPasswordPage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">KPIMe</div>
+      <div className="auth-brand">Scrum Master</div>
       <h1 className="auth-title">Choose a new password</h1>
       <p className="auth-sub">Set a password you will remember for next time.</p>
 

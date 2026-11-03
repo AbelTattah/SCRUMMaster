@@ -42,7 +42,7 @@ final class AuthController
         require_guest();
 
         render('auth/login', [
-            'title' => 'Sign in — KPIMe',
+            'title' => 'Sign in — Scrum Master',
             'email' => '',
             'error' => null,
             'flash' => take_flash(),
@@ -120,7 +120,7 @@ final class AuthController
         $legacy = self::users()->count() === 0 ? self::legacyProfile() : null;
 
         render('auth/register', [
-            'title' => 'Create your account — KPIMe',
+            'title' => 'Create your account — Scrum Master',
             'old' => [
                 'name' => (string) ($draft['name'] ?? ($legacy['name'] ?? '')),
                 'email' => (string) ($draft['email'] ?? ''),
@@ -306,7 +306,7 @@ final class AuthController
         }
 
         login_user($user);
-        flash('Welcome to KPIMe, ' . $draft['name'] . '!');
+        flash('Welcome to Scrum Master, ' . $draft['name'] . '!');
 
         redirect('index.php');
     }
@@ -552,7 +552,7 @@ final class AuthController
         http_response_code($status);
 
         render('auth/register-type', [
-            'title' => 'Choose your account type — KPIMe',
+            'title' => 'Choose your account type — Scrum Master',
             'draft' => $draft,
             'type' => $type,
             'orgName' => $organizationName,
@@ -576,7 +576,7 @@ final class AuthController
         http_response_code($status);
 
         render('auth/register', [
-            'title' => 'Create your account — KPIMe',
+            'title' => 'Create your account — Scrum Master',
             'old' => ['name' => $name, 'email' => $email],
             'avatar' => $avatar,
             'error' => $message,
@@ -595,7 +595,7 @@ final class AuthController
         http_response_code($status);
 
         render('auth/login', [
-            'title' => 'Sign in — KPIMe',
+            'title' => 'Sign in — Scrum Master',
             'email' => $email,
             'error' => $message,
             'flash' => null,

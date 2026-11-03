@@ -65,7 +65,7 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
 
   return (
     <aside className="sidebar">
-      <div className="logo">KPIMe</div>
+      <div className="logo">Scrum Master</div>
 
       <nav className="nav" aria-label="Primary">
         <Link
@@ -147,7 +147,7 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
           <ConfirmForm
             action={signOut}
             confirmMessage="You will need to sign in again to see your tasks."
-            confirmTitle="Sign out of KPIMe?"
+            confirmTitle="Sign out of Scrum Master?"
             confirmLabel="Sign out"
           >
             <button
@@ -245,7 +245,7 @@ export function Topbar({ user, unread }: { user: CurrentUser; unread: number }) 
   return (
     <header className="topbar">
       <Link className="mobile-brand" href="/">
-        KPIMe
+        Scrum Master
       </Link>
 
       <form className="search" method="get" action={team ? "/team" : "/"} role="search">

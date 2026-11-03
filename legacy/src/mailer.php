@@ -62,8 +62,8 @@ function mail_config(): array
 
     $config = [
         'transport' => $transport,
-        'from_email' => (string) ($env('MAIL_FROM') ?? $file['from_email'] ?? 'no-reply@kpime.local'),
-        'from_name' => (string) ($env('MAIL_FROM_NAME') ?? $file['from_name'] ?? 'KPIMe'),
+        'from_email' => (string) ($env('MAIL_FROM') ?? $file['from_email'] ?? 'no-reply@scrummaster.local'),
+        'from_name' => (string) ($env('MAIL_FROM_NAME') ?? $file['from_name'] ?? 'Scrum Master'),
         'smtp_host' => (string) ($env('SMTP_HOST') ?? $file['smtp_host'] ?? ''),
         'smtp_port' => (int) ($env('SMTP_PORT') ?? $file['smtp_port'] ?? 587),
         'smtp_user' => (string) ($env('SMTP_USER') ?? $file['smtp_user'] ?? ''),
@@ -254,7 +254,7 @@ function mail_build_message(array $config, string $to, string $subject, string $
     ];
 
     if ($html !== null && $html !== '') {
-        $boundary = 'kpime-' . bin2hex(random_bytes(12));
+        $boundary = 'Scrum Master-' . bin2hex(random_bytes(12));
 
         $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
 
@@ -297,8 +297,8 @@ function mail_header_value(string $value): string
  */
 function mail_domain(): string
 {
-    $host = $_SERVER['SERVER_NAME'] ?? 'kpime.local';
-    $host = preg_replace('/[^A-Za-z0-9.\-]/', '', (string) $host) ?: 'kpime.local';
+    $host = $_SERVER['SERVER_NAME'] ?? 'scrummaster.local';
+    $host = preg_replace('/[^A-Za-z0-9.\-]/', '', (string) $host) ?: 'scrummaster.local';
 
     return $host;
 }

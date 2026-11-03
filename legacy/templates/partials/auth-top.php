@@ -15,7 +15,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#FFFFFF">
-    <title><?= e($title ?? 'KPIMe') ?></title>
+    <title><?= e($title ?? 'Scrum Master') ?></title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/app.css">
 </head>

@@ -45,7 +45,7 @@ $userMeta = $orgName !== '' ? $orgName : (string) ($user['email'] ?? '');
 ?>
 <aside class="sidebar">
 
-    <div class="logo">KPIMe</div>
+    <div class="logo">Scrum Master</div>
 
     <nav class="nav" aria-label="Primary">
 
@@ -119,7 +119,7 @@ $userMeta = $orgName !== '' ? $orgName : (string) ($user['email'] ?? '');
 
             <form method="post" action="index.php"
                   data-confirm="You will need to sign in again to see your tasks."
-                  data-confirm-title="Sign out of KPIMe?"
+                  data-confirm-title="Sign out of Scrum Master?"
                   data-confirm-label="Sign out">
                 <?= csrf_field() ?>
                 <input type="hidden" name="action" value="auth.logout">

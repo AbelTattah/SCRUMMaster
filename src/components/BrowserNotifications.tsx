@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const SEEN_KEY = "kpime.notified";
+const SEEN_KEY = "Scrum Master.notified";
 const PRUNE_MS = 12 * 60 * 60 * 1000;
 
 interface FeedItem {

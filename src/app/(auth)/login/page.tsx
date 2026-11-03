@@ -21,7 +21,7 @@ export default async function LoginPage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">KPIMe</div>
+      <div className="auth-brand">Scrum Master</div>
       <h1 className="auth-title">Welcome back</h1>
       <p className="auth-sub">Sign in to pick up where you left off.</p>
 
@@ -75,7 +75,7 @@ export default async function LoginPage({
       </p>
 
       <p className="auth-switch">
-        New to KPIMe? <Link href="/register">Create an account</Link>
+        New to Scrum Master? <Link href="/register">Create an account</Link>
       </p>
     </div>
   );

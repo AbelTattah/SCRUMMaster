@@ -5,7 +5,7 @@
  *
  * Notification rules for the signed-in user.
  *
- * Tasks in KPIMe are planned for "today" and carry only a start/end time, so
+ * Tasks in Scrum Master are planned for "today" and carry only a start/end time, so
  * a notification is derived from the clock instead of being stored:
  *
  *   overdue   — still open and its end time has already passed
@@ -275,19 +275,19 @@ function notification_digest(array $items, array $user): array
     }
 
     if ($actionable === 0) {
-        $subject = 'KPIMe — your day at a glance';
+        $subject = 'Scrum Master — your day at a glance';
         $intro = 'Here is your day at a glance:';
     } elseif ($actionable === 1) {
-        $subject = 'KPIMe — 1 task needs your attention';
+        $subject = 'Scrum Master — 1 task needs your attention';
         $intro = 'Here is what needs your attention today:';
     } else {
-        $subject = 'KPIMe — ' . $actionable . ' tasks need your attention';
+        $subject = 'Scrum Master — ' . $actionable . ' tasks need your attention';
         $intro = 'Here is what needs your attention today:';
     }
 
     $text = 'Hello ' . $name . ",\n\n" . $intro . "\n\n";
     $html = '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">'
-        . '<h1 style="font-size:20px;font-weight:600;margin:0 0 4px;">KPIMe</h1>'
+        . '<h1 style="font-size:20px;font-weight:600;margin:0 0 4px;">Scrum Master</h1>'
         . '<p style="font-size:14px;color:#727272;margin:0 0 8px;">Hello ' . e($name) . ',</p>'
         . '<p style="font-size:14px;color:#727272;margin:0 0 20px;">' . e($intro) . '</p>';
 
@@ -324,9 +324,9 @@ function notification_digest(array $items, array $user): array
         $html .= '</ul>';
     }
 
-    $text .= "Change these emails in KPIMe → Settings.\n";
+    $text .= "Change these emails in Scrum Master → Settings.\n";
     $html .= '<p style="font-size:12px;color:#727272;margin:26px 0 0;">'
-        . 'Change these emails in KPIMe → Settings.</p></div>';
+        . 'Change these emails in Scrum Master → Settings.</p></div>';
 
     return [$subject, $text, $html];
 }

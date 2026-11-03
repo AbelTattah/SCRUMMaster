@@ -5,10 +5,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "KPIMe",
-    template: "%s — KPIMe",
+    default: "Scrum Master",
+    template: "%s — Scrum Master",
   },
-  description: "KPIMe — tasks, reminders and your team in one place.",
+  description: "Scrum Master — tasks, reminders and your team in one place.",
   icons: { icon: "data:," },
 };
 

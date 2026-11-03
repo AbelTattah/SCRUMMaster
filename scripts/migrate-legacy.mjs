@@ -301,7 +301,7 @@ async function main() {
   }
 
   const resetLines = [
-    "KPIMe — password reset links for migrated accounts",
+    "Scrum Master — password reset links for migrated accounts",
     "Generated " + new Date().toISOString(),
     "",
     "Legacy PHP passwords cannot be reused with Supabase Auth. Open each link",

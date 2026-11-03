@@ -42,7 +42,7 @@ final class TeamController
 
         render('layout', [
             'view' => 'team',
-            'title' => 'KPIMe — Team',
+            'title' => 'Scrum Master — Team',
             'showTodoModal' => false,
             'user' => $user,
             'page' => 'home',

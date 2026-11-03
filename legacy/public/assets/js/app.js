@@ -1,5 +1,5 @@
 /**
- * KPIMe — page behaviour.
+ * Scrum Master — page behaviour.
  *
  * Everything here is progressive enhancement: the page works without
  * JavaScript (modals are opened server-side via ?add=1 / ?edit=ID, the row
@@ -248,7 +248,7 @@
        ------------------------------------------------------------------ */
     var notifyFeed = document.body.getAttribute('data-notifications-feed');
     var browserNotifyEnabled = document.body.getAttribute('data-browser-notifications') === '1';
-    var NOTIFIED_PREFIX = 'kpime.notified.';
+    var NOTIFIED_PREFIX = 'Scrum Master.notified.';
     var NOTIFIED_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
     function notificationsSupported() {
@@ -426,7 +426,7 @@
     }
 
     // Exposed for debugging in the console.
-    window.KPIMe = {
+    window.Scrum Master = {
         openModal: openModal,
         closeModal: closeModal,
         todoModal: todoModal,
