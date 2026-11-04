@@ -619,7 +619,6 @@ svg {
 .todo-title {
     flex: 1;
     min-width: 0;
-    margin-left: 16px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1235,7 +1234,6 @@ svg {
     }
 
     .todo-title {
-        margin-left: 12px;
         font-size: 16px;
     }
 
@@ -1246,7 +1244,6 @@ svg {
         order: 5;
         gap: 8px;
         margin: 4px 0 0;
-        padding-left: 50px; /* aligns under the title: 12 pad + 26 box + 12 gap */
         font-size: 13px;
     }
 
@@ -2432,7 +2429,7 @@ svg {
         order: 5;
         gap: 12px;
         margin: 6px 0 0;
-        padding-left: 38px;
+        padding-left: 0; /* already inside the title line */
     }
 
     .team-row .todo-meta .todo-time {
@@ -3070,5 +3067,373 @@ svg {
     .leader-streak,
     .leader-noreport {
         min-width: 0;
+    }
+}
+
+/* ==========================================================================
+   Inline editing — rename, times, assignee and blocker all happen inside the
+   row (ClickUp style). The only dialog left is the delete confirmation.
+   ========================================================================== */
+.todo-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    margin-left: 16px;
+}
+
+.todo-line {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+}
+
+.todo-item.is-expanded {
+    height: auto;
+    min-height: 86px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.todo-title.is-clickable {
+    cursor: text;
+}
+
+.todo-title.is-clickable:hover {
+    color: var(--purple);
+}
+
+/* Renaming: an input that keeps the title's metrics */
+.inline-title {
+    flex: 1;
+    min-width: 0;
+    height: 36px;
+    padding: 0 10px;
+    border: 1.5px solid var(--purple);
+    border-radius: 8px;
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(33, 0, 93, 0.12);
+    outline: none;
+    font-family: inherit;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+/* Times: the range is a button that turns into two time inputs */
+.todo-time--action {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.todo-time--action:hover {
+    color: var(--purple);
+}
+
+.todo-time-empty {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ABABAB;
+}
+
+.todo-time--action:hover .todo-time-empty {
+    color: var(--purple);
+}
+
+.inline-times {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.inline-times input {
+    height: 34px;
+    padding: 0 6px;
+    border: 1.5px solid var(--field-line);
+    border-radius: 8px;
+    background: var(--surface);
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--nav-ink);
+}
+
+.inline-times input:focus {
+    border-color: var(--purple);
+}
+
+.inline-done {
+    height: 34px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--purple);
+    color: var(--surface);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.inline-done:hover {
+    background: var(--purple-hover);
+}
+
+/* Assignee: chip becomes a picker; unassigned owner rows offer "+ Assign" */
+button.chip {
+    border: 0;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+button.chip:disabled {
+    cursor: default;
+}
+
+.chip--action:hover {
+    background: #E9DFF9;
+}
+
+.chip-assign {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1.5px dashed var(--field-line);
+    border-radius: 13px;
+    background: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip-assign:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+}
+
+.inline-select {
+    height: 30px;
+    max-width: 190px;
+    padding: 0 6px;
+    border: 1.5px solid var(--purple);
+    border-radius: 8px;
+    background: var(--surface);
+    outline: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--nav-ink);
+}
+
+/* Blocker: an expanding editor under the title */
+.blocker-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #F5C7C7;
+    border-radius: 10px;
+    background: #FFF8F8;
+}
+
+.blocker-editor textarea {
+    width: 100%;
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 1.5px solid #F5C7C7;
+    border-radius: 8px;
+    background: var(--surface);
+    outline: none;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--nav-ink);
+    resize: vertical;
+}
+
+.blocker-editor textarea:focus {
+    border-color: #B3261E;
+}
+
+.blocker-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.blocker-editor-actions button {
+    height: 30px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 7px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.blocker-editor-actions button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.blocker-save {
+    background: var(--purple);
+    color: var(--surface);
+}
+
+.blocker-save:hover:not(:disabled) {
+    background: var(--purple-hover);
+}
+
+.blocker-cancel {
+    background: var(--panel-bg);
+    color: var(--nav-ink);
+}
+
+.blocker-editor-actions .blocker-clear {
+    border: 1.5px solid #F0C4C4;
+    background: none;
+    color: #B3261E;
+}
+
+.row-error {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #B3261E;
+}
+
+/* Inline composer at the bottom of the list */
+.add-task-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+    border: 1.5px dashed var(--field-line);
+    border-radius: var(--radius-lg);
+    background: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.add-task-placeholder:hover {
+    border-color: var(--purple);
+    background: #FBFAFE;
+    color: var(--purple);
+}
+
+.add-task-placeholder svg {
+    width: 16px;
+    height: 16px;
+}
+
+.add-task {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 12px 15px;
+    border: 1.5px solid var(--purple);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: 0 12px 30px rgba(33, 0, 93, 0.14);
+}
+
+.add-task-plus {
+    display: grid;
+    place-items: center;
+    color: var(--purple);
+}
+
+.add-task-plus svg {
+    width: 16px;
+    height: 16px;
+}
+
+.add-task input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+.add-task input::placeholder {
+    color: #ABABAB;
+    font-weight: 400;
+}
+
+.add-task .btn-small {
+    flex: none;
+    height: 36px;
+}
+
+.add-task-cancel {
+    flex: none;
+    padding: 4px;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.add-task-cancel:hover {
+    color: var(--ink);
+}
+
+.add-task-error {
+    flex: 0 0 100%;
+}
+
+@media (max-width: 700px) {
+    .todo-main {
+        margin-left: 12px;
+    }
+
+    .todo-line {
+        flex-wrap: wrap;
+    }
+
+    .inline-title {
+        height: 34px;
+        font-size: 16px;
+    }
+
+    .add-task {
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .add-task input {
+        font-size: 15px;
+    }
+
+    .blocker-editor {
+        padding: 8px;
     }
 }

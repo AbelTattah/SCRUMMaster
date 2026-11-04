@@ -19,6 +19,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isUuid, safeNext } from "@/lib/utils";
 import type { CurrentUser } from "@/lib/types";
 
+export interface InlineResult {
+  error: string | null;
+}
+
 function field(formData: FormData, name: string): string {
   const value = formData.get(name);
 
@@ -27,14 +31,6 @@ function field(formData: FormData, name: string): string {
 
 function returnTo(formData: FormData): string {
   return safeNext(field(formData, "return_to"));
-}
-
-function guard(length: number): string | null {
-  if (length === 0 || length > 200) {
-    return "Please enter a todo title.";
-  }
-
-  return null;
 }
 
 function fail(back: string, message: string): never {
@@ -69,70 +65,103 @@ async function resolveAssignee(
   return data?.id ?? null;
 }
 
-export async function saveTodo(formData: FormData): Promise<void> {
+/**
+ * Create or update a task from an inline editor (row title, times, assignee).
+ * Errors come back instead of redirecting so the row can show them in place.
+ */
+export async function saveTodoInline(formData: FormData): Promise<InlineResult> {
   const current = await requireOnboardedUser();
-  const back = returnTo(formData);
   const id = field(formData, "id");
   const title = field(formData, "title").trim();
   const start = sanitizeTime(formData.get("start_time"));
   const end = sanitizeTime(formData.get("end_time"));
 
-  const problem = guard(title.length);
-
-  if (problem) {
-    fail(back, problem);
+  if (title.length === 0 || title.length > 200) {
+    return { error: "Please enter a todo title." };
   }
 
   if (id && isUuid(id)) {
     const managed = await findManagedTodo(id, current);
 
     if (!managed) {
-      fail(back, "That todo no longer exists.");
+      return { error: "That todo no longer exists." };
     }
 
     // The assignee can tick the task off and record blockers, but only its
     // creator (or the organization owner) changes what the task *is*.
     if (managed.role === "assignee") {
-      fail(back, "Only the person who created a task can edit it.");
+      return { error: "Only the person who created a task can edit it." };
     }
 
     const assignee = await resolveAssignee(current, field(formData, "assignee"));
+    const { error } = await updateTodo(id, title, start, end, assignee);
 
-    await updateTodo(id, title, start, end, assignee);
+    if (error) {
+      return { error };
+    }
   } else {
     const assignee = await resolveAssignee(current, field(formData, "assignee"));
     const { error } = await createTodo(current.id, title, start, end, assignee);
 
     if (error) {
-      fail(back, error);
+      return { error };
     }
   }
 
   revalidatePath("/", "layout");
-  redirect(back);
+  return { error: null };
 }
 
-export async function toggleTodo(formData: FormData): Promise<void> {
+/** Tick a task off (or back on) without a page navigation. */
+export async function toggleTodoInline(formData: FormData): Promise<void> {
   const current = await requireOnboardedUser();
   const id = field(formData, "id");
 
-  if (isUuid(id)) {
-    const managed = await findManagedTodo(id, current);
-
-    if (managed) {
-      const result = await toggleTodoRecord(id);
-
-      if (result?.completed) {
-        // The work belongs to the assignee when there is one — ticking off
-        // someone's task credits them, not the person clicking.
-        await addXp(result.assignee_id ?? result.user_id, XP_TASK_COMPLETE);
-      }
-
-      revalidatePath("/", "layout");
-    }
+  if (!isUuid(id)) {
+    return;
   }
 
-  redirect(returnTo(formData));
+  const managed = await findManagedTodo(id, current);
+
+  if (!managed) {
+    return;
+  }
+
+  const result = await toggleTodoRecord(id);
+
+  if (result?.completed) {
+    // The work belongs to the assignee when there is one — ticking off
+    // someone's task credits them, not the person clicking.
+    await addXp(result.assignee_id ?? result.user_id, XP_TASK_COMPLETE);
+  }
+
+  revalidatePath("/", "layout");
+}
+
+/** Record (or, with an empty value, clear) a task's blocker inline. */
+export async function setBlockerInline(formData: FormData): Promise<InlineResult> {
+  const current = await requireOnboardedUser();
+  const id = field(formData, "id");
+
+  if (!isUuid(id)) {
+    return { error: "That todo no longer exists." };
+  }
+
+  const managed = await findManagedTodo(id, current);
+
+  if (!managed) {
+    return { error: "That todo no longer exists." };
+  }
+
+  const blocker = field(formData, "blocker").trim().slice(0, 500);
+  const { error } = await setBlockerRecord(id, blocker || null);
+
+  if (error) {
+    return { error };
+  }
+
+  revalidatePath("/", "layout");
+  return { error: null };
 }
 
 export async function deleteTodo(formData: FormData): Promise<void> {
@@ -149,45 +178,6 @@ export async function deleteTodo(formData: FormData): Promise<void> {
 
     if (managed) {
       await deleteTodoRecord(id);
-      revalidatePath("/", "layout");
-    }
-  }
-
-  redirect(back);
-}
-
-export async function setBlocker(formData: FormData): Promise<void> {
-  const current = await requireOnboardedUser();
-  const id = field(formData, "id");
-  const blocker = field(formData, "blocker").trim().slice(0, 500);
-  const back = returnTo(formData);
-
-  if (isUuid(id)) {
-    const managed = await findManagedTodo(id, current);
-
-    if (managed) {
-      const { error } = await setBlockerRecord(id, blocker || null);
-      revalidatePath("/", "layout");
-
-      if (error) {
-        fail(back, error);
-      }
-    }
-  }
-
-  redirect(back);
-}
-
-export async function clearBlocker(formData: FormData): Promise<void> {
-  const current = await requireOnboardedUser();
-  const id = field(formData, "id");
-  const back = returnTo(formData);
-
-  if (isUuid(id)) {
-    const managed = await findManagedTodo(id, current);
-
-    if (managed) {
-      await setBlockerRecord(id, null);
       revalidatePath("/", "layout");
     }
   }
