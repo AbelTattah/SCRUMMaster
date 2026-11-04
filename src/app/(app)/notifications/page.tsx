@@ -14,7 +14,7 @@ import type { NotificationItem, NotificationKind } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Notifications" };
 
-const KINDS: NotificationKind[] = ["overdue", "reminder", "upcoming"];
+const KINDS: NotificationKind[] = ["overdue", "blocker", "reminder", "report", "upcoming"];
 
 export default async function NotificationsPage() {
   const user = await requireOnboardedUser();
@@ -23,7 +23,9 @@ export default async function NotificationsPage() {
 
   const groups: Record<NotificationKind, NotificationItem[]> = {
     overdue: [],
+    blocker: [],
     reminder: [],
+    report: [],
     upcoming: [],
   };
 
@@ -61,7 +63,10 @@ export default async function NotificationsPage() {
           <Icon name="empty-bell" />
 
           <h2>You&rsquo;re all caught up</h2>
-          <p>Overdue tasks, reminders and tasks coming up later today will appear here.</p>
+          <p>
+            Overdue tasks, blockers, reminders, your daily report and anything
+            coming up later today will appear here.
+          </p>
 
           <Link className="btn-primary btn-small" href="/">
             Back to tasks
@@ -110,7 +115,14 @@ export default async function NotificationsPage() {
                         </div>
 
                         <div className="notification-actions">
-                          <Link className="notification-open" href={`/?edit=${item.todo_id}`}>
+                          <Link
+                            className="notification-open"
+                            href={
+                              item.kind === "report"
+                                ? "/reports"
+                                : `/?edit=${item.todo_id}`
+                            }
+                          >
                             Open
                           </Link>
 

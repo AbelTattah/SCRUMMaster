@@ -97,3 +97,48 @@ export function formatMinutes(minutes: number): string {
 
   return `${minutes} minute${minutes === 1 ? "" : "s"}`;
 }
+
+/** "2026-11-04" — today in the application timezone. */
+export function dateKey(date: Date = new Date()): string {
+  const value = parts(date, { year: "numeric", month: "2-digit", day: "2-digit" });
+
+  return `${value.year}-${value.month}-${value.day}`;
+}
+
+/** The calendar day before a "YYYY-MM-DD" key. */
+export function previousDateKey(key: string): string {
+  const [year, month, day] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  date.setUTCDate(date.getUTCDate() - 1);
+
+  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const nextDay = String(date.getUTCDate()).padStart(2, "0");
+
+  return `${date.getUTCFullYear()}-${nextMonth}-${nextDay}`;
+}
+
+/** "Wednesday 4 November 2026" for a "YYYY-MM-DD" report date. */
+export function formatDayLabel(key: string): string {
+  const [year, month, day] = key.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+/** "4 November 2026" — compact form for history lists. */
+export function formatDayShort(key: string): string {
+  const [year, month, day] = key.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+}

@@ -3759,3 +3759,508 @@ svg {
         padding: 34px 20px 44px;
     }
 }
+
+/* ==========================================================================
+   Daily reports, assignment, blockers and gamification
+   ========================================================================== */
+
+/* --- home: report nudge --------------------------------------------------- */
+.report-nudge {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 22px;
+    padding: 16px 20px;
+    background: #F4F0FB;
+    border: 1px solid #E4D9F7;
+    border-left: 4px solid var(--purple);
+    border-radius: var(--radius-lg);
+}
+
+.report-nudge.is-done {
+    background: #F1F8F4;
+    border-color: #D7EDE0;
+    border-left-color: #1E7A46;
+}
+
+.report-nudge-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.report-nudge-text strong {
+    font-size: 15px;
+    color: var(--ink);
+}
+
+.report-nudge-text span {
+    font-size: 13.5px;
+    color: var(--muted);
+}
+
+/* --- task tags: assignee + blocker ---------------------------------------- */
+.todo-tags {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 8px;
+    max-width: 42%;
+    margin-right: 14px;
+    overflow: hidden;
+}
+
+.chip--assignee {
+    height: 26px;
+    max-width: 160px;
+    padding: 0 10px 0 4px;
+    gap: 6px;
+    background: #F4F0FB;
+    color: var(--purple);
+    font-size: 12px;
+    overflow: hidden;
+}
+
+.chip--assignee img {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.chip--assignee span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.todo-blocker {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid #F5C7C7;
+    border-radius: 999px;
+    background: #FDECEC;
+    color: #B3261E;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.todo-blocker::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #B3261E;
+}
+
+/* --- reports page: stat cards --------------------------------------------- */
+.report-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.stat-label {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.stat-value {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    color: var(--ink);
+}
+
+.stat-meta {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.level-bar {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--panel-bg);
+}
+
+.level-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--purple), #6D28D9);
+    transition: width 0.3s ease;
+}
+
+/* --- reports page: form --------------------------------------------------- */
+.report-form {
+    display: flex;
+    flex-direction: column;
+    margin-top: 22px;
+}
+
+.report-form .field {
+    margin-bottom: 16px;
+}
+
+.input.textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 12px 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    resize: vertical;
+}
+
+.report-form .btn-primary {
+    align-self: flex-start;
+    width: auto;
+    padding: 0 28px;
+}
+
+/* --- reports page: history ------------------------------------------------ */
+.report-history {
+    display: flex;
+    flex-direction: column;
+    margin-top: 22px;
+}
+
+.report-entry {
+    border-top: 1px solid var(--line);
+}
+
+.report-entry summary {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 15px 2px;
+    cursor: pointer;
+    list-style: none;
+}
+
+.report-entry summary::-webkit-details-marker {
+    display: none;
+}
+
+.report-entry summary::marker {
+    content: "";
+}
+
+.report-entry summary::after {
+    content: "+";
+    margin-left: auto;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--muted);
+}
+
+.report-entry[open] summary::after {
+    content: "–";
+}
+
+.report-entry-date {
+    flex: none;
+    min-width: 160px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.report-entry-preview {
+    overflow: hidden;
+    font-size: 14px;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-entry-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 2px 18px;
+}
+
+.report-entry-body h4 {
+    margin: 0 0 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--purple);
+}
+
+.report-entry-body p {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--nav-ink);
+}
+
+.report-foot {
+    margin: 18px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.report-foot a {
+    color: var(--purple);
+    font-weight: 600;
+}
+
+/* --- team: member management ---------------------------------------------- */
+.team-members {
+    display: flex;
+    flex-direction: column;
+    margin-top: 22px;
+}
+
+.team-board {
+    margin-top: 18px;
+}
+
+.member-add {
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.member-add .field {
+    margin-bottom: 0;
+}
+
+.chip-x {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: 2px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.chip-x:hover {
+    background: #FDECEC;
+    color: #B3261E;
+}
+
+/* --- team: leaderboard ---------------------------------------------------- */
+.leaderboard {
+    display: flex;
+    flex-direction: column;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.leader-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 14px;
+    padding: 13px 4px;
+    border-top: 1px solid var(--line);
+}
+
+.leader-row:first-child {
+    border-top: 0;
+}
+
+.leader-rank {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--panel-bg);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.leader-rank.is-top-1 {
+    background: #F7D774;
+    color: #7A5B00;
+}
+
+.leader-rank.is-top-2 {
+    background: #E4E4E4;
+    color: #5B5B5B;
+}
+
+.leader-rank.is-top-3 {
+    background: #F3DFC9;
+    color: #8A5A2B;
+}
+
+.leader-avatar {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #FEF2E6;
+}
+
+.leader-name {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.leader-level {
+    flex: none;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #F4F0FB;
+    color: var(--purple);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.leader-xp {
+    flex: none;
+    min-width: 62px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: right;
+    color: var(--ink);
+}
+
+.leader-streak {
+    flex: none;
+    min-width: 96px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.chip--reported {
+    background: #E9F5EE;
+    color: #1E7A46;
+}
+
+.leader-noreport {
+    flex: none;
+    min-width: 96px;
+    font-size: 12.5px;
+    color: #ABABAB;
+}
+
+/* --- notifications: new kinds --------------------------------------------- */
+.notification-dot--blocker { background: #E11D48; }
+.notification-dot--report { background: #0F766E; }
+
+/* --- phone ---------------------------------------------------------------- */
+@media (max-width: 700px) {
+    .report-nudge {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .report-nudge .btn-primary {
+        width: 100%;
+    }
+
+    .report-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 14px 16px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .todo-tags {
+        max-width: 46%;
+        margin-right: 8px;
+    }
+
+    .chip--assignee {
+        max-width: 96px;
+    }
+
+    .report-entry summary {
+        flex-wrap: wrap;
+        gap: 4px 12px;
+    }
+
+    .report-entry-date {
+        min-width: 0;
+    }
+
+    .report-entry-preview {
+        flex-basis: 100%;
+    }
+
+    .member-add {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .member-add .btn-small {
+        width: 100%;
+        height: 44px;
+        margin-top: 0;
+    }
+
+    .leader-row {
+        gap: 10px;
+    }
+
+    .leader-name {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .leader-xp,
+    .leader-streak,
+    .leader-noreport {
+        min-width: 0;
+    }
+}

@@ -5,6 +5,7 @@ export type IconName =
   | "completed"
   | "in-progress"
   | "team"
+  | "report"
   | "user"
   | "settings"
   | "logout"
@@ -40,6 +41,13 @@ const paths: Record<IconName, ReactNode> = {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  report: (
+    <>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+      <path d="M9 12h6M9 16h4" />
     </>
   ),
   user: (

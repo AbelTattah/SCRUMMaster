@@ -1,6 +1,11 @@
 export type PageFilter = "home" | "completed" | "in-progress";
 
-export type NotificationKind = "overdue" | "reminder" | "upcoming";
+export type NotificationKind =
+  | "overdue"
+  | "blocker"
+  | "reminder"
+  | "report"
+  | "upcoming";
 
 export interface Profile {
   id: string;
@@ -12,6 +17,10 @@ export interface Profile {
   notify_email: boolean;
   notify_lead_minutes: number;
   onboarding_complete: boolean;
+  xp: number;
+  streak: number;
+  best_streak: number;
+  last_report_date: string | null;
   created_at: string;
 }
 
@@ -29,6 +38,8 @@ export interface Todo {
   completed: boolean;
   start_time: string | null;
   end_time: string | null;
+  assignee_id: string | null;
+  blocker: string | null;
   legacy_id: number | null;
   created_at: string;
 }
@@ -36,6 +47,8 @@ export interface Todo {
 export interface TeamTodo extends Todo {
   owner_name: string;
   owner_avatar: string | null;
+  assignee_name: string | null;
+  assignee_avatar: string | null;
 }
 
 export interface Member {
@@ -46,6 +59,15 @@ export interface Member {
   is_owner: boolean;
   todo_count: number;
   completed_count: number;
+  xp: number;
+  streak: number;
+  last_report_date: string | null;
+}
+
+export interface Assignee {
+  id: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 export interface Counts {
@@ -53,9 +75,23 @@ export interface Counts {
   in_progress: number;
 }
 
+/** One "yesterday / today / blockers" entry for a calendar day. */
+export interface DailyReport {
+  id: string;
+  user_id: string;
+  /** YYYY-MM-DD in the application timezone. */
+  report_date: string;
+  yesterday: string;
+  today: string;
+  blockers: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface NotificationItem {
   key: string;
   kind: NotificationKind;
+  /** Empty for items that are not tied to a single task (daily report). */
   todo_id: string;
   title: string;
   detail: string;

@@ -21,9 +21,10 @@ export interface DigestResult {
 /**
  * Send the notification email digest.
  *
- * Only overdue tasks and tasks that start within the user's reminder window
- * trigger an email; tasks coming up later today are included as a preview. A
- * notification is emailed at most once (notification_state).
+ * Overdue tasks, blockers, tasks that start within the user's reminder
+ * window and an unfiled daily report trigger an email; tasks coming up later
+ * today are included as a preview. A notification is emailed at most once
+ * (notification_state).
  */
 export async function runDigest(options: DigestOptions = {}): Promise<DigestResult> {
   const transport = mailTransport();
@@ -66,7 +67,12 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
 
     const items = await notificationsForUser(user);
     const pending = items.filter(
-      (item) => !item.emailed && (item.kind === "overdue" || item.kind === "reminder"),
+      (item) =>
+        !item.emailed &&
+        (item.kind === "overdue" ||
+          item.kind === "blocker" ||
+          item.kind === "reminder" ||
+          item.kind === "report"),
     );
 
     if (pending.length === 0) {

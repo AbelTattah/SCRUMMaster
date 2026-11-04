@@ -1,6 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildNotifications, notificationLeadMinutes } from "@/lib/notifications";
+import { getReport } from "@/lib/data/reports";
 import { listTodos } from "@/lib/data/todos";
+import { dateKey, nowMinutes } from "@/lib/time";
+import { REPORT_REMINDER_HOUR } from "@/lib/gamification";
 import type { NotificationItem, Profile } from "@/lib/types";
 
 /**
@@ -48,8 +51,17 @@ async function withState(
 export async function notificationsForUser(
   user: Pick<Profile, "id" | "notify_lead_minutes">,
 ): Promise<NotificationItem[]> {
-  const todos = await listTodos(user.id);
-  const items = buildNotifications(todos, notificationLeadMinutes(user));
+  const today = dateKey();
+
+  const [todos, report] = await Promise.all([
+    listTodos(user.id),
+    getReport(user.id, today),
+  ]);
+
+  const items = buildNotifications(todos, notificationLeadMinutes(user), {
+    reportMissing: report === null && nowMinutes() >= REPORT_REMINDER_HOUR * 60,
+    reportDate: today,
+  });
 
   return withState(user.id, items);
 }

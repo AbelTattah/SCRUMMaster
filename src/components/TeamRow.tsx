@@ -18,6 +18,24 @@ export function TeamRow({ todo }: { todo: TeamTodo }) {
 
       <span className="todo-title">{todo.title}</span>
 
+      <span className="todo-tags">
+        {todo.assignee_name && todo.assignee_name !== todo.owner_name ? (
+          <span
+            className="chip chip--assignee"
+            title={`Assigned to ${todo.assignee_name}`}
+          >
+            <img src={avatarUrl(todo.assignee_avatar)} alt="" />
+            <span>{todo.assignee_name}</span>
+          </span>
+        ) : null}
+
+        {todo.blocker ? (
+          <span className="todo-blocker" title={todo.blocker}>
+            Blocked
+          </span>
+        ) : null}
+      </span>
+
       <span className="todo-meta">
         <span className="todo-owner">
           <img src={avatarUrl(todo.owner_avatar)} alt="" />
