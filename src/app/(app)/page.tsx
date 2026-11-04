@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { BlockerModal } from "@/components/BlockerModal";
-import { LandingPage } from "@/components/LandingPage";
 import { AddTodoButton, AddTodoFab, TodoModal } from "@/components/TodoModal";
 import { TodoRow } from "@/components/TodoRow";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
@@ -15,13 +15,7 @@ import { dateKey, greetingFor, todayLine } from "@/lib/time";
 import type { Assignee, PageFilter } from "@/lib/types";
 import { firstParam, isUuid } from "@/lib/utils";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const user = await getCurrentUser();
-
-  return user
-    ? { title: "Home" }
-    : { title: { absolute: "Scrum Master — tasks, reminders and your team" } };
-}
+export const metadata: Metadata = { title: "Home" };
 
 export default async function HomePage({
   searchParams,
@@ -30,9 +24,11 @@ export default async function HomePage({
 }) {
   const current = await getCurrentUser();
 
-  // The public landing page for signed-out visitors (see the layout above).
+  // "/" is the app's front door: signed-out visitors go straight to the sign-in
+  // screen (silently — every other route below asks them to sign in with a
+  // notice of its own).
   if (!current) {
-    return <LandingPage />;
+    redirect("/login");
   }
 
   const user = await requireOnboardedUser();
