@@ -1,0 +1,11 @@
+# Everything the Next.js build needs stays (src/, public/, configs); these
+# are local-only or unrelated to the deployed app.
+node_modules/
+.next/
+.vercel/
+legacy/
+ui-design/
+storage/
+.env*
+*.tsbuildinfo
+AGENTS.md
