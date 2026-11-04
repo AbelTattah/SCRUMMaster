@@ -170,7 +170,6 @@ export function LandingPage() {
       <main>
         <section className="landing-hero">
           <div className="landing-hero-copy">
-            <span className="landing-eyebrow">Tasks · reminders · team</span>
             <h1>Get more done with Scrum Master</h1>
             <p className="landing-lead">
               Scrum Master keeps your day in one place: plan tasks with times, get
@@ -180,10 +179,7 @@ export function LandingPage() {
 
             <div className="landing-hero-actions">
               <Link className="btn-primary" href="/register">
-                Create your account
-              </Link>
-              <Link className="btn-ghost" href="/login">
-                Sign in
+                Get Started
               </Link>
             </div>
 
@@ -192,28 +188,6 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="landing-hero-visual" aria-hidden="true">
-            <div className="landing-mock">
-              <div className="landing-mock-bar">
-                <span className="landing-mock-dot" />
-                <span className="landing-mock-search">search for task …</span>
-                <span className="landing-mock-bell">
-                  <Icon name="bell" />
-                </span>
-              </div>
-
-              <div className="landing-mock-body">
-                <p className="landing-mock-greeting">Good morning Abel!</p>
-                <p className="landing-mock-date">Today, Wednesday 26 October, 2026</p>
-
-                <div className="landing-mock-list">
-                  <HeroTask title="Jogging" time="10:30AM - 2:00PM" state="done" />
-                  <HeroTask title="Team standup" time="9:00AM - 9:30AM" state="open" />
-                  <HeroTask title="Ship the landing page" time="3:00PM - 5:00PM" state="open" />
-                </div>
-              </div>
-            </div>
-          </div>
         </section>
 
         <section className="landing-stats" aria-label="Scrum Master at a glance">
