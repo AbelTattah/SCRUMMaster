@@ -1,7 +1,14 @@
 import { cache } from "react";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Assignee, Counts, PageFilter, TeamTodo, Todo } from "@/lib/types";
+import type {
+  Assignee,
+  Counts,
+  CurrentUser,
+  PageFilter,
+  TeamTodo,
+  Todo,
+} from "@/lib/types";
 
 function searchTerm(query: string): string {
   // PostgREST's ilike has no ESCAPE clause, so wildcards are removed rather
@@ -71,6 +78,60 @@ export async function findTodo(id: string, userId: string): Promise<Todo | null>
   return data ?? null;
 }
 
+export type TodoRole = "creator" | "assignee" | "owner";
+
+export interface ManagedTodo {
+  todo: Todo;
+  role: TodoRole;
+}
+
+/**
+ * Load a task for a mutating action.
+ *
+ * The creator and the assignee manage their own work; on top of that the
+ * owner of the creator's organization manages *every* task inside it. That
+ * last rule is what lets an organization add a person by email and assign,
+ * update, block and complete tasks for them before that person has ever
+ * signed in.
+ */
+export async function findManagedTodo(
+  id: string,
+  current: Pick<CurrentUser, "id" | "isOwner" | "organization">,
+): Promise<ManagedTodo | null> {
+  const { data } = await createAdminClient()
+    .from("todos")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle<Todo>();
+
+  if (!data) {
+    return null;
+  }
+
+  if (data.user_id === current.id) {
+    return { todo: data, role: "creator" };
+  }
+
+  if (data.assignee_id === current.id) {
+    return { todo: data, role: "assignee" };
+  }
+
+  if (current.isOwner && current.organization) {
+    const { data: member } = await createAdminClient()
+      .from("profiles")
+      .select("id")
+      .eq("id", data.user_id)
+      .eq("organization_id", current.organization.id)
+      .maybeSingle<{ id: string }>();
+
+    if (member) {
+      return { todo: data, role: "owner" };
+    }
+  }
+
+  return null;
+}
+
 export async function createTodo(
   userId: string,
   title: string,
@@ -89,9 +150,19 @@ export async function createTodo(
   return { error: error?.message ?? null };
 }
 
-/** Returns the task's new completed state, or null when it does not exist. */
-export async function toggleTodo(id: string, userId: string): Promise<boolean | null> {
-  const todo = await findTodo(id, userId);
+/**
+ * Toggle completion. Returns the task's new state — including whose work it
+ * is — so the caller can award XP to the right person, or null when the task
+ * no longer exists. Callers authorise first (findManagedTodo).
+ */
+export async function toggleTodo(
+  id: string,
+): Promise<{ completed: boolean; assignee_id: string | null; user_id: string } | null> {
+  const { data: todo } = await createAdminClient()
+    .from("todos")
+    .select("id,completed,assignee_id,user_id")
+    .eq("id", id)
+    .maybeSingle<{ id: string; completed: boolean; assignee_id: string | null; user_id: string }>();
 
   if (!todo) {
     return null;
@@ -106,22 +177,18 @@ export async function toggleTodo(id: string, userId: string): Promise<boolean | 
       // Finishing a task clears its blocker — nothing is in the way anymore.
       ...(completed ? { blocker: null } : {}),
     })
-    .eq("id", id)
-    .or(visibleTo(userId));
+    .eq("id", id);
 
-  return completed;
+  return { completed, assignee_id: todo.assignee_id, user_id: todo.user_id };
 }
 
 export async function updateTodo(
   id: string,
-  userId: string,
   title: string,
   startTime: string | null,
   endTime: string | null,
   assigneeId: string | null = null,
 ): Promise<{ error: string | null }> {
-  // Only the creator edits the task itself; the assignee may still toggle and
-  // record blockers (see setBlocker / toggleTodo).
   const { error } = await createAdminClient()
     .from("todos")
     .update({
@@ -130,37 +197,24 @@ export async function updateTodo(
       end_time: endTime,
       assignee_id: assigneeId,
     })
-    .eq("id", id)
-    .eq("user_id", userId);
+    .eq("id", id);
 
   return { error: error?.message ?? null };
 }
 
-export async function deleteTodo(id: string, userId: string): Promise<void> {
-  await createAdminClient()
-    .from("todos")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", userId);
+export async function deleteTodo(id: string): Promise<void> {
+  await createAdminClient().from("todos").delete().eq("id", id);
 }
 
 /** Record (or clear, with null) what is blocking a task. */
 export async function setBlocker(
   id: string,
-  userId: string,
   blocker: string | null,
 ): Promise<{ error: string | null }> {
-  const existing = await findTodo(id, userId);
-
-  if (!existing) {
-    return { error: "That task no longer exists." };
-  }
-
   const { error } = await createAdminClient()
     .from("todos")
     .update({ blocker })
-    .eq("id", id)
-    .or(visibleTo(userId));
+    .eq("id", id);
 
   return { error: error?.message ?? null };
 }

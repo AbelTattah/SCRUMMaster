@@ -78,6 +78,16 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
     return null;
   }
 
+  // First authenticated load of an invitee: the invitation has been used.
+  if (profile.invited_at) {
+    profile = { ...profile, invited_at: null };
+
+    await createAdminClient()
+      .from("profiles")
+      .update({ invited_at: null })
+      .eq("id", profile.id);
+  }
+
   const organization = await getOrganization(profile.organization_id);
   const hasPassword = (authUser.identities ?? []).some(
     (identity) => identity.provider === "email",

@@ -81,7 +81,11 @@ export async function addMemberToOrganization(
   // step — the owner already chose for them.
   const { error: attachError } = await admin
     .from("profiles")
-    .update({ organization_id: organization.id, onboarding_complete: true })
+    .update({
+      organization_id: organization.id,
+      onboarding_complete: true,
+      invited_at: new Date().toISOString(),
+    })
     .eq("id", created.user.id);
 
   if (attachError) {
