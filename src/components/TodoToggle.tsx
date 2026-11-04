@@ -1,22 +1,24 @@
 ﻿"use client";
 
-import { toggleTodo } from "@/app/actions/todos";
+import { toggleTodoInline } from "@/app/actions/todos";
 
+/**
+ * The row checkbox. Uses the non-redirecting inline action so ticking a task
+ * updates the list in place — no navigation, no scroll jump.
+ */
 export function TodoToggle({
   todoId,
   completed,
   title,
-  returnTo,
 }: {
   todoId: string;
   completed: boolean;
   title: string;
-  returnTo: string;
+  returnTo?: string;
 }) {
   return (
-    <form action={toggleTodo} className="todo-toggle">
+    <form action={toggleTodoInline} className="todo-toggle">
       <input type="hidden" name="id" value={todoId} />
-      <input type="hidden" name="return_to" value={returnTo} />
 
       <input
         type="checkbox"

@@ -1,19 +1,17 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { BlockerModal } from "@/components/BlockerModal";
-import { AddTodoButton, AddTodoFab, TodoModal } from "@/components/TodoModal";
-import { TodoRow } from "@/components/TodoRow";
+import { AddTaskRow, AddTodoButton, AddTodoFab } from "@/components/AddTask";
+import { TaskRow } from "@/components/TaskRow";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
 import { getReport } from "@/lib/data/reports";
-import { findTodo, listTodos } from "@/lib/data/todos";
+import { listTodos } from "@/lib/data/todos";
 import { levelFor } from "@/lib/gamification";
 import { dateKey, greetingFor, todayLine } from "@/lib/time";
-import type { Assignee, PageFilter } from "@/lib/types";
-import { firstParam, isUuid } from "@/lib/utils";
+import type { PageFilter } from "@/lib/types";
+import { firstParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -39,11 +37,13 @@ export default async function HomePage({
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  const editId = firstParam(params.edit);
+  // "?edit=" centres that row and starts renaming it; "?add=" opens the
+  // inline composer (used by the header button and the phone FAB).
+  const focusId = firstParam(params.edit);
+  const openAdd = params.add !== undefined;
 
-  const [todos, editTodo, members, todayReport] = await Promise.all([
+  const [todos, members, todayReport] = await Promise.all([
     listTodos(user.id, page, q),
-    editId && isUuid(editId) ? findTodo(editId, user.id) : Promise.resolve(null),
     user.organization
       ? listMembers(user.organization.id, user.organization.owner_id)
       : Promise.resolve([]),
@@ -58,22 +58,6 @@ export default async function HomePage({
     search.set("q", q);
   }
   const returnTo = search.toString() ? `/?${search.toString()}` : "/";
-  // "?edit=" opens the edit dialog for the creator; an assignee only ever
-  // gets the blocker dialog (and only when the task actually is blocked).
-  const canEdit = editTodo !== null && editTodo.user_id === user.id;
-  const blockedForAssignee = editTodo !== null && !canEdit && editTodo.blocker !== null;
-  const initialOpen = params.add !== undefined || canEdit;
-
-  const assignees: Assignee[] = members.map((member) => ({
-    id: member.id,
-    name: member.name,
-    avatar_url: member.avatar_url,
-  }));
-  // The owner picks from everyone but themselves (assigning to self is the
-  // same as leaving it unassigned).
-  const assignable = user.isOwner
-    ? assignees.filter((member) => member.id !== user.id)
-    : null;
 
   return (
     <>
@@ -120,38 +104,26 @@ export default async function HomePage({
             {q ? (
               <>No todos match &ldquo;{q}&rdquo;.</>
             ) : (
-              <>
-                Nothing here yet — press <strong className="only-desktop">Add Todo</strong>
-                <strong className="only-mobile">+</strong> to create your first task.
-              </>
+              <>Nothing here yet — add your first task below.</>
             )}
           </p>
         ) : (
           todos.map((todo) => (
-            <TodoRow
+            <TaskRow
               key={todo.id}
               todo={todo}
               returnTo={returnTo}
+              variant="home"
               currentUserId={user.id}
-              assignees={assignees}
+              members={members}
+              canAssign={user.isOwner}
+              focus={focusId !== "" && todo.id === focusId}
             />
           ))
         )}
-      </section>
 
-      <Suspense fallback={null}>
-        <TodoModal
-          initialTodo={canEdit ? editTodo : null}
-          initialOpen={initialOpen}
-          initialReturnTo={returnTo}
-          assignees={assignable}
-        />
-        <BlockerModal
-          initialTodo={blockedForAssignee ? editTodo : null}
-          initialOpen={blockedForAssignee}
-          initialReturnTo={returnTo}
-        />
-      </Suspense>
+        <AddTaskRow returnTo={returnTo} autoFocus={openAdd} />
+      </section>
     </>
   );
 }
