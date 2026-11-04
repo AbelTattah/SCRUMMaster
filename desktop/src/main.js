@@ -32,8 +32,17 @@ function webRootCandidates() {
 
 function findStandaloneRoot() {
   for (const dir of webRootCandidates()) {
-    if (fs.existsSync(path.join(dir, ".next", "standalone", "server.js"))) {
-      return path.join(dir, ".next", "standalone");
+    // Development checkout: <repo>/.next/standalone/server.js
+    const nested = path.join(dir, ".next", "standalone");
+
+    if (fs.existsSync(path.join(nested, "server.js"))) {
+      return nested;
+    }
+
+    // Packaged: extraResources flattens the standalone folder into web/, so
+    // server.js sits directly next to its .next directory.
+    if (fs.existsSync(path.join(dir, "server.js")) && fs.existsSync(path.join(dir, ".next"))) {
+      return dir;
     }
   }
 
@@ -129,14 +138,21 @@ async function resolveUrl() {
   if (standaloneRoot) {
     loadWebEnv();
 
-    try {
-      const url = await startLocalServer(standaloneRoot);
+    // The bundled server reads its configuration at runtime. Without it every
+    // page would 500, so a build with no shipped config falls back to the
+    // production site instead (ship a resources/web/.env.local to go local).
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const url = await startLocalServer(standaloneRoot);
 
-      if (url) {
-        return { url, mode: "local" };
+        if (url) {
+          return { url, mode: "local" };
+        }
+      } catch (error) {
+        console.error("[desktop] local server failed, falling back:", error);
       }
-    } catch (error) {
-      console.error("[desktop] local server failed, falling back:", error);
+    } else {
+      console.log("[desktop] no bundled configuration found");
     }
   }
 

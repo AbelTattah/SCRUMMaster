@@ -32,5 +32,40 @@ fs.cpSync(path.join(root, ".next", "static"), path.join(standalone, ".next", "st
 });
 fs.cpSync(path.join(root, "public"), path.join(standalone, "public"), { recursive: true });
 
+// Turbopack traces external packages as relative symlinks (e.g. nodemailer).
+// electron-builder copies links verbatim and 7-Zip then fails on them, so
+// every link inside the bundle is replaced with a real copy of its target.
+function dereferenceLinks(dir) {
+  let fixed = 0;
+
+  function walk(current) {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const full = path.join(current, entry.name);
+
+      if (entry.isSymbolicLink()) {
+        const target = path.resolve(path.dirname(full), fs.readlinkSync(full));
+
+        fs.rmSync(full, { force: true });
+
+        if (fs.existsSync(target)) {
+          fs.cpSync(target, full, { recursive: true, dereference: true });
+          fixed += 1;
+        }
+        continue;
+      }
+
+      if (entry.isDirectory()) {
+        walk(full);
+      }
+    }
+  }
+
+  walk(dir);
+  return fixed;
+}
+
+const links = dereferenceLinks(standalone);
+console.log(`✓ dereferenced ${links} symlink(s) in the bundle`);
+
 console.log(`✓ standalone bundle ready at ${path.relative(root, standalone)}`);
 console.log("  next: cd desktop && npm start");
