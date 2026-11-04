@@ -5,6 +5,7 @@ node_modules/
 .vercel/
 legacy/
 ui-design/
+desktop/
 storage/
 .env*
 *.tsbuildinfo

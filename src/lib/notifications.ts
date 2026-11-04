@@ -188,6 +188,32 @@ export function alertableNotifications(items: NotificationItem[]): NotificationI
   );
 }
 
+/** Header line for an OS/desktop alert. */
+export function alertHeading(kind: NotificationKind): string {
+  return kind === "overdue"
+    ? "Overdue task"
+    : kind === "blocker"
+      ? "Blocked task"
+      : kind === "report"
+        ? "Daily report not filed"
+        : kind === "reminder"
+          ? "Starting soon"
+          : "Scrum Master";
+}
+
+/** Where an alert's click should land. */
+export function notificationUrl(item: Pick<NotificationItem, "kind" | "todo_id">): string {
+  if (item.kind === "report") {
+    return "/reports";
+  }
+
+  if (item.kind === "blocker") {
+    return "/notifications";
+  }
+
+  return item.todo_id ? `/?edit=${encodeURIComponent(item.todo_id)}` : "/notifications";
+}
+
 export function notificationDigest(
   items: NotificationItem[],
   profile: Pick<Profile, "name">,
