@@ -9,7 +9,7 @@
  *
  * API responses are never cached — tasks and sessions stay network-only.
  */
-const CACHE = "scrum-master-v1";
+const CACHE = "scrum-master-v2";
 const SHELL = [
   "/offline.html",
   "/manifest.webmanifest",

@@ -8,9 +8,9 @@ import { unreadNotificationCount } from "@/lib/data/notifications";
 import { countTodos } from "@/lib/data/todos";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  // Signed-out visitors only ever reach "/" inside this group, where the
-  // page renders the public landing page — no shell, no redirect. Every
-  // other route below guards itself with requireOnboardedUser().
+  // Signed-out visitors get no shell: each page decides what happens next.
+  // "/" sends them silently to the sign-in screen, the other routes ask them
+  // to sign in with a notice (see their own requireOnboardedUser guards).
   const guest = !(await getCurrentUser());
 
   if (guest) {
