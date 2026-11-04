@@ -22,3 +22,7 @@ legacy/migration-reset-links.txt
 storage/
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*
+!.env.example
