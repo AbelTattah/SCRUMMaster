@@ -1,10 +1,13 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { addMember, removeMember } from "@/app/actions/team";
+import { BlockerModal } from "@/components/BlockerModal";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { TeamRow } from "@/components/TeamRow";
+import { TodoModal } from "@/components/TodoModal";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
 import { reportedUserIds } from "@/lib/data/reports";
@@ -63,6 +66,12 @@ export default async function TeamPage({
   ]);
 
   const leaderboard = [...members].sort(byScore);
+  const returnTo = filterHref(page, q);
+  // The owner hands work to members — including invitees who have not signed
+  // in yet (they appear in this list as soon as they are attached).
+  const assignable = members
+    .filter((member) => member.id !== user.id)
+    .map(({ id, name, avatar_url }) => ({ id, name, avatar_url }));
 
   return (
     <>
@@ -78,8 +87,9 @@ export default async function TeamPage({
       <section className="card team-members">
         <h2 className="card-title">Members</h2>
         <p className="card-sub">
-          Attach people by email. New accounts receive a link to set their
-          password and land straight in this organization.
+          Attach people by email — no account needed on their side yet. Assign
+          and update tasks for them right away; they pick everything up when
+          they first sign in.
         </p>
 
         <form action={addMember} className="inline-form member-add">
@@ -105,6 +115,12 @@ export default async function TeamPage({
               <img src={avatarUrl(member.avatar_url)} alt="" />
               {member.name}
               <span className="chip-count">{member.todo_count}</span>
+
+              {member.invited_at ? (
+                <span className="chip-pending" title="They have not signed in yet">
+                  Invite pending
+                </span>
+              ) : null}
 
               {member.is_owner ? null : (
                 <ConfirmForm
@@ -158,7 +174,11 @@ export default async function TeamPage({
                 {member.streak > 0 ? `${member.streak}-day streak` : "No streak"}
               </span>
 
-              {reported.has(member.id) ? (
+              {member.invited_at ? (
+                <span className="chip-pending" title="They have not signed in yet">
+                  Invite pending
+                </span>
+              ) : reported.has(member.id) ? (
                 <span className="chip chip--reported">Reported today</span>
               ) : (
                 <span className="leader-noreport">No report yet</span>
@@ -199,9 +219,23 @@ export default async function TeamPage({
             )}
           </p>
         ) : (
-          todos.map((todo) => <TeamRow todo={todo} key={todo.id} />)
+          todos.map((todo) => <TeamRow todo={todo} key={todo.id} returnTo={returnTo} />)
         )}
       </section>
+
+      <Suspense fallback={null}>
+        <TodoModal
+          initialTodo={null}
+          initialOpen={false}
+          initialReturnTo={returnTo}
+          assignees={assignable}
+        />
+        <BlockerModal
+          initialTodo={null}
+          initialOpen={false}
+          initialReturnTo={returnTo}
+        />
+      </Suspense>
     </>
   );
 }

@@ -8,7 +8,7 @@ import { addXp } from "@/lib/data/gamification";
 import {
   createTodo,
   deleteTodo as deleteTodoRecord,
-  findTodo,
+  findManagedTodo,
   setBlocker as setBlockerRecord,
   toggleTodo as toggleTodoRecord,
   updateTodo,
@@ -42,9 +42,10 @@ function fail(back: string, message: string): never {
 }
 
 /**
- * The organization owner may hand a task to a member. Anything else (a member
- * posting the field, an id outside the organization, the owner's own id) is
- * normalised away so the server never trusts the form.
+ * The organization owner may hand a task to a member — including someone who
+ * has not signed in yet. Anything else (a member posting the field, an id
+ * outside the organization, the owner's own id) is normalised away so the
+ * server never trusts the form.
  */
 async function resolveAssignee(
   current: CurrentUser,
@@ -83,20 +84,21 @@ export async function saveTodo(formData: FormData): Promise<void> {
   }
 
   if (id && isUuid(id)) {
-    const existing = await findTodo(id, current.id);
+    const managed = await findManagedTodo(id, current);
 
-    if (!existing) {
+    if (!managed) {
       fail(back, "That todo no longer exists.");
     }
 
-    if (existing.user_id !== current.id) {
+    // The assignee can tick the task off and record blockers, but only its
+    // creator (or the organization owner) changes what the task *is*.
+    if (managed.role === "assignee") {
       fail(back, "Only the person who created a task can edit it.");
     }
 
-    // Only the creator can re-assign (the server never trusts the form).
     const assignee = await resolveAssignee(current, field(formData, "assignee"));
 
-    await updateTodo(id, current.id, title, start, end, assignee);
+    await updateTodo(id, title, start, end, assignee);
   } else {
     const assignee = await resolveAssignee(current, field(formData, "assignee"));
     const { error } = await createTodo(current.id, title, start, end, assignee);
@@ -115,13 +117,19 @@ export async function toggleTodo(formData: FormData): Promise<void> {
   const id = field(formData, "id");
 
   if (isUuid(id)) {
-    const completed = await toggleTodoRecord(id, current.id);
+    const managed = await findManagedTodo(id, current);
 
-    if (completed === true) {
-      await addXp(current.id, XP_TASK_COMPLETE);
+    if (managed) {
+      const result = await toggleTodoRecord(id);
+
+      if (result?.completed) {
+        // The work belongs to the assignee when there is one — ticking off
+        // someone's task credits them, not the person clicking.
+        await addXp(result.assignee_id ?? result.user_id, XP_TASK_COMPLETE);
+      }
+
+      revalidatePath("/", "layout");
     }
-
-    revalidatePath("/", "layout");
   }
 
   redirect(returnTo(formData));
@@ -130,40 +138,59 @@ export async function toggleTodo(formData: FormData): Promise<void> {
 export async function deleteTodo(formData: FormData): Promise<void> {
   const current = await requireOnboardedUser();
   const id = field(formData, "id");
+  const back = returnTo(formData);
 
   if (isUuid(id)) {
-    await deleteTodoRecord(id, current.id);
-    revalidatePath("/", "layout");
+    const managed = await findManagedTodo(id, current);
+
+    if (managed && managed.role === "assignee") {
+      fail(back, "Only the person who created a task can delete it.");
+    }
+
+    if (managed) {
+      await deleteTodoRecord(id);
+      revalidatePath("/", "layout");
+    }
   }
 
-  redirect(returnTo(formData));
+  redirect(back);
 }
 
 export async function setBlocker(formData: FormData): Promise<void> {
   const current = await requireOnboardedUser();
   const id = field(formData, "id");
   const blocker = field(formData, "blocker").trim().slice(0, 500);
+  const back = returnTo(formData);
 
   if (isUuid(id)) {
-    const { error } = await setBlockerRecord(id, current.id, blocker || null);
-    revalidatePath("/", "layout");
+    const managed = await findManagedTodo(id, current);
 
-    if (error) {
-      fail(returnTo(formData), error);
+    if (managed) {
+      const { error } = await setBlockerRecord(id, blocker || null);
+      revalidatePath("/", "layout");
+
+      if (error) {
+        fail(back, error);
+      }
     }
   }
 
-  redirect(returnTo(formData));
+  redirect(back);
 }
 
 export async function clearBlocker(formData: FormData): Promise<void> {
   const current = await requireOnboardedUser();
   const id = field(formData, "id");
+  const back = returnTo(formData);
 
   if (isUuid(id)) {
-    await setBlockerRecord(id, current.id, null);
-    revalidatePath("/", "layout");
+    const managed = await findManagedTodo(id, current);
+
+    if (managed) {
+      await setBlockerRecord(id, null);
+      revalidatePath("/", "layout");
+    }
   }
 
-  redirect(returnTo(formData));
+  redirect(back);
 }

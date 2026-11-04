@@ -21,6 +21,8 @@ export interface Profile {
   streak: number;
   best_streak: number;
   last_report_date: string | null;
+  /** Set when an owner created this account for an invitee; cleared on first sign-in. */
+  invited_at: string | null;
   created_at: string;
 }
 
@@ -62,6 +64,8 @@ export interface Member {
   xp: number;
   streak: number;
   last_report_date: string | null;
+  /** Not null while the person has never signed in to the account we created. */
+  invited_at: string | null;
 }
 
 export interface Assignee {
