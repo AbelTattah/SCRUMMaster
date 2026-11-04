@@ -1,7 +1,14 @@
 import { notificationRecipients, findProfileByEmail } from "@/lib/data/profiles";
 import { markNotificationsEmailed, notificationsForUser } from "@/lib/data/notifications";
-import { notificationDigest } from "@/lib/notifications";
+import { subscriptionCount } from "@/lib/data/push";
+import {
+  alertHeading,
+  notificationDigest,
+  notificationUrl,
+} from "@/lib/notifications";
+import { pushConfigured, pushPendingAlerts, type PushPayload } from "@/lib/push";
 import { mailTransport, sendMail } from "@/lib/mail";
+import type { NotificationItem, Profile } from "@/lib/types";
 
 export interface DigestOptions {
   /** Only consider this account (profile id or email). */
@@ -18,13 +25,22 @@ export interface DigestResult {
   lines: string[];
 }
 
+/** Kinds worth an email or a push — "coming up" stays in-app only. */
+const ALERT_KINDS = new Set<NotificationItem["kind"]>([
+  "overdue",
+  "blocker",
+  "reminder",
+  "report",
+]);
+
 /**
- * Send the notification email digest.
+ * Send the notification digest.
  *
- * Overdue tasks, blockers, tasks that start within the user's reminder
- * window and an unfiled daily report trigger an email; tasks coming up later
- * today are included as a preview. A notification is emailed at most once
- * (notification_state).
+ * Every actionable item goes out over each channel the user has: the email
+ * digest (when enabled) and a Web Push message to every subscribed device
+ * (which is what reaches people with the app closed). An item is marked as
+ * alerted once it reached someone — failed channels are retried on the next
+ * run instead of being swallowed.
  */
 export async function runDigest(options: DigestOptions = {}): Promise<DigestResult> {
   const transport = mailTransport();
@@ -59,21 +75,8 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
   for (const user of recipients) {
     const label = `${user.name} <${user.email}>`;
 
-    if (!user.notify_email) {
-      lines.push(`  skip  ${label} — email notifications are off`);
-      skipped += 1;
-      continue;
-    }
-
     const items = await notificationsForUser(user);
-    const pending = items.filter(
-      (item) =>
-        !item.emailed &&
-        (item.kind === "overdue" ||
-          item.kind === "blocker" ||
-          item.kind === "reminder" ||
-          item.kind === "report"),
-    );
+    const pending = items.filter((item) => !item.emailed && ALERT_KINDS.has(item.kind));
 
     if (pending.length === 0) {
       lines.push(`  skip  ${label} — nothing new needs attention`);
@@ -82,40 +85,125 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
     }
 
     const digest = notificationDigest(items, user);
+    const payload = buildPushPayload(pending);
 
     if (options.dryRun) {
-      lines.push(`  would send  ${label} — ${digest.subject}`);
+      let mentioned = false;
 
-      for (const item of pending) {
-        lines.push(`      • ${item.title} — ${item.detail}`);
+      if (user.notify_email) {
+        lines.push(`  would send  ${label} — ${digest.subject}`);
+
+        for (const item of pending) {
+          lines.push(`      • ${item.title} — ${item.detail}`);
+        }
+
+        mentioned = true;
+      }
+
+      if (pushConfigured() && user.notify_browser) {
+        const devices = await subscriptionCount(user.id);
+
+        if (devices > 0) {
+          lines.push(`  would push  ${label} — ${devices} device(s): ${payload.title}`);
+          mentioned = true;
+        }
+      }
+
+      if (mentioned) {
+        sent += 1;
+      } else {
+        lines.push(`  skip  ${label} — no delivery channel (email off, no push devices)`);
+        skipped += 1;
+      }
+
+      continue;
+    }
+
+    const failures: string[] = [];
+    let delivered = false;
+
+    if (user.notify_email) {
+      const result = await sendMail({
+        to: user.email,
+        subject: digest.subject,
+        text: digest.text,
+        html: digest.html,
+        userId: user.id,
+      });
+
+      if (result.ok) {
+        lines.push(`  sent  ${label} — ${digest.subject}`);
+        delivered = true;
+      } else {
+        failures.push(`email: ${result.error ?? "unknown mail error"}`);
+      }
+    }
+
+    if (pushConfigured() && user.notify_browser) {
+      const outcome = await pushPendingAlerts(user, payload);
+
+      if (outcome === "sent") {
+        lines.push(`  push   ${label} — ${payload.title}`);
+        delivered = true;
+      } else if (outcome === "failed") {
+        failures.push("push: send failed");
+      }
+      // "none" — this user has no subscribed devices; not a failure.
+    }
+
+    if (delivered) {
+      await markNotificationsEmailed(
+        user.id,
+        pending.map((item) => item.key),
+      );
+
+      if (failures.length > 0) {
+        lines.push(`  note  ${label} — delivered, but ${failures.join("; ")}`);
       }
 
       sent += 1;
       continue;
     }
 
-    const result = await sendMail({
-      to: user.email,
-      subject: digest.subject,
-      text: digest.text,
-      html: digest.html,
-      userId: user.id,
-    });
-
-    if (!result.ok) {
-      lines.push(`  FAIL  ${label} — ${result.error ?? "unknown mail error"}`);
+    if (failures.length > 0) {
+      // Leave the items pending so the next run retries them.
+      lines.push(`  FAIL  ${label} — ${failures.join("; ")}`);
       failed += 1;
       continue;
     }
 
+    // Nothing is configured to deliver on: mark anyway so the counters stay
+    // honest — the in-app feed remains the channel of record.
     await markNotificationsEmailed(
       user.id,
       pending.map((item) => item.key),
     );
-
-    lines.push(`  sent  ${label} — ${digest.subject}`);
-    sent += 1;
+    lines.push(`  skip  ${label} — no delivery channel (email off, no push devices)`);
+    skipped += 1;
   }
 
   return { sent, skipped, failed, transport, lines };
+}
+
+/** One push message per digest run: the first alert, or a short summary. */
+function buildPushPayload(pending: NotificationItem[]): PushPayload {
+  const first = pending[0];
+
+  if (pending.length === 1) {
+    return {
+      title: alertHeading(first.kind),
+      body:
+        first.kind === "report" ? first.detail : `${first.title} — ${first.detail}`,
+      url: notificationUrl(first),
+      tag: first.key,
+    };
+  }
+
+  const titles = pending.slice(0, 3).map((item) => item.title);
+
+  return {
+    title: `${pending.length} items need your attention`,
+    body: titles.join(", ") + (pending.length > titles.length ? "…" : ""),
+    url: "/notifications",
+  };
 }
