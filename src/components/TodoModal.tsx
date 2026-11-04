@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { saveTodo } from "@/app/actions/todos";
 import { Icon } from "@/components/icons";
-import type { Todo } from "@/lib/types";
+import type { Assignee, Todo } from "@/lib/types";
 
 const OPEN_EVENT = "Scrum Master:todo:open";
 
@@ -74,10 +74,13 @@ export function TodoModal({
   initialTodo,
   initialOpen,
   initialReturnTo,
+  assignees = null,
 }: {
   initialTodo: Todo | null;
   initialOpen: boolean;
   initialReturnTo: string;
+  /** Organization members; passed only to the owner, who assigns the work. */
+  assignees?: Assignee[] | null;
 }) {
   const [open, setOpen] = useState(initialOpen);
   const [editing, setEditing] = useState<Todo | null>(initialTodo);
@@ -207,6 +210,27 @@ export function TodoModal({
                 />
               </label>
             </div>
+
+            {assignees && assignees.length > 0 ? (
+              <label className="field">
+                <span>Assign to</span>
+                <select
+                  className="input"
+                  name="assignee"
+                  defaultValue={editing?.assignee_id ?? ""}
+                >
+                  <option value="">Me</option>
+                  {assignees.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="field-hint">
+                  Assigned tasks appear in that member&rsquo;s list.
+                </span>
+              </label>
+            ) : null}
           </div>
 
           <div className="modal-actions">

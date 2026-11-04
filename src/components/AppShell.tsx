@@ -9,7 +9,7 @@ import { Icon } from "@/components/icons";
 import type { Counts, CurrentUser, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
-type AppView = "home" | "team" | "account" | "settings" | "notifications";
+type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports";
 
 function hrefs(page: PageFilter, q: string) {
   const search = q ? `&q=${encodeURIComponent(q)}` : "";
@@ -19,6 +19,7 @@ function hrefs(page: PageFilter, q: string) {
     completed: `/?page=completed${search}`,
     inProgress: `/?page=in-progress${search}`,
     team: "/team",
+    reports: "/reports",
     profile: "/account",
     settings: "/settings",
   };
@@ -30,6 +31,7 @@ function activeState(view: AppView, page: PageFilter) {
     completed: view === "home" && page === "completed",
     inProgress: view === "home" && page === "in-progress",
     team: view === "team",
+    reports: view === "reports",
     profile: view === "account",
     settings: view === "settings",
   };
@@ -52,7 +54,9 @@ function useLocation() {
           ? "settings"
           : pathname === "/notifications"
             ? "notifications"
-            : "home";
+            : pathname === "/reports"
+              ? "reports"
+              : "home";
 
   return { view, page, q };
 }
@@ -99,6 +103,15 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
           {counts.in_progress > 0 ? (
             <span className="badge badge--amber">{counts.in_progress}</span>
           ) : null}
+        </Link>
+
+        <Link
+          className={`nav-item${active.reports ? " is-active" : ""}`}
+          href={links.reports}
+          aria-current={active.reports ? "page" : undefined}
+        >
+          <Icon name="report" />
+          <span className="nav-label">Reports</span>
         </Link>
       </nav>
 
@@ -209,6 +222,17 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
           ) : null}
         </span>
         <span className="tab-label">In Progress</span>
+      </Link>
+
+      <Link
+        className={`tab${active.reports ? " is-active" : ""}`}
+        href={links.reports}
+        aria-current={active.reports ? "page" : undefined}
+      >
+        <span className="tab-icon">
+          <Icon name="report" />
+        </span>
+        <span className="tab-label">Reports</span>
       </Link>
 
       {user.isOwner ? (

@@ -1,13 +1,18 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { AddTodoButton, AddTodoFab, TodoModal } from "@/components/TodoModal";
+import { BlockerModal } from "@/components/BlockerModal";
 import { LandingPage } from "@/components/LandingPage";
+import { AddTodoButton, AddTodoFab, TodoModal } from "@/components/TodoModal";
 import { TodoRow } from "@/components/TodoRow";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
+import { listMembers } from "@/lib/data/profiles";
+import { getReport } from "@/lib/data/reports";
 import { findTodo, listTodos } from "@/lib/data/todos";
-import { greetingFor, todayLine } from "@/lib/time";
-import type { PageFilter } from "@/lib/types";
+import { levelFor } from "@/lib/gamification";
+import { dateKey, greetingFor, todayLine } from "@/lib/time";
+import type { Assignee, PageFilter } from "@/lib/types";
 import { firstParam, isUuid } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,10 +43,16 @@ export default async function HomePage({
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  const todos = await listTodos(user.id, page, q);
-
   const editId = firstParam(params.edit);
-  const editTodo = editId && isUuid(editId) ? await findTodo(editId, user.id) : null;
+
+  const [todos, editTodo, members, todayReport] = await Promise.all([
+    listTodos(user.id, page, q),
+    editId && isUuid(editId) ? findTodo(editId, user.id) : Promise.resolve(null),
+    user.organization
+      ? listMembers(user.organization.id, user.organization.owner_id)
+      : Promise.resolve([]),
+    getReport(user.id, dateKey()),
+  ]);
 
   const search = new URLSearchParams();
   if (page !== "home") {
@@ -51,7 +62,22 @@ export default async function HomePage({
     search.set("q", q);
   }
   const returnTo = search.toString() ? `/?${search.toString()}` : "/";
-  const initialOpen = params.add !== undefined || editTodo !== null;
+  // "?edit=" opens the edit dialog for the creator; an assignee only ever
+  // gets the blocker dialog (and only when the task actually is blocked).
+  const canEdit = editTodo !== null && editTodo.user_id === user.id;
+  const blockedForAssignee = editTodo !== null && !canEdit && editTodo.blocker !== null;
+  const initialOpen = params.add !== undefined || canEdit;
+
+  const assignees: Assignee[] = members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    avatar_url: member.avatar_url,
+  }));
+  // The owner picks from everyone but themselves (assigning to self is the
+  // same as leaving it unassigned).
+  const assignable = user.isOwner
+    ? assignees.filter((member) => member.id !== user.id)
+    : null;
 
   return (
     <>
@@ -63,6 +89,32 @@ export default async function HomePage({
 
         <AddTodoButton returnTo={returnTo} />
       </header>
+
+      <div className={`report-nudge${todayReport ? " is-done" : ""}`}>
+        <div className="report-nudge-text">
+          {todayReport ? (
+            <>
+              <strong>Today&rsquo;s report is filed</strong>
+              <span>
+                Level {levelFor(user.profile.xp)} · {user.profile.xp} XP ·{" "}
+                {user.profile.streak}-day streak
+              </span>
+            </>
+          ) : (
+            <>
+              <strong>Daily report not filed yet</strong>
+              <span>
+                Yesterday&rsquo;s wins, today&rsquo;s plan and blockers — it takes a
+                minute.
+              </span>
+            </>
+          )}
+        </div>
+
+        <Link className="btn-primary btn-small" href="/reports">
+          {todayReport ? "View report" : "File report"}
+        </Link>
+      </div>
 
       <AddTodoFab returnTo={returnTo} />
 
@@ -79,14 +131,28 @@ export default async function HomePage({
             )}
           </p>
         ) : (
-          todos.map((todo) => <TodoRow key={todo.id} todo={todo} returnTo={returnTo} />)
+          todos.map((todo) => (
+            <TodoRow
+              key={todo.id}
+              todo={todo}
+              returnTo={returnTo}
+              currentUserId={user.id}
+              assignees={assignees}
+            />
+          ))
         )}
       </section>
 
       <Suspense fallback={null}>
         <TodoModal
-          initialTodo={editTodo}
+          initialTodo={canEdit ? editTodo : null}
           initialOpen={initialOpen}
+          initialReturnTo={returnTo}
+          assignees={assignable}
+        />
+        <BlockerModal
+          initialTodo={blockedForAssignee ? editTodo : null}
+          initialOpen={blockedForAssignee}
           initialReturnTo={returnTo}
         />
       </Suspense>

@@ -1,13 +1,34 @@
 import { deleteTodo } from "@/app/actions/todos";
+import { BlockerButton } from "@/components/BlockerModal";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { EditTodoButton } from "@/components/TodoModal";
 import { TodoToggle } from "@/components/TodoToggle";
 import { formatTimeRange } from "@/lib/time";
-import type { Todo } from "@/lib/types";
+import type { Assignee, Todo } from "@/lib/types";
+import { avatarUrl } from "@/lib/utils";
 
-export function TodoRow({ todo, returnTo }: { todo: Todo; returnTo: string }) {
+export function TodoRow({
+  todo,
+  returnTo,
+  currentUserId,
+  assignees = [],
+}: {
+  todo: Todo;
+  returnTo: string;
+  currentUserId: string;
+  assignees?: Assignee[];
+}) {
   const range = formatTimeRange(todo.start_time, todo.end_time);
+  const canManage = todo.user_id === currentUserId;
+  const assignee = todo.assignee_id
+    ? (assignees.find((member) => member.id === todo.assignee_id) ?? null)
+    : null;
+  const assigneeLabel = assignee
+    ? assignee.id === currentUserId
+      ? "You"
+      : assignee.name
+    : null;
 
   return (
     <div className="todo-item">
@@ -19,6 +40,24 @@ export function TodoRow({ todo, returnTo }: { todo: Todo; returnTo: string }) {
       />
 
       <span className="todo-title">{todo.title}</span>
+
+      <span className="todo-tags">
+        {assignee && assigneeLabel ? (
+          <span
+            className="chip chip--assignee"
+            title={assignee.id === currentUserId ? "Assigned to you" : `Assigned to ${assignee.name}`}
+          >
+            <img src={avatarUrl(assignee.avatar_url)} alt="" />
+            <span>{assigneeLabel}</span>
+          </span>
+        ) : null}
+
+        {todo.blocker ? (
+          <span className="todo-blocker" title={todo.blocker}>
+            Blocked
+          </span>
+        ) : null}
+      </span>
 
       <span className="todo-time">
         {range ? (
@@ -35,20 +74,26 @@ export function TodoRow({ todo, returnTo }: { todo: Todo; returnTo: string }) {
         </summary>
 
         <div className="kebab-menu">
-          <EditTodoButton todo={todo} returnTo={returnTo} />
+          {canManage ? <EditTodoButton todo={todo} returnTo={returnTo} /> : null}
 
-          <ConfirmForm
-            action={deleteTodo}
-            confirmTitle="Delete task?"
-            confirmMessage={`Delete “${todo.title}”? This cannot be undone.`}
-            confirmLabel="Delete"
-          >
-            <input type="hidden" name="id" value={todo.id} />
-            <input type="hidden" name="return_to" value={returnTo} />
-            <button type="submit" className="danger">
-              Delete
-            </button>
-          </ConfirmForm>
+          {todo.completed ? null : (
+            <BlockerButton todo={todo} returnTo={returnTo} />
+          )}
+
+          {canManage ? (
+            <ConfirmForm
+              action={deleteTodo}
+              confirmTitle="Delete task?"
+              confirmMessage={`Delete “${todo.title}”? This cannot be undone.`}
+              confirmLabel="Delete"
+            >
+              <input type="hidden" name="id" value={todo.id} />
+              <input type="hidden" name="return_to" value={returnTo} />
+              <button type="submit" className="danger">
+                Delete
+              </button>
+            </ConfirmForm>
+          ) : null}
         </div>
       </details>
     </div>

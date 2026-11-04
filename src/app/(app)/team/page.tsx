@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { addMember, removeMember } from "@/app/actions/team";
+import { ConfirmForm } from "@/components/ConfirmForm";
 import { TeamRow } from "@/components/TeamRow";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
+import { reportedUserIds } from "@/lib/data/reports";
 import { listTeamTodos } from "@/lib/data/todos";
-import type { PageFilter } from "@/lib/types";
+import { levelFor } from "@/lib/gamification";
+import { dateKey } from "@/lib/time";
+import type { Member, PageFilter } from "@/lib/types";
 import { avatarUrl, firstParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Team" };
@@ -23,6 +28,10 @@ function filterHref(page: PageFilter, q: string): string {
   const query = params.toString();
 
   return query ? `/team?${query}` : "/team";
+}
+
+function byScore(a: Member, b: Member): number {
+  return b.xp - a.xp || b.streak - a.streak || a.name.localeCompare(b.name);
 }
 
 export default async function TeamPage({
@@ -47,10 +56,13 @@ export default async function TeamPage({
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  const [{ todos }, members] = await Promise.all([
+  const [{ todos }, members, reported] = await Promise.all([
     listTeamTodos(organization.id, page, q),
     listMembers(organization.id, organization.owner_id),
+    reportedUserIds(organization.id, dateKey()),
   ]);
+
+  const leaderboard = [...members].sort(byScore);
 
   return (
     <>
@@ -63,15 +75,98 @@ export default async function TeamPage({
         </div>
       </header>
 
-      <div className="member-chips">
-        {members.map((member) => (
-          <span className="chip" key={member.id}>
-            <img src={avatarUrl(member.avatar_url)} alt="" />
-            {member.name}
-            <span className="chip-count">{member.todo_count}</span>
-          </span>
-        ))}
-      </div>
+      <section className="card team-members">
+        <h2 className="card-title">Members</h2>
+        <p className="card-sub">
+          Attach people by email. New accounts receive a link to set their
+          password and land straight in this organization.
+        </p>
+
+        <form action={addMember} className="inline-form member-add">
+          <label className="field">
+            <span>Email address</span>
+            <input
+              className="input"
+              type="email"
+              name="email"
+              placeholder="teammate@example.com"
+              autoComplete="email"
+              required
+            />
+          </label>
+          <button className="btn-primary btn-small" type="submit">
+            Add member
+          </button>
+        </form>
+
+        <div className="member-chips">
+          {members.map((member) => (
+            <span className="chip" key={member.id}>
+              <img src={avatarUrl(member.avatar_url)} alt="" />
+              {member.name}
+              <span className="chip-count">{member.todo_count}</span>
+
+              {member.is_owner ? null : (
+                <ConfirmForm
+                  action={removeMember}
+                  className="member-remove"
+                  confirmTitle="Remove member?"
+                  confirmMessage={`${member.name} will lose access to this organization's tasks. Their own tasks and reports stay with them.`}
+                  confirmLabel="Remove"
+                >
+                  <input type="hidden" name="member_id" value={member.id} />
+                  <button
+                    type="submit"
+                    className="chip-x"
+                    aria-label={`Remove ${member.name}`}
+                    title={`Remove ${member.name}`}
+                  >
+                    ×
+                  </button>
+                </ConfirmForm>
+              )}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="card team-board">
+        <h2 className="card-title">Leaderboard</h2>
+        <p className="card-sub">
+          XP from completed tasks (+10) and daily reports (+20, plus a streak
+          bonus). Levels come every 250 XP.
+        </p>
+
+        <ol className="leaderboard">
+          {leaderboard.map((member, index) => (
+            <li className="leader-row" key={member.id}>
+              <span className={`leader-rank${index < 3 ? ` is-top-${index + 1}` : ""}`}>
+                {index + 1}
+              </span>
+
+              <img className="leader-avatar" src={avatarUrl(member.avatar_url)} alt="" />
+
+              <span className="leader-name">
+                {member.name}
+                {member.is_owner ? <span className="chip chip--owner">Owner</span> : null}
+              </span>
+
+              <span className="leader-level">Lv {levelFor(member.xp)}</span>
+              <span className="leader-xp">{member.xp} XP</span>
+
+              <span className="leader-streak">
+                {member.streak > 0 ? `${member.streak}-day streak` : "No streak"}
+              </span>
+
+              {reported.has(member.id) ? (
+                <span className="chip chip--reported">Reported today</span>
+              ) : (
+                <span className="leader-noreport">No report yet</span>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
 
       <nav className="filter-pills" aria-label="Filter team todos">
         <Link
@@ -100,7 +195,7 @@ export default async function TeamPage({
             {q ? (
               <>No team todos match &ldquo;{q}&rdquo;.</>
             ) : (
-              <>Nothing here yet — tasks appear as soon as your members add them.</>
+              <>Nothing here yet — assign a task from Add Todo, or wait for your members to add their own.</>
             )}
           </p>
         ) : (
