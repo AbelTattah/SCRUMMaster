@@ -66,15 +66,75 @@ function dataUrl(html) {
   return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
 }
 
+/**
+ * The first screen the desktop shows matches the web app's post-sign-up
+ * loading veil exactly: the app mark centred on the page background with
+ * the glowing indeterminate bar underneath (see AuthLoading / globals.css).
+ */
+const SPLASH_CSS = `
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+    background: #FAFAFA;
+    font-family: Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .veil { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+  .mark-img { height: 88px; width: auto; animation: breathe 1.6s ease-in-out infinite; }
+  .bar {
+    position: relative; width: 176px; height: 7px; overflow: hidden;
+    border-radius: 999px; background: rgba(33, 0, 93, 0.16);
+    box-shadow: 0 0 18px rgba(33, 0, 93, 0.16);
+  }
+  .bar span {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 42%;
+    border-radius: 999px; background: #21005D;
+    box-shadow: 0 0 14px 2px rgba(33, 0, 93, 0.16);
+    animation: sweep 1.15s ease-in-out infinite;
+  }
+  @keyframes sweep { from { transform: translateX(-110%); } to { transform: translateX(340%); } }
+  @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.04); opacity: 0.85; } }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0E0E12; }
+    .bar { background: rgba(185, 166, 245, 0.3); box-shadow: 0 0 18px rgba(185, 166, 245, 0.3); }
+    .bar span { background: #B9A6F5; box-shadow: 0 0 14px 2px rgba(185, 166, 245, 0.3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mark-img, .bar span { animation: none; }
+    .bar span { width: 100%; }
+  }
+`;
+
+/** The app mark as a data URI so the data-URL splash needs no file access. */
+function splashIconDataUri() {
+  const candidates = [];
+
+  if (process.resourcesPath) {
+    candidates.push(path.join(process.resourcesPath, "web", "public", "favicon.png"));
+  }
+
+  candidates.push(path.join(__dirname, "..", "..", "public", "favicon.png")); // dev
+  candidates.push(path.join(__dirname, "..", "..", "..", "public", "favicon.png"));
+
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`;
+      }
+    } catch {
+      // try the next candidate
+    }
+  }
+
+  return "";
+}
+
 const SPLASH_URL = dataUrl(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Scrum Master</title>
-<style>${BRAND_CSS}</style></head>
+<style>${SPLASH_CSS}</style></head>
 <body>
-  <div class="card">
-    <div class="mark">✓</div>
-    <h1>Scrum Master</h1>
-    <p>Loading your tasks…</p>
-    <div class="spinner"></div>
+  <div class="veil">
+    <img class="mark-img" src="${splashIconDataUri()}" alt="Scrum Master">
+    <div class="bar"><span></span></div>
   </div>
 </body></html>`);
 
