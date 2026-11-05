@@ -370,8 +370,8 @@ svg {
 .icon-btn {
     display: grid;
     place-items: center;
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -479,8 +479,8 @@ svg {
     position: relative;
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     background: var(--surface);
     border: 1.5px solid var(--border-strong);
@@ -501,8 +501,8 @@ svg {
 }
 
 .bell svg {
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
 }
 
 .bell-badge {
@@ -525,11 +525,10 @@ svg {
     font-variant-numeric: tabular-nums;
 }
 
-/* The sidebar is hidden on phones, so the settings gear moves into the header. */
+/* The sidebar is hidden on phones, so the settings gear moves into the header.
+   Sizing comes from .icon-btn — all header icon buttons share 36×36. */
 .topbar-settings {
     display: none;
-    width: 36px;
-    height: 36px;
 }
 
 .avatar-form {
@@ -1796,6 +1795,89 @@ svg {
     height: 44px;
 }
 
+/* --------------------------------------------------------------------------
+   Auth loading veil — covers the screen while sign in / sign up runs, so the
+   wait between clicking the button and the app appearing reads as working
+   rather than frozen. The mark breathes; the bar sweeps with a soft glow.
+   -------------------------------------------------------------------------- */
+.auth-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    background: var(--page-bg);
+    animation: auth-loading-fade 0.18s ease;
+}
+
+.auth-loading__mark {
+    height: 88px;
+    width: auto;
+    animation: auth-loading-breathe 1.6s ease-in-out infinite;
+}
+
+.auth-loading__bar {
+    position: relative;
+    width: 176px;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--purple-ring);
+    box-shadow: 0 0 18px var(--purple-ring);
+}
+
+.auth-loading__bar span {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 42%;
+    border-radius: inherit;
+    background: var(--purple-ink);
+    box-shadow: 0 0 14px 2px var(--purple-ring);
+    animation: auth-loading-sweep 1.15s ease-in-out infinite;
+}
+
+.auth-loading__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@keyframes auth-loading-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes auth-loading-breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes auth-loading-sweep {
+    from { transform: translateX(-110%); }
+    to   { transform: translateX(340%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-loading {
+        animation: none;
+    }
+
+    .auth-loading__mark {
+        animation: none;
+    }
+
+    .auth-loading__bar span {
+        width: 100%;
+        animation: none;
+    }
+}
+
 .auth-switch {
     margin: 14px 0 0;
     font-size: 14px;
@@ -2487,6 +2569,7 @@ svg {
 .notification-dot--overdue  { background: #C0392B; }
 .notification-dot--reminder { background: var(--amber); }
 .notification-dot--upcoming { background: var(--purple); }
+.notification-dot--nudge    { background: #0F766E; }
 
 .notification-body {
     flex: 1;

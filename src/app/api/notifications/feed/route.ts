@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { getProfile } from "@/lib/auth";
+import { countTodosCreatedSince } from "@/lib/data/todos";
 import { notificationsForUser } from "@/lib/data/notifications";
-import { alertableNotifications } from "@/lib/notifications";
+import { alertableNotifications, todoNudge } from "@/lib/notifications";
+import { startOfToday } from "@/lib/time";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +14,10 @@ export const dynamic = "force-dynamic";
  * notifications (overdue, blocked, starting soon, unfiled report) are
  * returned — "coming up" would just be noise as an OS alert, though it is
  * listed on the notifications page.
+ *
+ * When the user has not added a single todo today, the feed also carries the
+ * periodic planning nudge (see todoNudge) — that is what reminds people to
+ * plan their day while the app is open.
  */
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -37,6 +43,20 @@ export async function GET() {
     title: item.title,
     detail: item.detail,
   }));
+
+  // Nothing added yet today → raise the periodic planning nudge alongside
+  // the task alerts. Feed-only: it never reaches the bell list or email.
+  const nudge = todoNudge();
+
+  if (nudge && (await countTodosCreatedSince(profile.id, startOfToday())) === 0) {
+    alertable.push({
+      key: nudge.key,
+      kind: nudge.kind,
+      todo_id: nudge.todo_id,
+      title: nudge.title,
+      detail: nudge.detail,
+    });
+  }
 
   return NextResponse.json(
     {

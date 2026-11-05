@@ -26,6 +26,9 @@ export default async function NotificationsPage() {
     blocker: [],
     reminder: [],
     upcoming: [],
+    // The planning nudge lives only in the alert feed (it is raised by the
+    // browser notification component, never listed here) — empty by design.
+    nudge: [],
   };
 
   for (const item of items) {

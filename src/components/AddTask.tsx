@@ -125,8 +125,51 @@ export function AddTaskRow({
 
       setError(null);
       setTitle("");
-      inputRef.current?.focus(); // stay open — add the next one
+      // Stay open — add the next one — without letting focus yank the page
+      // around; revealNewRow() brings the fresh row into view instead.
+      inputRef.current?.focus({ preventScroll: true });
+
+      if (result.id) {
+        revealNewRow(result.id);
+      }
     });
+  }
+
+  /**
+   * The revalidated list lands right after the action resolves, so poll briefly
+   * for the row we just created, then centre it (the composer sits directly
+   * below it, so both end up on screen).
+   */
+  function revealNewRow(todoId: string) {
+    const deadline = performance.now() + 1500;
+
+    const attempt = () => {
+      const row = document.querySelector<HTMLElement>(`[data-todo-id="${todoId}"]`);
+
+      if (!row) {
+        if (performance.now() < deadline) {
+          window.requestAnimationFrame(attempt);
+        } else {
+          inputRef.current?.focus(); // fallback: at least show the composer
+        }
+
+        return;
+      }
+
+      const rowRect = row.getBoundingClientRect();
+      const formRect = formRef.current?.getBoundingClientRect();
+      const rowVisible = rowRect.top >= 0 && rowRect.bottom <= window.innerHeight;
+      const formVisible =
+        !!formRect && formRect.top >= 0 && formRect.bottom <= window.innerHeight;
+
+      if (!rowVisible || !formVisible) {
+        row.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+
+      inputRef.current?.focus({ preventScroll: true });
+    };
+
+    window.requestAnimationFrame(attempt);
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {

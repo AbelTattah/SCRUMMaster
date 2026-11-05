@@ -21,6 +21,8 @@ import type { CurrentUser } from "@/lib/types";
 
 export interface InlineResult {
   error: string | null;
+  /** Set when a row was created — lets the composer scroll it into view. */
+  id?: string | null;
 }
 
 function field(formData: FormData, name: string): string {
@@ -101,15 +103,18 @@ export async function saveTodoInline(formData: FormData): Promise<InlineResult> 
     }
   } else {
     const assignee = await resolveAssignee(current, field(formData, "assignee"));
-    const { error } = await createTodo(current.id, title, start, end, assignee);
+    const { error, id: createdId } = await createTodo(current.id, title, start, end, assignee);
 
     if (error) {
       return { error };
     }
+
+    revalidatePath("/", "layout");
+    return { error: null, id: createdId };
   }
 
   revalidatePath("/", "layout");
-  return { error: null };
+  return { error: null, id };
 }
 
 /** Tick a task off (or back on) without a page navigation. */

@@ -105,6 +105,19 @@ export function dateKey(date: Date = new Date()): string {
   return `${value.year}-${value.month}-${value.day}`;
 }
 
+/**
+ * Midnight of "today" in the application timezone, as an instant.
+ *
+ * Derived from nowMinutes() (minutes since app-tz midnight), so it is exact
+ * for fixed-offset zones like the default Africa/Accra; on DST days it lands
+ * within an hour of the true boundary, which is plenty for "created today".
+ */
+export function startOfToday(now: Date = new Date()): Date {
+  const elapsedSeconds = nowMinutes(now) * 60 + now.getSeconds();
+
+  return new Date(now.getTime() - elapsedSeconds * 1000 - now.getMilliseconds());
+}
+
 /** The calendar day before a "YYYY-MM-DD" key. */
 export function previousDateKey(key: string): string {
   const [year, month, day] = key.split("-").map(Number);

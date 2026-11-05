@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 import { registerStepOne } from "@/app/actions/auth";
+import { AuthLoading } from "@/components/AuthLoading";
 import { GoogleButton } from "@/components/GoogleButton";
 import { requireGuest } from "@/lib/auth";
 import { firstParam } from "@/lib/utils";
@@ -85,6 +86,8 @@ export default async function RegisterPage({
             required
           />
         </label>
+
+        <AuthLoading />
 
         <button className="btn-primary" type="submit">
           Continue

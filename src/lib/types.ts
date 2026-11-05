@@ -4,7 +4,9 @@ export type NotificationKind =
   | "overdue"
   | "blocker"
   | "reminder"
-  | "upcoming";
+  | "upcoming"
+  /** Periodic "you haven't added any todos today" nudge (feed-only). */
+  | "nudge";
 
 export interface Profile {
   id: string;

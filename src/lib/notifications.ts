@@ -1,5 +1,6 @@
 import type { NotificationItem, NotificationKind, Profile, Todo } from "@/lib/types";
-import { formatMinutes, formatTime, normalizeTime, nowMinutes } from "@/lib/time";
+import { siteUrl } from "@/lib/env";
+import { dateKey, formatMinutes, formatTime, normalizeTime, nowMinutes } from "@/lib/time";
 
 /** Lead-time choices offered on the settings page (minutes). */
 export const NOTIFICATION_LEAD_OPTIONS = [5, 10, 15, 30, 60, 120] as const;
@@ -120,6 +121,7 @@ export function buildNotifications(
     blocker: 1,
     reminder: 2,
     upcoming: 3,
+    nudge: 4,
   };
 
   return items.sort((a, b) => rank[a.kind] - rank[b.kind] || a.sort - b.sort);
@@ -138,7 +140,9 @@ export function notificationKindLabel(kind: NotificationKind): string {
       ? "Blocked"
       : kind === "reminder"
         ? "Reminders"
-        : "Coming up";
+        : kind === "nudge"
+          ? "Planning"
+          : "Coming up";
 }
 
 export function notificationKindHint(kind: NotificationKind): string {
@@ -148,7 +152,9 @@ export function notificationKindHint(kind: NotificationKind): string {
       ? "Tasks waiting on someone or something."
       : kind === "reminder"
         ? "Starting soon or happening right now."
-        : "Scheduled for later today.";
+        : kind === "nudge"
+          ? "A reminder to plan your day when nothing has been added yet."
+          : "Scheduled for later today.";
 }
 
 /** "Coming up" is listed on the screen but would be noise as an OS alert. */
@@ -156,7 +162,10 @@ export function alertableNotifications(items: NotificationItem[]): NotificationI
   return items.filter(
     (item) =>
       !item.read &&
-      (item.kind === "overdue" || item.kind === "blocker" || item.kind === "reminder"),
+      (item.kind === "overdue" ||
+        item.kind === "blocker" ||
+        item.kind === "reminder" ||
+        item.kind === "nudge"),
   );
 }
 
@@ -168,16 +177,56 @@ export function alertHeading(kind: NotificationKind): string {
       ? "Blocked task"
       : kind === "reminder"
         ? "Starting soon"
-        : "Scrum Master";
+        : kind === "nudge"
+          ? "Plan your day"
+          : "Scrum Master";
 }
 
 /** Where an alert's click should land. */
 export function notificationUrl(item: Pick<NotificationItem, "kind" | "todo_id">): string {
+  if (item.kind === "nudge") {
+    return "/?add=1"; // straight into the inline composer
+  }
+
   if (item.kind === "blocker") {
     return "/notifications";
   }
 
   return item.todo_id ? `/?edit=${encodeURIComponent(item.todo_id)}` : "/notifications";
+}
+
+/** Hours (application timezone) when the planning nudge may fire. */
+const NUDGE_FROM_HOUR = 9;
+const NUDGE_TO_HOUR = 21; // exclusive
+const NUDGE_BUCKET_HOURS = 3;
+
+/**
+ * The proactive "you haven't added any todos today" nudge.
+ *
+ * Returns null outside9:00–21:00 app time; otherwise an item keyed by
+ * date + three-hour bucket, so the alert feed re-raises it once per bucket
+ * while the condition holds and stops the moment it no longer does. The
+ * caller supplies the "nothing added yet" check (it needs the database).
+ */
+export function todoNudge(now: Date = new Date()): Omit<NotificationItem, "read" | "emailed"> | null {
+  const hour = Math.floor(nowMinutes(now) / 60);
+
+  if (hour < NUDGE_FROM_HOUR || hour >= NUDGE_TO_HOUR) {
+    return null;
+  }
+
+  const bucket = Math.floor(hour / NUDGE_BUCKET_HOURS);
+
+  return {
+    key: `nudge:${dateKey(now)}:${bucket}`,
+    kind: "nudge",
+    todo_id: "",
+    title: "No todos yet today",
+    detail: "Add your first task for today.",
+    start_time: null,
+    end_time: null,
+    sort: -1,
+  };
 }
 
 export function notificationDigest(
@@ -256,4 +305,28 @@ function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+/** Email for the digest's share of the planning nudge (idle day). */
+export function todoNudgeEmail(profile: Pick<Profile, "name">): {
+  subject: string;
+  text: string;
+  html: string;
+} {
+  const name = profile.name || "there";
+  const url = `${siteUrl()}/?add=1`;
+  const subject = "Scrum Master — plan your day";
+  const text =
+    `Hello ${name},\n\n` +
+    `You haven't added any todos yet today. Add your first task and start crossing things off:\n${url}\n\n` +
+    "Change these emails in Scrum Master → Settings.\n";
+  const html =
+    '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">' +
+    '<h1 style="font-size:20px;font-weight:600;margin:0 0 4px;">Scrum Master</h1>' +
+    `<p style="font-size:14px;color:#727272;margin:0 0 8px;">Hello ${escapeHtml(name)},</p>` +
+    `<p style="font-size:14px;color:#727272;margin:0 0 20px;">You haven't added any todos yet today. Add your first task and start crossing things off:</p>` +
+    `<p style="margin:0 0 24px;"><a href="${escapeHtml(url)}" style="background:#21005D;color:#FFFFFF;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;">Add a todo</a></p>` +
+    '<p style="font-size:12px;color:#727272;margin:0;">Change these emails in Scrum Master → Settings.</p></div>';
+
+  return { subject, text, html };
 }

@@ -16,8 +16,13 @@
 !define SM_RUN_KEY "Software\Microsoft\Windows\CurrentVersion\Run"
 
 # Declared globally — shared by the page functions and customInstall.
+# The uninstaller build compiles this same include but never expands those
+# macros, so declaring the vars there would trip NSIS warning 6001 (and
+# electron-builder passes -WX, warnings-as-errors).
+!ifndef BUILD_UNINSTALLER
 Var smStartupCheckbox
 Var smStartupEnabled # "1" = run at logon, "0" = don't, "" = page never shown (silent install)
+!endif
 
 !macro customPageAfterChangeDir
   Page custom smStartupPageCreate smStartupPageLeave

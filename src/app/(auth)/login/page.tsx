@@ -2,6 +2,7 @@
 import Link from "next/link";
 
 import { signIn } from "@/app/actions/auth";
+import { AuthLoading } from "@/components/AuthLoading";
 import { GoogleButton } from "@/components/GoogleButton";
 import { requireGuest } from "@/lib/auth";
 import { firstParam, safeNext } from "@/lib/utils";
@@ -61,6 +62,8 @@ export default async function LoginPage({
             required
           />
         </label>
+
+        <AuthLoading />
 
         <button className="btn-primary" type="submit">
           Sign in
