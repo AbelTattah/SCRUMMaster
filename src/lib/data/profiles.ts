@@ -46,7 +46,7 @@ export async function listMembers(organizationId: string, ownerId: string): Prom
 
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id,name,email,avatar_url,xp,streak,last_report_date,invited_at")
+    .select("id,name,email,avatar_url,xp,invited_at")
     .eq("organization_id", organizationId)
     .order("name", { ascending: true });
 
@@ -87,8 +87,6 @@ export async function listMembers(organizationId: string, ownerId: string): Prom
         todo_count: entry.total,
         completed_count: entry.completed,
         xp: Number(profile.xp ?? 0),
-        streak: Number(profile.streak ?? 0),
-        last_report_date: (profile.last_report_date as string | null) ?? null,
         invited_at: (profile.invited_at as string | null) ?? null,
       };
     })

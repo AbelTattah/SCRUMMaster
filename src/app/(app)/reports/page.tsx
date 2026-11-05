@@ -1,18 +1,30 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { saveReport } from "@/app/actions/reports";
+import { ReportControls } from "@/components/ReportControls";
+import { Icon } from "@/components/icons";
 import { requireOnboardedUser } from "@/lib/auth";
-import { countReports, getReport, listReports } from "@/lib/data/reports";
-import { countTodos } from "@/lib/data/todos";
-import { levelProgress, nextStreakBonus, XP_DAILY_REPORT } from "@/lib/gamification";
-import { dateKey, formatDayLabel, formatDayShort } from "@/lib/time";
+import { buildReport, type ReportTask } from "@/lib/data/reports";
+import {
+  parseDateKey,
+  parsePeriod,
+  reportWindow,
+  type ReportScope,
+} from "@/lib/reportPeriods";
+import { formatStamp, formatTimeRange } from "@/lib/time";
 import { firstParam } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Daily report" };
+export const metadata: Metadata = { title: "Reports" };
 
-function plural(value: number, word: string): string {
-  return `${value} ${word}${value === 1 ? "" : "s"}`;
+function statusOf(task: ReportTask): { key: string; label: string } {
+  if (task.completed) {
+    return { key: "done", label: "Completed" };
+  }
+
+  if (task.blocker) {
+    return { key: "blocked", label: "Blocked" };
+  }
+
+  return { key: "open", label: "In progress" };
 }
 
 export default async function ReportsPage({
@@ -22,188 +34,127 @@ export default async function ReportsPage({
 }) {
   const user = await requireOnboardedUser();
   const params = await searchParams;
-  const today = dateKey();
 
-  const [report, history, reportCount, counts] = await Promise.all([
-    getReport(user.id, today),
-    listReports(user.id, 30),
-    countReports(user.id),
-    countTodos(user.id),
-  ]);
+  const period = parsePeriod(firstParam(params.period));
+  const dateKey = parseDateKey(firstParam(params.date));
+  // Owners default to the whole organization (they asked for org downloads);
+  // members only ever see their own working set.
+  const scope: ReportScope =
+    user.isOwner && user.organization && firstParam(params.scope) !== "mine"
+      ? "org"
+      : "mine";
 
-  const progress = levelProgress(user.profile.xp);
-  const streak = user.profile.streak;
-  const bonus = nextStreakBonus(streak, report !== null);
-  const upcomingXp = XP_DAILY_REPORT + bonus;
-  const pastHistory = history.filter((entry) => entry.report_date !== today);
+  const window = reportWindow(period, dateKey);
+  const data = await buildReport({
+    start: window.start,
+    end: window.end,
+    scope,
+    userId: user.id,
+    organizationId: user.organization?.id ?? null,
+    organizationName: user.organization?.name ?? null,
+  });
 
-  const error = firstParam(params.error).trim();
+  const pdfHref = `/api/reports/pdf?period=${period}&date=${dateKey}&scope=${scope}`;
+  const { summary } = data;
 
   return (
     <>
       <header className="page-header">
         <div className="page-heading">
-          <h1 className="greeting">Daily report</h1>
-          <p className="date-line">{formatDayLabel(today)}</p>
+          <h1 className="greeting">Reports</h1>
+          <p className="date-line">
+            {window.label} · {data.scopeLabel}
+          </p>
         </div>
       </header>
 
-      {error ? (
-        <p className="auth-error" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <ReportControls
+        period={period}
+        dateKey={dateKey}
+        prevDate={window.prevDate}
+        nextDate={window.nextDate}
+        scope={scope}
+        canSwitchScope={Boolean(user.isOwner && user.organization)}
+        pdfHref={pdfHref}
+      />
 
       <div className="report-stats">
         <div className="stat-card">
-          <span className="stat-label">Level</span>
-          <strong className="stat-value">{progress.level}</strong>
-          <div className="level-bar" aria-hidden="true">
-            <span style={{ width: `${progress.percent}%` }} />
-          </div>
-          <span className="stat-meta">
-            {progress.earned} / {progress.needed} XP to level {progress.level + 1}
-          </span>
+          <span className="stat-label">Created</span>
+          <strong className="stat-value">{summary.created}</strong>
+          <span className="stat-meta">in this period</span>
         </div>
 
         <div className="stat-card">
-          <span className="stat-label">Streak</span>
-          <strong className="stat-value">{plural(streak, "day")}</strong>
-          <span className="stat-meta">
-            Best {user.profile.best_streak} day{user.profile.best_streak === 1 ? "" : "s"}
-            {report === null && streak > 0 ? ` · file now for +${upcomingXp} XP` : ""}
-          </span>
+          <span className="stat-label">Completed</span>
+          <strong className="stat-value">{summary.completed}</strong>
+          <span className="stat-meta">{summary.rate}% completion rate</span>
         </div>
 
         <div className="stat-card">
-          <span className="stat-label">Total XP</span>
-          <strong className="stat-value">{user.profile.xp}</strong>
-          <span className="stat-meta">{plural(counts.completed, "task")} completed</span>
+          <span className="stat-label">In progress</span>
+          <strong className="stat-value">{summary.inProgress}</strong>
+          <span className="stat-meta">still open</span>
         </div>
 
         <div className="stat-card">
-          <span className="stat-label">Reports filed</span>
-          <strong className="stat-value">{reportCount}</strong>
+          <span className="stat-label">Blocked</span>
+          <strong className="stat-value">{summary.blocked}</strong>
           <span className="stat-meta">
-            {reportCount === 0 ? "Start with today's" : "Keep it going"}
+            {summary.blocked > 0 ? "needs attention" : "nothing blocked"}
           </span>
         </div>
       </div>
 
-      <form action={saveReport} className="card report-form">
-        <h2 className="card-title">
-          {report ? "Update today's report" : "File today's report"}
-        </h2>
-        <p className="card-sub">
-          Record what got done, what is next and what is in the way. Filing earns{" "}
-          {report ? "nothing more today — edits are free" : `+${upcomingXp} XP`}
-          {report === null && streak > 0 ? ` and keeps your ${plural(streak, "day")} streak alive` : ""}.
-        </p>
-
-        <label className="field">
-          <span>Yesterday&rsquo;s achievements</span>
-          <textarea
-            className="input textarea"
-            name="yesterday"
-            rows={4}
-            maxLength={2000}
-            defaultValue={report?.yesterday ?? ""}
-            placeholder="What did you get done?"
-          />
-        </label>
-
-        <label className="field">
-          <span>Today&rsquo;s plan</span>
-          <textarea
-            className="input textarea"
-            name="today"
-            rows={4}
-            maxLength={2000}
-            defaultValue={report?.today ?? ""}
-            placeholder="What will you deliver today?"
-          />
-        </label>
-
-        <label className="field">
-          <span>Current blockers</span>
-          <textarea
-            className="input textarea"
-            name="blockers"
-            rows={3}
-            maxLength={2000}
-            defaultValue={report?.blockers ?? ""}
-            placeholder="What is in your way?"
-          />
-          <span className="field-hint">
-            Task-level blockers can also be recorded from a task&rsquo;s menu.
-          </span>
-        </label>
-
-        <button className="btn-primary" type="submit">
-          {report ? "Update report" : "Save report"}
-        </button>
-      </form>
-
-      <section className="card report-history">
-        <h2 className="card-title">History</h2>
-        <p className="card-sub">
-          {pastHistory.length === 0
-            ? "Your reports will collect here."
-            : `Your last ${plural(pastHistory.length, "report")}.`}
-        </p>
-
-        {pastHistory.length === 0 ? (
-          <p className="empty">No earlier reports yet — today&rsquo;s is the first.</p>
+      <section className="panel report-tasks" aria-label="Tasks in this period">
+        {data.tasks.length === 0 ? (
+          <p className="empty">
+            No tasks were created in {window.label.toLowerCase()}.
+          </p>
         ) : (
-          pastHistory.map((entry) => (
-            <details className="report-entry" key={entry.id}>
-              <summary>
-                <span className="report-entry-date">
-                  {formatDayShort(entry.report_date)}
+          data.tasks.map((task) => {
+            const status = statusOf(task);
+            const range = formatTimeRange(task.start_time, task.end_time);
+
+            return (
+              <div
+                className={`report-task${task.completed ? " is-done" : ""}`}
+                key={task.id}
+              >
+                <span
+                  className={`report-dot report-dot--${status.key}`}
+                  aria-hidden="true"
+                />
+
+                <span className="report-task-title">{task.title}</span>
+
+                <span className="report-task-meta">
+                  {task.assignee_name ? (
+                    <span className="chip chip--assignee">{task.assignee_name}</span>
+                  ) : null}
+
+                  {scope === "org" && task.creator_name ? (
+                    <span className="report-by">by {task.creator_name}</span>
+                  ) : null}
+
+                  {range ? (
+                    <span className="report-range">
+                      <Icon name="clock" />
+                      <span>{range}</span>
+                    </span>
+                  ) : null}
+
+                  <span className="report-created">{formatStamp(task.created_at)}</span>
+
+                  <span className={`report-chip report-chip--${status.key}`}>
+                    {status.label}
+                  </span>
                 </span>
-                <span className="report-entry-preview">
-                  {firstLine(entry.today) || firstLine(entry.yesterday) || "No details"}
-                </span>
-              </summary>
-
-              <div className="report-entry-body">
-                {entry.yesterday ? (
-                  <div>
-                    <h4>Yesterday</h4>
-                    <p>{entry.yesterday}</p>
-                  </div>
-                ) : null}
-
-                {entry.today ? (
-                  <div>
-                    <h4>Today</h4>
-                    <p>{entry.today}</p>
-                  </div>
-                ) : null}
-
-                {entry.blockers ? (
-                  <div>
-                    <h4>Blockers</h4>
-                    <p>{entry.blockers}</p>
-                  </div>
-                ) : null}
               </div>
-            </details>
-          ))
+            );
+          })
         )}
       </section>
-
-      <p className="report-foot">
-        Need to change an older day? Reports are locked to the day they were
-        filed — <Link href="/notifications">notifications</Link> show what needs
-        attention right now.
-      </p>
     </>
   );
-}
-
-function firstLine(value: string): string {
-  const line = value.split("\n").find((part) => part.trim() !== "") ?? "";
-
-  return line.trim().slice(0, 90);
 }

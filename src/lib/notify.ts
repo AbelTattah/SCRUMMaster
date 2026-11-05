@@ -30,7 +30,6 @@ const ALERT_KINDS = new Set<NotificationItem["kind"]>([
   "overdue",
   "blocker",
   "reminder",
-  "report",
 ]);
 
 /**
@@ -192,8 +191,7 @@ function buildPushPayload(pending: NotificationItem[]): PushPayload {
   if (pending.length === 1) {
     return {
       title: alertHeading(first.kind),
-      body:
-        first.kind === "report" ? first.detail : `${first.title} — ${first.detail}`,
+      body: `${first.title} — ${first.detail}`,
       url: notificationUrl(first),
       tag: first.key,
     };

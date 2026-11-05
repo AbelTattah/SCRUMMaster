@@ -1,92 +1,116 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { DailyReport } from "@/lib/types";
+import type { ReportScope } from "@/lib/reportPeriods";
+import type { Todo } from "@/lib/types";
 
-export async function getReport(
-  userId: string,
-  reportDate: string,
-): Promise<DailyReport | null> {
-  const { data } = await createAdminClient()
-    .from("daily_reports")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("report_date", reportDate)
-    .maybeSingle<DailyReport>();
-
-  return data ?? null;
+export interface ReportTask extends Todo {
+  creator_name: string;
+  assignee_name: string | null;
 }
 
-export async function listReports(userId: string, limit = 30): Promise<DailyReport[]> {
-  const { data } = await createAdminClient()
-    .from("daily_reports")
-    .select("*")
-    .eq("user_id", userId)
-    .order("report_date", { ascending: false })
-    .limit(limit);
-
-  return (data ?? []) as DailyReport[];
+export interface ReportSummary {
+  created: number;
+  completed: number;
+  inProgress: number;
+  blocked: number;
+  /** Share of created tasks that are finished, 0–100. */
+  rate: number;
 }
 
-export async function countReports(userId: string): Promise<number> {
-  const { count } = await createAdminClient()
-    .from("daily_reports")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
+export interface ReportData {
+  tasks: ReportTask[];
+  summary: ReportSummary;
+  /** "Entire organization — Test" or "My tasks". */
+  scopeLabel: string;
+}
 
-  return count ?? 0;
+export interface ReportQuery {
+  start: Date;
+  end: Date;
+  scope: ReportScope;
+  userId: string;
+  organizationId: string | null;
+  organizationName: string | null;
 }
 
 /**
- * File (or update) the report for a day. The database function advances the
- * streak and awards XP only when the day's report is new.
+ * Every task CREATED inside [start, end) for the chosen scope — the whole
+ * organization for owners, the caller's own working set (created by them or
+ * assigned to them) otherwise.
  */
-export async function fileReport(
-  userId: string,
-  reportDate: string,
-  fields: { yesterday: string; today: string; blockers: string },
-): Promise<{ xp: number; streak: number; isNew: boolean; error: string | null }> {
-  const { data, error } = await createAdminClient().rpc("file_daily_report", {
-    p_user_id: userId,
-    p_date: reportDate,
-    p_yesterday: fields.yesterday,
-    p_today: fields.today,
-    p_blockers: fields.blockers,
-  });
+export async function buildReport(query: ReportQuery): Promise<ReportData> {
+  const admin = createAdminClient();
+  const startIso = query.start.toISOString();
+  const endIso = query.end.toISOString();
 
-  if (error) {
-    return { xp: 0, streak: 0, isNew: false, error: error.message };
+  let request = admin.from("todos").select("*");
+
+  let people = new Map<string, { name: string }>();
+
+  if (query.scope === "org" && query.organizationId) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id,name")
+      .eq("organization_id", query.organizationId);
+
+    for (const profile of profiles ?? []) {
+      people.set(profile.id as string, { name: profile.name as string });
+    }
+
+    const ids = [...people.keys()];
+
+    if (ids.length === 0) {
+      return {
+        tasks: [],
+        summary: { created: 0, completed: 0, inProgress: 0, blocked: 0, rate: 0 },
+        scopeLabel: `Entire organization — ${query.organizationName ?? ""}`.trim(),
+      };
+    }
+
+    request = request.in("user_id", ids);
+  } else {
+    request = request.or(`user_id.eq.${query.userId},assignee_id.eq.${query.userId}`);
+
+    // Names for the assignee/creator columns of "my tasks" reports.
+    if (query.organizationId) {
+      const { data: profiles } = await admin
+        .from("profiles")
+        .select("id,name")
+        .eq("organization_id", query.organizationId);
+
+      for (const profile of profiles ?? []) {
+        people.set(profile.id as string, { name: profile.name as string });
+      }
+    }
   }
 
-  const payload = (data ?? {}) as { xp?: number; streak?: number; new?: boolean };
+  const { data } = await request
+    .gte("created_at", startIso)
+    .lt("created_at", endIso)
+    .order("created_at", { ascending: true });
+
+  const rows = (data ?? []) as Todo[];
+
+  const tasks: ReportTask[] = rows.map((todo) => ({
+    ...todo,
+    creator_name: people.get(todo.user_id)?.name ?? "",
+    assignee_name: todo.assignee_id ? (people.get(todo.assignee_id)?.name ?? null) : null,
+  }));
+
+  const completed = tasks.filter((task) => task.completed).length;
+  const blocked = tasks.filter((task) => task.blocker !== null).length;
 
   return {
-    xp: Number(payload.xp ?? 0),
-    streak: Number(payload.streak ?? 0),
-    isNew: Boolean(payload.new),
-    error: null,
+    tasks,
+    summary: {
+      created: tasks.length,
+      completed,
+      inProgress: tasks.length - completed,
+      blocked,
+      rate: tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100),
+    },
+    scopeLabel:
+      query.scope === "org" && query.organizationId
+        ? `Entire organization — ${query.organizationName ?? ""}`.trim()
+        : "My tasks",
   };
-}
-
-/** Which organization members have filed a report for the given day. */
-export async function reportedUserIds(
-  organizationId: string,
-  reportDate: string,
-): Promise<Set<string>> {
-  const { data: profiles } = await createAdminClient()
-    .from("profiles")
-    .select("id")
-    .eq("organization_id", organizationId);
-
-  const ids = (profiles ?? []).map((row) => row.id as string);
-
-  if (ids.length === 0) {
-    return new Set();
-  }
-
-  const { data: reports } = await createAdminClient()
-    .from("daily_reports")
-    .select("user_id")
-    .in("user_id", ids)
-    .eq("report_date", reportDate);
-
-  return new Set((reports ?? []).map((row) => row.user_id as string));
 }

@@ -2642,43 +2642,6 @@ svg {
    Daily reports, assignment, blockers and gamification
    ========================================================================== */
 
-/* --- home: report nudge --------------------------------------------------- */
-.report-nudge {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-top: 22px;
-    padding: 16px 20px;
-    background: #F4F0FB;
-    border: 1px solid #E4D9F7;
-    border-left: 4px solid var(--purple);
-    border-radius: var(--radius-lg);
-}
-
-.report-nudge.is-done {
-    background: #F1F8F4;
-    border-color: #D7EDE0;
-    border-left-color: #1E7A46;
-}
-
-.report-nudge-text {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.report-nudge-text strong {
-    font-size: 15px;
-    color: var(--ink);
-}
-
-.report-nudge-text span {
-    font-size: 13.5px;
-    color: var(--muted);
-}
-
 /* --- task tags: assignee + blocker ---------------------------------------- */
 .todo-tags {
     display: flex;
@@ -2778,138 +2741,6 @@ svg {
     font-size: 12.5px;
     line-height: 1.45;
     color: var(--muted);
-}
-
-.level-bar {
-    height: 6px;
-    overflow: hidden;
-    border-radius: 3px;
-    background: var(--panel-bg);
-}
-
-.level-bar span {
-    display: block;
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--purple), #6D28D9);
-    transition: width 0.3s ease;
-}
-
-/* --- reports page: form --------------------------------------------------- */
-.report-form {
-    display: flex;
-    flex-direction: column;
-    margin-top: 22px;
-}
-
-.report-form .field {
-    margin-bottom: 16px;
-}
-
-.input.textarea {
-    height: auto;
-    min-height: 96px;
-    padding: 12px 14px;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    resize: vertical;
-}
-
-.report-form .btn-primary {
-    align-self: flex-start;
-    width: auto;
-    padding: 0 28px;
-}
-
-/* --- reports page: history ------------------------------------------------ */
-.report-history {
-    display: flex;
-    flex-direction: column;
-    margin-top: 22px;
-}
-
-.report-entry {
-    border-top: 1px solid var(--line);
-}
-
-.report-entry summary {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    padding: 15px 2px;
-    cursor: pointer;
-    list-style: none;
-}
-
-.report-entry summary::-webkit-details-marker {
-    display: none;
-}
-
-.report-entry summary::marker {
-    content: "";
-}
-
-.report-entry summary::after {
-    content: "+";
-    margin-left: auto;
-    font-size: 18px;
-    line-height: 1;
-    color: var(--muted);
-}
-
-.report-entry[open] summary::after {
-    content: "–";
-}
-
-.report-entry-date {
-    flex: none;
-    min-width: 160px;
-    font-size: 14.5px;
-    font-weight: 600;
-    color: var(--ink);
-}
-
-.report-entry-preview {
-    overflow: hidden;
-    font-size: 14px;
-    color: var(--muted);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.report-entry-body {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    padding: 0 2px 18px;
-}
-
-.report-entry-body h4 {
-    margin: 0 0 4px;
-    font-size: 11.5px;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--purple);
-}
-
-.report-entry-body p {
-    margin: 0;
-    font-size: 14.5px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    color: var(--nav-ink);
-}
-
-.report-foot {
-    margin: 18px 0 0;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.report-foot a {
-    color: var(--purple);
-    font-weight: 600;
 }
 
 /* --- team: member management ---------------------------------------------- */
@@ -3046,25 +2877,6 @@ svg {
     color: var(--ink);
 }
 
-.leader-streak {
-    flex: none;
-    min-width: 96px;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.chip--reported {
-    background: #E9F5EE;
-    color: #1E7A46;
-}
-
-.leader-noreport {
-    flex: none;
-    min-width: 96px;
-    font-size: 12.5px;
-    color: #ABABAB;
-}
-
 /* Someone the owner added who has not signed in yet */
 .chip-pending {
     display: inline-flex;
@@ -3095,16 +2907,6 @@ svg {
 
 /* --- phone ---------------------------------------------------------------- */
 @media (max-width: 700px) {
-    .report-nudge {
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 14px 16px;
-    }
-
-    .report-nudge .btn-primary {
-        width: 100%;
-    }
-
     .report-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
@@ -3127,19 +2929,6 @@ svg {
         max-width: 96px;
     }
 
-    .report-entry summary {
-        flex-wrap: wrap;
-        gap: 4px 12px;
-    }
-
-    .report-entry-date {
-        min-width: 0;
-    }
-
-    .report-entry-preview {
-        flex-basis: 100%;
-    }
-
     .member-add {
         flex-direction: column;
         align-items: stretch;
@@ -3160,9 +2949,7 @@ svg {
         min-width: 0;
     }
 
-    .leader-xp,
-    .leader-streak,
-    .leader-noreport {
+    .leader-xp {
         min-width: 0;
     }
 }
@@ -3533,4 +3320,215 @@ button.chip:disabled {
     .blocker-editor {
         padding: 8px;
     }
+}
+
+
+/* ==========================================================================
+   Period reports — daily / weekly / monthly by creation time, summary and
+   task list, exported to PDF
+   ========================================================================== */
+.report-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.report-periods {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.report-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pager-btn {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1.5px solid var(--field-line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--nav-ink);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.pager-btn:hover {
+    border-color: var(--purple);
+    color: var(--purple);
+}
+
+.report-date {
+    height: 40px;
+    width: auto;
+    padding: 0 10px;
+    font-size: 14px;
+}
+
+.report-download {
+    margin-left: auto;
+}
+
+/* --- the task list ------------------------------------------------------- */
+.report-tasks {
+    padding: 18px;
+    margin-top: 22px;
+}
+
+.report-task {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 58px;
+    margin-bottom: 6px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.report-task:last-child {
+    margin-bottom: 0;
+}
+
+.report-dot {
+    width: 10px;
+    height: 10px;
+    flex: none;
+    border-radius: 50%;
+}
+
+.report-dot--done {
+    background: #1E7A46;
+}
+
+.report-dot--open {
+    background: var(--amber);
+}
+
+.report-dot--blocked {
+    background: #B3261E;
+}
+
+.report-task-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-task.is-done .report-task-title {
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+.report-task-meta {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 14px;
+    max-width: 55%;
+}
+
+.report-by,
+.report-created {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.report-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.report-range svg {
+    width: 15px;
+    height: 15px;
+}
+
+.report-chip {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.report-chip--done {
+    background: #E9F5EE;
+    color: #1E7A46;
+}
+
+.report-chip--open {
+    background: #FEF5E0;
+    color: #8A5A00;
+}
+
+.report-chip--blocked {
+    background: #FDECEC;
+    color: #B3261E;
+}
+
+@media (max-width: 700px) {
+    .report-controls {
+        gap: 10px;
+    }
+
+    .report-download {
+        flex: 1 0 100%;
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .report-task {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px;
+    }
+
+    .report-task-title {
+        flex: 1 1 auto;
+        font-size: 15px;
+    }
+
+    .report-task-meta {
+        flex: 1 0 100%;
+        max-width: none;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-left: 24px;
+    }
+}
+
+/* --- notification permission panel actions ------------------------------- */
+.permission-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.permission-actions + .setting-status {
+    margin-top: 12px;
 }

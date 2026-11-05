@@ -142,3 +142,16 @@ export function formatDayShort(key: string): string {
     timeZone: "UTC",
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
+
+/** "4 Nov, 14:02" — a created-at stamp in the application timezone. */
+export function formatStamp(value: string | Date): string {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: appTimezone(),
+  }).format(date);
+}
