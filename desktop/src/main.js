@@ -8,14 +8,91 @@
  *   2. bundled standalone server — the Next.js build shipped inside the app,
  *                                   started in-process on a loopback port
  *   3. the production site       — fallback when no bundle is present
+ *
+ * The window never shows a raw colour while loading: a branded splash shows
+ * first, and a failed load lands on a friendly retry page instead.
  */
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, Menu, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const http = require("node:http");
 
 const PRODUCTION_URL = "https://scrum-master-two.vercel.app";
 const SMOKE_TEST = process.argv.includes("--smoke-test");
+
+/* ------------------------------------------------------------------ pages */
+
+const BRAND_CSS = `
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+    background: #FAFAFA; color: #1A1A1A;
+    font-family: Poppins, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .card { text-align: center; max-width: 420px; padding: 40px 32px; }
+  .mark {
+    display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 20px;
+    border-radius: 16px; background: linear-gradient(135deg, #2E0480, #160043);
+    color: #fff; font-size: 30px; font-weight: 600;
+    box-shadow: 0 18px 40px rgba(33, 0, 93, 0.28);
+  }
+  h1 { font-size: 22px; font-weight: 600; }
+  p { margin-top: 8px; color: #727272; font-size: 14px; line-height: 1.6; }
+  .spinner {
+    width: 26px; height: 26px; margin: 22px auto 0;
+    border: 3px solid #E4D9F7; border-top-color: #21005D;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; }
+  button, a {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 42px; padding: 0 20px; border-radius: 8px; border: 0;
+    font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer;
+  }
+  button { background: #21005D; color: #fff; }
+  button:hover { background: #2E0480; }
+  a { background: #fff; color: #21005D; border: 1.5px solid #E4D9F7; }
+  a:hover { background: #F4F0FB; }
+  .meta { margin-top: 18px; font-size: 12px; color: #ABABAB; }
+`;
+
+function dataUrl(html) {
+  return `data:text/html;charset=utf-8,${encodeURIComponent(html)}`;
+}
+
+const SPLASH_URL = dataUrl(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Scrum Master</title>
+<style>${BRAND_CSS}</style></head>
+<body>
+  <div class="card">
+    <div class="mark">✓</div>
+    <h1>Scrum Master</h1>
+    <p>Loading your tasks…</p>
+    <div class="spinner"></div>
+  </div>
+</body></html>`);
+
+function errorPage(target, code, description) {
+  return dataUrl(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Couldn't load Scrum Master</title>
+<style>${BRAND_CSS}</style></head>
+<body>
+  <div class="card">
+    <div class="mark">!</div>
+    <h1>Couldn't load Scrum Master</h1>
+    <p>${description || "The page failed to load."} (error ${code})<br>
+       Check your connection, then try again.</p>
+    <div class="actions">
+      <button onclick="location.href=${JSON.stringify(target).replace(/"/g, "&quot;")}">Try again</button>
+      <a href="${target}" target="_blank" rel="noreferrer">Open in browser</a>
+    </div>
+    <p class="meta">${target}</p>
+  </div>
+</body></html>`);
+}
+
+/* ------------------------------------------------------- bundle discovery */
 
 /** Repo root in development; <resources>/web when packaged. */
 function webRootCandidates() {
@@ -47,10 +124,6 @@ function findStandaloneRoot() {
   }
 
   return null;
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -89,6 +162,10 @@ function loadWebEnv() {
     loadEnvFile(path.join(dir, ".env.local"));
     loadEnvFile(path.join(dir, ".env"));
   }
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function ping(url) {
@@ -159,13 +236,15 @@ async function resolveUrl() {
   return { url: PRODUCTION_URL, mode: "production" };
 }
 
+/* ----------------------------------------------------------------- window */
+
 function createWindow(url) {
   const window = new BrowserWindow({
     width: 1340,
     height: 900,
     minWidth: 980,
     minHeight: 640,
-    backgroundColor: "#21005D",
+    backgroundColor: "#FAFAFA", // never a raw colour while loading
     title: "Scrum Master",
     icon: path.join(__dirname, "..", "assets", "icon.png"),
     show: false,
@@ -184,7 +263,12 @@ function createWindow(url) {
   // Anything that leaves our origin opens in the default browser (Google
   // sign-in, password-reset links, docs) instead of a new Electron window.
   window.webContents.setWindowOpenHandler(({ url: target }) => {
-    if (new URL(target).origin !== origin) {
+    try {
+      if (new URL(target).origin !== origin) {
+        shell.openExternal(target);
+        return { action: "deny" };
+      }
+    } catch (error) {
       shell.openExternal(target);
       return { action: "deny" };
     }
@@ -193,17 +277,29 @@ function createWindow(url) {
   });
 
   window.webContents.on("will-navigate", (event, target) => {
-    if (new URL(target).origin !== origin) {
+    try {
+      if (new URL(target).origin !== origin) {
+        event.preventDefault();
+        shell.openExternal(target);
+      }
+    } catch (error) {
       event.preventDefault();
       shell.openExternal(target);
     }
   });
 
-  window.webContents.on("did-fail-load", (_event, code, description) => {
-    console.error(`[desktop] load failed: ${code} ${description}`);
-  });
+  // A failed load gets a branded retry page — never a blank window.
+  window.webContents.on(
+    "did-fail-load",
+    (_event, code, description, isMainFrame, failedUrl) => {
+      if (!isMainFrame || code === -3 || (failedUrl || "").startsWith("data:")) {
+        return; // aborted navigation or the pages we load ourselves
+      }
 
-  window.loadURL(url);
+      console.error(`[desktop] load failed: ${code} ${description} (${failedUrl})`);
+      window.loadURL(errorPage(url, code, description));
+    },
+  );
 
   if (SMOKE_TEST) {
     window.webContents.once("did-finish-load", () => {
@@ -216,31 +312,116 @@ function createWindow(url) {
       app.exit(1);
     });
 
-    // Never hang a CI run on a slow network.
     setTimeout(() => {
       console.error("SMOKE_FAIL timeout");
       app.exit(1);
     }, 60_000);
+
+    window.loadURL(url);
+  } else {
+    // Branded splash first, then the app — the window is never a colour void.
+    window.loadURL(SPLASH_URL);
+    window.webContents.once("did-finish-load", () => {
+      window.loadURL(url);
+    });
   }
 
   return window;
 }
 
-app.whenReady().then(async () => {
-  const { url, mode } = await resolveUrl();
+/* ------------------------------------------------------------------- menu */
 
-  console.log(`[desktop] loading ${url} (${mode})`);
-  createWindow(url);
+function buildMenu() {
+  const isMac = process.platform === "darwin";
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow(url);
+  const template = [
+    ...(isMac ? [{ role: "appMenu" }] : []),
+    {
+      label: "File",
+      submenu: [
+        { role: "close" },
+        ...(isMac ? [] : [{ type: "separator" }, { role: "quit" }]),
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    { label: "Window", role: "windowMenu" },
+    {
+      label: "Help",
+      role: "help",
+      submenu: [
+        {
+          label: "Scrum Master on the web",
+          click: () => shell.openExternal(PRODUCTION_URL),
+        },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+/* ------------------------------------------------------------------- main */
+
+const gotLock = app.requestSingleInstanceLock();
+
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    const [window] = BrowserWindow.getAllWindows();
+
+    if (window) {
+      if (window.isMinimized()) {
+        window.restore();
+      }
+
+      window.focus();
     }
   });
-});
 
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+  app.whenReady().then(async () => {
+    buildMenu();
+
+    const { url, mode } = await resolveUrl();
+
+    console.log(`[desktop] loading ${url} (${mode})`);
+    createWindow(url);
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow(url);
+      }
+    });
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  });
+}
