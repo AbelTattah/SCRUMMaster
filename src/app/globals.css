@@ -146,6 +146,12 @@ svg {
     user-select: none;
 }
 
+.logo img {
+    display: block;
+    width: auto;
+    height: 46px;
+}
+
 .nav {
     display: flex;
     flex-direction: column;
@@ -323,6 +329,12 @@ svg {
 /* Brand shown only in the phone header — larger screens carry it in the sidebar */
 .mobile-brand {
     display: none;
+}
+
+.mobile-brand img {
+    display: block;
+    width: auto;
+    height: 22px;
 }
 
 .search {
@@ -971,6 +983,11 @@ svg {
         text-align: center;
     }
 
+    .logo img {
+        height: 20px;
+        margin: 0 auto;
+    }
+
     .nav {
         padding: 0 12px;
     }
@@ -1355,6 +1372,12 @@ svg {
     color: var(--ink);
     text-decoration: none;
     user-select: none;
+}
+
+.auth-logo img {
+    display: block;
+    width: auto;
+    height: 30px;
 }
 
 .auth-home-link {

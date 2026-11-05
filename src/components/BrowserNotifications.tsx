@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { alertHeading, notificationUrl } from "@/lib/notifications";
 import { isDesktopApp } from "@/lib/push-client";
+import { playAlertSound } from "@/lib/sound";
 import type { NotificationKind } from "@/lib/types";
 
 const SEEN_KEY = "Scrum Master.notified";
@@ -79,6 +80,7 @@ export function BrowserNotifications() {
 
           if (registration) {
             await registration.showNotification(alertHeading(item.kind), options);
+            playAlertSound();
             return;
           }
         }
@@ -92,6 +94,8 @@ export function BrowserNotifications() {
         window.focus();
         window.location.assign(url);
       };
+
+      playAlertSound();
     }
 
     async function updateBadge(unread: number) {
