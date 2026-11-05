@@ -10,7 +10,31 @@ export type PushState =
   | "denied"
   | "unsubscribed"
   | "subscribed"
+  | "desktop"
   | "failed";
+
+/**
+ * The Electron shell exposes this bridge from its preload script. Desktop has
+ * no Web Push (PushManager) — the app itself is the notification surface — so
+ * in Electron only the OS permission matters.
+ */
+export function isDesktopApp(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    Boolean(
+      (window as unknown as { scrumMasterDesktop?: { electron?: boolean } })
+        .scrumMasterDesktop?.electron,
+    )
+  );
+}
+
+function desktopPermissionState(): PushState {
+  if (window.Notification.permission === "granted") {
+    return "desktop";
+  }
+
+  return window.Notification.permission === "denied" ? "denied" : "no-permission";
+}
 
 function vapidPublicKey(): string {
   return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
@@ -56,6 +80,10 @@ export async function getPushState(): Promise<PushState> {
     return "unsupported";
   }
 
+  if (isDesktopApp()) {
+    return desktopPermissionState();
+  }
+
   if (!vapidPublicKey()) {
     return "not-configured";
   }
@@ -90,6 +118,13 @@ export async function getPushState(): Promise<PushState> {
 export async function subscribePush(): Promise<PushState> {
   if (!supported()) {
     return "unsupported";
+  }
+
+  if (isDesktopApp()) {
+    // Desktop: only the OS permission is needed — the app shows the alerts
+    // itself while it is running.
+    const permission = await window.Notification.requestPermission();
+    return permission === "granted" ? "desktop" : desktopPermissionState();
   }
 
   if (!vapidPublicKey()) {
@@ -138,6 +173,11 @@ export async function subscribePush(): Promise<PushState> {
 export async function unsubscribePush(): Promise<PushState> {
   if (!supported()) {
     return "unsupported";
+  }
+
+  if (isDesktopApp()) {
+    // Nothing to unsubscribe — the permission itself stays with the OS.
+    return desktopPermissionState();
   }
 
   try {

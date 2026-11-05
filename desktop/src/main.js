@@ -12,13 +12,18 @@
  * The window never shows a raw colour while loading: a branded splash shows
  * first, and a failed load lands on a friendly retry page instead.
  */
-const { app, BrowserWindow, Menu, shell } = require("electron");
+const { app, BrowserWindow, Menu, session, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const http = require("node:http");
 
 const PRODUCTION_URL = "https://scrum-master-two.vercel.app";
 const SMOKE_TEST = process.argv.includes("--smoke-test");
+const NOTIFY_TEST = process.argv.includes("--notify-test");
+
+// Windows toast identity — matches the NSIS appId so notifications and the
+// taskbar entry group under one name. Must be set before any notification.
+app.setAppUserModelId("com.scrummaster.desktop");
 
 /* ------------------------------------------------------------------ pages */
 
@@ -296,24 +301,66 @@ function createWindow(url) {
         return; // aborted navigation or the pages we load ourselves
       }
 
+      if (SMOKE_TEST || NOTIFY_TEST) {
+        return; // test modes exit via their own handlers below
+      }
+
       console.error(`[desktop] load failed: ${code} ${description} (${failedUrl})`);
       window.loadURL(errorPage(url, code, description));
     },
   );
 
-  if (SMOKE_TEST) {
-    window.webContents.once("did-finish-load", () => {
+  if (SMOKE_TEST || NOTIFY_TEST) {
+    window.webContents.once("did-finish-load", async () => {
+      if (NOTIFY_TEST) {
+        // Requests permission through the granted handler below, then fires a
+        // real OS notification. The window stays up for a moment so the toast
+        // is visible on screen.
+        try {
+          const result = await window.webContents.executeJavaScript(`(async () => {
+            if (!("Notification" in window)) {
+              return { permission: "unsupported", fired: false };
+            }
+            const initial = Notification.permission;
+            const permission = await Notification.requestPermission();
+            let fired = false;
+            let error = null;
+            if (permission === "granted") {
+              try {
+                new Notification("Scrum Master", {
+                  body: "Desktop notifications are working.",
+                });
+                fired = true;
+              } catch (e) {
+                error = String(e);
+              }
+            }
+            return { initial, permission, fired, error };
+          })()`);
+
+          console.log(`NOTIFY_TEST ${JSON.stringify(result)}`);
+          setTimeout(
+            () => app.exit(result.permission === "granted" && result.fired ? 0 : 1),
+            4000,
+          );
+        } catch (error) {
+          console.error(`NOTIFY_TEST_FAILED ${error}`);
+          app.exit(1);
+        }
+        return;
+      }
+
       console.log(`SMOKE_OK mode=${new URL(url).hostname}`);
       app.exit(0);
     });
 
     window.webContents.once("did-fail-load", (_event, code) => {
-      console.error(`SMOKE_FAIL ${code}`);
+      console.error(`${SMOKE_TEST ? "SMOKE" : "NOTIFY"}_FAIL ${code}`);
       app.exit(1);
     });
 
     setTimeout(() => {
-      console.error("SMOKE_FAIL timeout");
+      console.error(`${SMOKE_TEST ? "SMOKE" : "NOTIFY"}_FAIL timeout`);
       app.exit(1);
     }, 60_000);
 
@@ -406,6 +453,18 @@ if (!gotLock) {
 
   app.whenReady().then(async () => {
     buildMenu();
+
+    // Notifications are the whole point of the desktop shell: grant them
+    // without a prompt (Electron shows no permission UI by default) and do
+    // not advertise anything else the app never uses.
+    session.defaultSession.setPermissionRequestHandler(
+      (_webContents, permission, callback) => {
+        callback(permission === "notifications");
+      },
+    );
+    session.defaultSession.setPermissionCheckHandler(
+      (_webContents, permission) => permission === "notifications",
+    );
 
     const { url, mode } = await resolveUrl();
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { alertHeading, notificationUrl } from "@/lib/notifications";
+import { isDesktopApp } from "@/lib/push-client";
 import type { NotificationKind } from "@/lib/types";
 
 const SEEN_KEY = "Scrum Master.notified";
@@ -70,11 +71,16 @@ export function BrowserNotifications() {
       };
 
       try {
-        const registration = await navigator.serviceWorker?.getRegistration();
+        // In the desktop shell the page-context Notification is the reliable
+        // path (Electron renders it natively); on the web the service worker
+        // is required for installed PWAs, notably Android.
+        if (!isDesktopApp()) {
+          const registration = await navigator.serviceWorker?.getRegistration();
 
-        if (registration) {
-          await registration.showNotification(alertHeading(item.kind), options);
-          return;
+          if (registration) {
+            await registration.showNotification(alertHeading(item.kind), options);
+            return;
+          }
         }
       } catch {
         // Fall through to a page-context notification.
