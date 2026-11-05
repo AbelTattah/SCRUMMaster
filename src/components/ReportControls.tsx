@@ -12,7 +12,9 @@ const PERIODS: { id: ReportPeriod; label: string }[] = [
 
 /**
  * Period, date pager, scope switch (owners) and the PDF download — the whole
- * report is a query string, so every change is a plain navigation.
+ * report is a query string, so every change is a plain navigation. The PDF
+ * itself is generated in the browser: task titles are encrypted, so the
+ * server cannot build the document.
  */
 export function ReportControls({
   period,
@@ -21,7 +23,8 @@ export function ReportControls({
   nextDate,
   scope,
   canSwitchScope,
-  pdfHref,
+  onDownload,
+  downloading,
 }: {
   period: ReportPeriod;
   dateKey: string;
@@ -29,7 +32,8 @@ export function ReportControls({
   nextDate: string;
   scope: ReportScope;
   canSwitchScope: boolean;
-  pdfHref: string;
+  onDownload: () => void;
+  downloading?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,9 +120,14 @@ export function ReportControls({
         </div>
       ) : null}
 
-      <a className="btn-primary btn-small report-download" href={pdfHref}>
-        Download PDF
-      </a>
+      <button
+        className="btn-primary btn-small report-download"
+        type="button"
+        onClick={onDownload}
+        disabled={downloading}
+      >
+        {downloading ? "Preparing…" : "Download PDF"}
+      </button>
     </div>
   );
 }

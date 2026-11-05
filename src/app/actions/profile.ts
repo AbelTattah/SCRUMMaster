@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import { requireOnboardedUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   findProfileByEmail,
   setOrganization,
@@ -14,8 +13,6 @@ import {
 import { createOrganization } from "@/lib/data/organizations";
 import { isUuid } from "@/lib/utils";
 
-const MIN_PASSWORD = 8;
-const MAX_PASSWORD_BYTES = 72;
 const AVATAR_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -136,56 +133,6 @@ export async function updateAvatar(formData: FormData): Promise<void> {
 
   revalidatePath("/", "layout");
   back("/account", "notice", "Profile picture updated.");
-}
-
-export async function updatePasswordAction(formData: FormData): Promise<void> {
-  const current = await requireOnboardedUser();
-  const existingPassword = field(formData, "current_password");
-  const password = field(formData, "password");
-  const confirm = field(formData, "password_confirm");
-
-  if (current.hasPassword && existingPassword === "") {
-    back("/account", "error", "Enter your current password.");
-  }
-
-  if (current.hasPassword) {
-    const supabase = await createServerSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: current.email,
-      password: existingPassword,
-    });
-
-    if (error) {
-      back("/account", "error", "Your current password is incorrect.");
-    }
-  }
-
-  if (password.length < MIN_PASSWORD) {
-    back("/account", "error", "Your new password must be at least 8 characters.");
-  }
-
-  if (Buffer.byteLength(password, "utf8") > MAX_PASSWORD_BYTES) {
-    back("/account", "error", "Your new password is too long (max 72 characters).");
-  }
-
-  if (password !== confirm) {
-    back("/account", "error", "The two new passwords do not match.");
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.updateUser({ password });
-
-  if (error) {
-    back("/account", "error", error.message);
-  }
-
-  back(
-    "/account",
-    "notice",
-    current.hasPassword
-      ? "Password changed."
-      : "Password set — you can now sign in with your email and password too.",
-  );
 }
 
 export async function createOrganizationAction(formData: FormData): Promise<void> {

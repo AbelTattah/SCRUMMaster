@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AddTaskRow, AddTodoButton, AddTodoFab } from "@/components/AddTask";
-import { TaskRow } from "@/components/TaskRow";
+import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
+import { TaskBoard } from "@/components/TaskBoard";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
-import { listTodos } from "@/lib/data/todos";
 import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Home" };
 
+/**
+ * The list itself renders client-side from the encrypted local mirror
+ * (see TaskBoard): the server can no longer read task titles, so rows are
+ * decrypted in the browser after the gate unlocks.
+ */
 export default async function HomePage({
   searchParams,
 }: {
@@ -39,12 +43,9 @@ export default async function HomePage({
   const focusId = firstParam(params.edit);
   const openAdd = params.add !== undefined;
 
-  const [todos, members] = await Promise.all([
-    listTodos(user.id, page, q),
-    user.organization
-      ? listMembers(user.organization.id, user.organization.owner_id)
-      : Promise.resolve([]),
-  ]);
+  const members = user.organization
+    ? await listMembers(user.organization.id, user.organization.owner_id)
+    : [];
 
   const search = new URLSearchParams();
   if (page !== "home") {
@@ -69,30 +70,17 @@ export default async function HomePage({
       <AddTodoFab returnTo={returnTo} />
 
       <section className="panel" aria-label="Todos">
-        {todos.length === 0 ? (
-          <p className="empty">
-            {q ? (
-              <>No todos match &ldquo;{q}&rdquo;.</>
-            ) : (
-              <>Nothing here yet — add your first task below.</>
-            )}
-          </p>
-        ) : (
-          todos.map((todo) => (
-            <TaskRow
-              key={todo.id}
-              todo={todo}
-              returnTo={returnTo}
-              variant="home"
-              currentUserId={user.id}
-              members={members}
-              canAssign={user.isOwner}
-              focus={focusId !== "" && todo.id === focusId}
-            />
-          ))
-        )}
-
-        <AddTaskRow returnTo={returnTo} autoFocus={openAdd} />
+        <TaskBoard
+          scope="home"
+          page={page}
+          q={q}
+          focusId={focusId}
+          returnTo={returnTo}
+          members={members}
+          currentUserId={user.id}
+          canAssign={user.isOwner}
+          autoFocusAdd={openAdd}
+        />
       </section>
     </>
   );

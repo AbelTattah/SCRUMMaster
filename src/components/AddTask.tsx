@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
 
-import { saveTodoInline } from "@/app/actions/todos";
 import { Icon } from "@/components/icons";
+import { createTodoLocal } from "@/lib/sync";
 
 const ADD_EVENT = "Scrum Master:todo:add";
 
@@ -57,7 +57,6 @@ export function AddTodoFab({ returnTo }: { returnTo: string }) {
  * open for the next one.
  */
 export function AddTaskRow({
-  returnTo,
   autoFocus = false,
 }: {
   returnTo: string;
@@ -111,12 +110,8 @@ export function AddTaskRow({
       return;
     }
 
-    const data = new FormData();
-    data.set("title", trimmed);
-    data.set("return_to", returnTo);
-
     startTransition(async () => {
-      const result = await saveTodoInline(data);
+      const result = await createTodoLocal({ title: trimmed });
 
       if (result.error) {
         setError(result.error);

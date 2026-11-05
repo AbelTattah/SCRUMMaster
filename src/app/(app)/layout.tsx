@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from "react";
 
 import { Sidebar, Tabbar, Topbar } from "@/components/AppShell";
 import { BrowserNotifications } from "@/components/BrowserNotifications";
+import { CryptoGate } from "@/components/CryptoGate";
 import { FlashToast } from "@/components/FlashToast";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { countTodos } from "@/lib/data/todos";
@@ -25,7 +26,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const unread = notifications.filter((item) => !item.read).length;
 
   return (
-    <>
+    <CryptoGate
+      user={{
+        id: user.id,
+        email: user.email,
+        name: user.profile.name,
+        isOwner: user.isOwner,
+        inOrg: Boolean(user.organization),
+        hasPassword: user.hasPassword,
+      }}
+    >
       <Suspense fallback={null}>
         <Sidebar user={user} counts={counts} />
       </Suspense>
@@ -47,6 +57,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </Suspense>
 
       {user.profile.notify_browser ? <BrowserNotifications /> : null}
-    </>
+    </CryptoGate>
   );
 }

@@ -7,6 +7,9 @@ import { signOut } from "@/app/actions/auth";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { NotificationBell } from "@/components/NotificationBell";
+import { clearKeys } from "@/lib/keys";
+import { wipeLocal } from "@/lib/localdb";
+import { drainBeforeSignOut } from "@/lib/sync";
 import type { Counts, CurrentUser, NotificationItem, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
@@ -162,7 +165,14 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
           </Link>
 
           <ConfirmForm
-            action={signOut}
+            action={async () => {
+              // Push what we can, then drop this device's copy of the keys
+              // and the encrypted mirror before the session goes away.
+              await drainBeforeSignOut().catch(() => undefined);
+              await wipeLocal().catch(() => undefined);
+              clearKeys();
+              await signOut();
+            }}
             confirmMessage="You will need to sign in again to see your tasks."
             confirmTitle="Sign out of Scrum Master?"
             confirmLabel="Sign out"

@@ -67,16 +67,6 @@ export const countTodos = cache(async (userId: string): Promise<Counts> => {
   );
 });
 
-export async function findTodo(id: string, userId: string): Promise<Todo | null> {
-  const { data } = await createAdminClient()
-    .from("todos")
-    .select("*")
-    .eq("id", id)
-    .or(visibleTo(userId))
-    .maybeSingle<Todo>();
-
-  return data ?? null;
-}
 
 export type TodoRole = "creator" | "assignee" | "owner";
 
@@ -132,27 +122,6 @@ export async function findManagedTodo(
   return null;
 }
 
-export async function createTodo(
-  userId: string,
-  title: string,
-  startTime: string | null,
-  endTime: string | null,
-  assigneeId: string | null = null,
-): Promise<{ error: string | null; id: string | null }> {
-  const { data, error } = await createAdminClient()
-    .from("todos")
-    .insert({
-      user_id: userId,
-      title,
-      start_time: startTime,
-      end_time: endTime,
-      assignee_id: assigneeId,
-    })
-    .select("id")
-    .single();
-
-  return { error: error?.message ?? null, id: data?.id ?? null };
-}
 
 /** How many todos this user *created* since a point in time (nudge logic). */
 export async function countTodosCreatedSince(userId: string, since: Date): Promise<number> {
@@ -170,76 +139,19 @@ export async function countTodosCreatedSince(userId: string, since: Date): Promi
  * is — so the caller can award XP to the right person, or null when the task
  * no longer exists. Callers authorise first (findManagedTodo).
  */
-export async function toggleTodo(
-  id: string,
-): Promise<{ completed: boolean; assignee_id: string | null; user_id: string } | null> {
-  const { data: todo } = await createAdminClient()
-    .from("todos")
-    .select("id,completed,assignee_id,user_id")
-    .eq("id", id)
-    .maybeSingle<{ id: string; completed: boolean; assignee_id: string | null; user_id: string }>();
 
-  if (!todo) {
-    return null;
-  }
-
-  const completed = !todo.completed;
-
-  await createAdminClient()
-    .from("todos")
-    .update({
-      completed,
-      // Finishing a task clears its blocker — nothing is in the way anymore.
-      ...(completed ? { blocker: null } : {}),
-    })
-    .eq("id", id);
-
-  return { completed, assignee_id: todo.assignee_id, user_id: todo.user_id };
-}
-
-export async function updateTodo(
-  id: string,
-  title: string,
-  startTime: string | null,
-  endTime: string | null,
-  assigneeId: string | null = null,
-): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient()
-    .from("todos")
-    .update({
-      title,
-      start_time: startTime,
-      end_time: endTime,
-      assignee_id: assigneeId,
-    })
-    .eq("id", id);
-
-  return { error: error?.message ?? null };
-}
 
 export async function deleteTodo(id: string): Promise<void> {
   await createAdminClient().from("todos").delete().eq("id", id);
 }
 
 /** Record (or clear, with null) what is blocking a task. */
-export async function setBlocker(
-  id: string,
-  blocker: string | null,
-): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient()
-    .from("todos")
-    .update({ blocker })
-    .eq("id", id);
-
-  return { error: error?.message ?? null };
-}
 
 export async function listTeamTodos(
   organizationId: string,
   page: PageFilter = "home",
   query = "",
-): Promise<{ members: Assignee[]; todos: TeamTodo[] }> {
-  const admin = createAdminClient();
+): Promise<{ members: Assignee[]; todos: TeamTodo[] }> {  const admin = createAdminClient();
 
   const { data: profiles } = await admin
     .from("profiles")
@@ -291,4 +203,106 @@ export async function listTeamTodos(
     );
 
   return { members, todos };
+}
+
+/* ------------------------------------------------------------------ sync */
+
+/** The full state a sync push carries for one todo. */
+export interface TodoState {
+  title: string;
+  start_time: string | null;
+  end_time: string | null;
+  assignee_id: string | null;
+  blocker: string | null;
+  completed: boolean;
+}
+
+/**
+ * Insert a todo with a client-generated id (offline-first create: the row
+ * exists locally before the server ever hears about it).
+ */
+export async function insertTodoWithId(
+  userId: string,
+  id: string,
+  state: TodoState,
+): Promise<{ error: string | null }> {
+  const { error } = await createAdminClient()
+    .from("todos")
+    .insert({
+      id,
+      user_id: userId,
+      title: state.title,
+      start_time: state.start_time,
+      end_time: state.end_time,
+      assignee_id: state.assignee_id,
+      blocker: state.blocker,
+      completed: state.completed,
+    });
+
+  return { error: error?.message ?? null };
+}
+
+/** Apply a todo's full state (the sync upsert target). */
+export async function updateTodoState(
+  id: string,
+  state: TodoState,
+): Promise<{ error: string | null }> {
+  const { error } = await createAdminClient()
+    .from("todos")
+    .update({
+      title: state.title,
+      start_time: state.start_time,
+      end_time: state.end_time,
+      assignee_id: state.assignee_id,
+      blocker: state.blocker,
+      completed: state.completed,
+    })
+    .eq("id", id);
+
+  return { error: error?.message ?? null };
+}
+
+const SYNC_ROW_LIMIT = 5000;
+
+/**
+ * Every todo visible to this user, with owner/assignee display fields
+ * joined — the payload the offline mirror is built from.
+ */
+export async function listTodosWithNames(userId: string): Promise<TeamTodo[]> {
+  const rows = await listTodos(userId);
+  const ids = new Set<string>();
+
+  for (const row of rows) {
+    ids.add(row.user_id);
+
+    if (row.assignee_id) {
+      ids.add(row.assignee_id);
+    }
+  }
+
+  if (ids.size === 0) {
+    return [];
+  }
+
+  const { data: profiles } = await createAdminClient()
+    .from("profiles")
+    .select("id,name,avatar_url")
+    .in("id", [...ids]);
+
+  const byId = new Map(
+    ((profiles ?? []) as Assignee[]).map((profile) => [profile.id, profile]),
+  );
+
+  return rows.slice(0, SYNC_ROW_LIMIT).map((row) => {
+    const owner = byId.get(row.user_id);
+    const assignee = row.assignee_id ? byId.get(row.assignee_id) : undefined;
+
+    return {
+      ...row,
+      owner_name: owner?.name ?? "",
+      owner_avatar: owner?.avatar_url ?? null,
+      assignee_name: assignee?.name ?? null,
+      assignee_avatar: assignee?.avatar_url ?? null,
+    };
+  });
 }

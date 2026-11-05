@@ -5,6 +5,7 @@ import { subscriptionCount } from "@/lib/data/push";
 import {
   alertHeading,
   notificationDigest,
+  notificationKindHint,
   notificationUrl,
   todoNudge,
   todoNudgeEmail,
@@ -184,8 +185,15 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
       if (user.notify_email) {
         lines.push(`  would send  ${label} — ${digest.subject}`);
 
+        // Counts only — task titles are encrypted and unreadable server-side.
+        const kinds = new Map<string, number>();
+
         for (const item of pending) {
-          lines.push(`      • ${item.title} — ${item.detail}`);
+          kinds.set(item.kind, (kinds.get(item.kind) ?? 0) + 1);
+        }
+
+        for (const [kind, count] of kinds) {
+          lines.push(`      • ${count} × ${kind}`);
         }
 
         mentioned = true;
@@ -276,24 +284,25 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
   return { sent, skipped, failed, transport, lines };
 }
 
-/** One push message per digest run: the first alert, or a short summary. */
+/**
+ * One push message per digest run — counts only: the payload crosses the
+ * server, which cannot read encrypted task titles.
+ */
 function buildPushPayload(pending: NotificationItem[]): PushPayload {
   const first = pending[0];
 
   if (pending.length === 1) {
     return {
       title: alertHeading(first.kind),
-      body: `${first.title} — ${first.detail}`,
+      body: `${notificationKindHint(first.kind)} Open Scrum Master to review.`,
       url: notificationUrl(first),
       tag: first.key,
     };
   }
 
-  const titles = pending.slice(0, 3).map((item) => item.title);
-
   return {
     title: `${pending.length} items need your attention`,
-    body: titles.join(", ") + (pending.length > titles.length ? "…" : ""),
+    body: "Open Scrum Master to review them.",
     url: "/notifications",
   };
 }

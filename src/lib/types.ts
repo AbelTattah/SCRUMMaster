@@ -79,8 +79,11 @@ export interface NotificationItem {
   key: string;
   kind: NotificationKind;
   todo_id: string;
+  /** Task title — ciphertext (or legacy plaintext) for task items. */
   title: string;
   detail: string;
+  /** Blocker text (ciphertext) for blocker items — composed client-side. */
+  blocker?: string | null;
   start_time: string | null;
   end_time: string | null;
   sort: number;
