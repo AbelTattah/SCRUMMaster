@@ -1,0 +1,689 @@
+/**
+ * Offline-first sync: the UI writes here, never to the network directly.
+ *
+ *   mutate → encrypt → local IndexedDB (instant, offline-safe) → outbox
+ *   flush  → pushTodos (ciphertext) when a network is available
+ *   pull   → server rows back into the mirror (server wins only where the
+ *            device has no pending local change)
+ *
+ * Decryption happens only at the render boundary (decryptRows) — the local
+ * store itself keeps ciphertext at rest.
+ */
+import { loadTeamTodosSync, loadTodosSync, pushTodos, type PushOp } from "@/app/actions/sync";
+import { decryptField, encryptField, isEncrypted, UNREADABLE } from "@/lib/crypto";
+import {
+  allTodos,
+  clearOps,
+  enqueueOp,
+  getMeta,
+  getTodo,
+  localdb,
+  pendingOps,
+  dropOp,
+  putTodos,
+  setMeta,
+  type LocalTodo,
+} from "@/lib/localdb";
+import { contentKey, keys } from "@/lib/keys";
+import type { TeamTodo } from "@/lib/types";
+
+export interface InlineResult {
+  error: string | null;
+  /** Set when a row was created — lets the composer scroll it into view. */
+  id?: string | null;
+}
+
+export interface SyncViewer {
+  id: string;
+  name: string;
+  isOwner: boolean;
+  inOrg: boolean;
+}
+
+let viewer: SyncViewer | null = null;
+let started = false;
+let flushing = false;
+const listeners = new Set<() => void>();
+
+/* ------------------------------------------------------------ plumbing */
+
+export function initSync(next: SyncViewer): void {
+  viewer = next;
+}
+
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+
+  return () => listeners.delete(listener);
+}
+
+function notify(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function emitSyncError(message: string): void {
+  void setMeta("sync_error", message);
+  window.dispatchEvent(new CustomEvent("Scrum Master:sync-error", { detail: message }));
+}
+
+async function viewerOrFail(): Promise<SyncViewer> {
+  if (!viewer) {
+    throw new Error("Sync is not initialised.");
+  }
+
+  return viewer;
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+/* ------------------------------------------------------------ decryption */
+
+/** Decrypt one stored task field (envelope → key → legacy passthrough). */
+export async function decryptText(value: string | null | undefined): Promise<string> {
+  if (!value) {
+    return "";
+  }
+
+  if (!isEncrypted(value)) {
+    return value; // legacy plaintext row
+  }
+
+  const session = keys();
+
+  if (!session) {
+    return UNREADABLE;
+  }
+
+  const first = await decryptField(session.orgKey ?? session.dek, value);
+
+  if (first !== UNREADABLE) {
+    return first;
+  }
+
+  if (session.orgKey) {
+    // Written while the account was personal (or before a grant arrived).
+    return decryptField(session.dek, value);
+  }
+
+  return UNREADABLE;
+}
+
+/** The mirror, decrypted — what every list renders. */
+export async function decryptRows(rows: LocalTodo[]): Promise<TeamTodo[]> {  const out: TeamTodo[] = [];
+
+  for (const row of rows) {
+    out.push({
+      id: row.id,
+      user_id: row.user_id,
+      title: await decryptText(row.title),
+      completed: row.completed,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      assignee_id: row.assignee_id,
+      blocker: row.blocker ? await decryptText(row.blocker) : null,
+      legacy_id: row.legacy_id,
+      created_at: row.created_at,
+      owner_name: row.owner_name,
+      owner_avatar: row.owner_avatar,
+      assignee_name: row.assignee_name,
+      assignee_avatar: row.assignee_avatar,
+    });
+  }
+
+  return out;
+}
+
+/** Home list: rows this user can see (their own + assigned to them). */
+export async function visibleHomeRows(): Promise<LocalTodo[]> {
+  const me = await viewerOrFail();
+  const rows = await allTodos();
+
+  return rows.filter(
+    (row) => !row.tombstone && (row.user_id === me.id || row.assignee_id === me.id),
+  );
+}
+
+/** Team list: the ids the last team pull delivered (owner view). */
+export async function visibleTeamRows(): Promise<LocalTodo[]> {
+  const teamIds = (await getMeta<string[]>("team_ids")) ?? [];
+  const wanted = new Set(teamIds);
+  const rows = await allTodos();
+
+  return rows.filter((row) => !row.tombstone && wanted.has(row.id));
+}
+
+/* ----------------------------------------------------------- local writes */
+
+async function applyUpsert(
+  id: string,
+  state: {
+    title?: string;
+    start_time?: string | null;
+    end_time?: string | null;
+    assignee_id?: string | null;
+    blocker?: string | null;
+    completed?: boolean;
+  },
+  display?: { assignee_name?: string | null; assignee_avatar?: string | null },
+): Promise<LocalTodo> {
+  const me = await viewerOrFail();
+  const existing = await getTodo(id);
+
+  const row: LocalTodo = {
+    id,
+    user_id: existing?.user_id ?? me.id,
+    title: state.title ?? existing?.title ?? "",
+    blocker: state.blocker !== undefined ? state.blocker : (existing?.blocker ?? null),
+    completed: state.completed ?? existing?.completed ?? false,
+    start_time: state.start_time !== undefined ? state.start_time : (existing?.start_time ?? null),
+    end_time: state.end_time !== undefined ? state.end_time : (existing?.end_time ?? null),
+    assignee_id: state.assignee_id !== undefined ? state.assignee_id : (existing?.assignee_id ?? null),
+    legacy_id: existing?.legacy_id ?? null,
+    created_at: existing?.created_at ?? nowIso(),
+    owner_name: existing?.owner_name ?? me.name,
+    owner_avatar: existing?.owner_avatar ?? null,
+    assignee_name:
+      display?.assignee_name !== undefined
+        ? display.assignee_name
+        : (existing?.assignee_name ?? null),
+    assignee_avatar:
+      display?.assignee_avatar !== undefined
+        ? display.assignee_avatar
+        : (existing?.assignee_avatar ?? null),
+    scope: existing?.scope ?? "own",
+    dirty: 1,
+    tombstone: 0,
+  };
+
+  await putTodos([row]);
+  await enqueueOp({
+    kind: "upsert",
+    todo_id: id,
+    created_at: Date.now(),
+  });
+
+  notify();
+
+  return row;
+}
+
+function pushOpFor(row: LocalTodo): PushOp {
+  return {
+    kind: "upsert",
+    id: row.id,
+    title: row.title,
+    start_time: row.start_time,
+    end_time: row.end_time,
+    assignee_id: row.assignee_id,
+    blocker: row.blocker,
+    completed: row.completed,
+  };
+}
+
+/** Create a task: encrypt → mirror → outbox. Returns the new id at once. */
+export async function createTodoLocal(draft: {
+  title: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  assignee_id?: string | null;
+}): Promise<InlineResult> {
+  const title = draft.title.trim();
+
+  if (title.length === 0 || title.length > 200) {
+    return { error: "Please enter a todo title." };
+  }
+
+  const key = contentKey();
+
+  if (!key) {
+    return { error: "The app is locked — unlock it to add tasks." };
+  }
+
+  const id = crypto.randomUUID();
+  const encrypted = await encryptField(key, title);
+
+  await applyUpsert(
+    id,
+    {
+      title: encrypted,
+      start_time: draft.start_time ?? null,
+      end_time: draft.end_time ?? null,
+      assignee_id: draft.assignee_id ?? null,
+      blocker: null,
+      completed: false,
+    },
+    { assignee_name: null, assignee_avatar: null },
+  );
+  await flush();
+
+  return { error: null, id };
+}
+
+/** Save a task's identity (title, times, assignee) from an inline editor. */
+export async function saveTodoLocal(
+  id: string,
+  draft: {
+    title: string;
+    start_time?: string | null;
+    end_time?: string | null;
+    assignee_id?: string | null;
+    assignee_name?: string | null;
+    assignee_avatar?: string | null;
+  },
+): Promise<InlineResult> {
+  const title = draft.title.trim();
+
+  if (title.length === 0 || title.length > 200) {
+    return { error: "Please enter a todo title." };
+  }
+
+  const key = contentKey();
+
+  if (!key) {
+    return { error: "The app is locked." };
+  }
+
+  const existing = await getTodo(id);
+
+  if (!existing) {
+    return { error: "That todo no longer exists." };
+  }
+
+  await applyUpsert(
+    id,
+    {
+      title: await encryptField(key, title),
+      start_time: draft.start_time !== undefined ? draft.start_time : existing.start_time,
+      end_time: draft.end_time !== undefined ? draft.end_time : existing.end_time,
+      assignee_id: draft.assignee_id !== undefined ? draft.assignee_id : existing.assignee_id,
+      blocker: existing.blocker,
+      completed: existing.completed,
+    },
+    {
+      assignee_name:
+        draft.assignee_name !== undefined ? draft.assignee_name : existing.assignee_name,
+      assignee_avatar:
+        draft.assignee_avatar !== undefined ? draft.assignee_avatar : existing.assignee_avatar,
+    },
+  );
+  await flush();
+
+  return { error: null, id };
+}
+
+/** Record (or clear) a blocker. */
+export async function setBlockerLocal(id: string, blocker: string): Promise<InlineResult> {
+  const note = blocker.trim().slice(0, 500);
+  const existing = await getTodo(id);
+
+  if (!existing) {
+    return { error: "That todo no longer exists." };
+  }
+
+  const key = contentKey();
+
+  if (!key && note) {
+    return { error: "The app is locked." };
+  }
+
+  await applyUpsert(id, {
+    title: existing.title,
+    blocker: note ? await encryptField(key!, note) : null,
+    completed: existing.completed,
+    start_time: existing.start_time,
+    end_time: existing.end_time,
+    assignee_id: existing.assignee_id,
+  });
+  await flush();
+
+  return { error: null };
+}
+
+/** Tick a task off (or back on) — full-state so the push is idempotent. */
+export async function toggleTodoLocal(id: string, completed: boolean): Promise<InlineResult> {
+  const existing = await getTodo(id);
+
+  if (!existing) {
+    return { error: "That todo no longer exists." };
+  }
+
+  await applyUpsert(id, {
+    title: existing.title,
+    // Finishing a task clears its blocker — nothing is in the way anymore.
+    blocker: completed ? null : existing.blocker,
+    completed,
+    start_time: existing.start_time,
+    end_time: existing.end_time,
+    assignee_id: existing.assignee_id,
+  });
+  await flush();
+
+  return { error: null };
+}
+
+/** Delete a task locally; the tombstone goes away when the server confirms. */
+export async function deleteTodoLocal(id: string): Promise<InlineResult> {
+  const existing = await getTodo(id);
+
+  if (!existing) {
+    return { error: null };
+  }
+
+  await localdb.todos.update(id, { tombstone: 1, dirty: 1 });
+  await enqueueOp({ kind: "delete", todo_id: id, created_at: Date.now() });
+  notify();
+  void flush();
+
+  return { error: null };
+}
+
+/* --------------------------------------------------------------- pulling */
+
+function toLocal(
+  incoming: TeamTodo,
+  scope: "own" | "team",
+  previous?: LocalTodo,
+): LocalTodo {
+  return {
+    id: incoming.id,
+    user_id: incoming.user_id,
+    title: incoming.title,
+    blocker: incoming.blocker,
+    completed: incoming.completed,
+    start_time: incoming.start_time,
+    end_time: incoming.end_time,
+    assignee_id: incoming.assignee_id,
+    legacy_id: incoming.legacy_id ?? null,
+    created_at: incoming.created_at,
+    owner_name: incoming.owner_name,
+    owner_avatar: incoming.owner_avatar,
+    assignee_name: incoming.assignee_name,
+    assignee_avatar: incoming.assignee_avatar,
+    scope: previous?.scope ?? scope,
+    // A device with pending writes keeps its own version until it pushes.
+    dirty: previous?.dirty ?? 0,
+    tombstone: previous?.tombstone ?? 0,
+  };
+}
+
+async function mergeIncoming(
+  incoming: TeamTodo[],
+  scope: "own" | "team",
+  wasMember: (row: LocalTodo) => boolean,
+): Promise<void> {
+  const existing = new Map((await allTodos()).map((row) => [row.id, row]));
+  const incomingIds = new Set(incoming.map((row) => row.id));
+  const keep: LocalTodo[] = [];
+
+  for (const row of incoming) {
+    const previous = existing.get(row.id);
+
+    if (previous?.dirty || previous?.tombstone) {
+      continue; // local changes win until they are pushed
+    }
+
+    keep.push(toLocal(row, scope, previous));
+  }
+
+  await putTodos(keep);
+
+  // Rows this pull is responsible for that the server no longer serves are
+  // deleted locally — but only when the device has nothing pending. Rows
+  // from the other scope (home vs team) are left alone.
+  const gone = [...existing.values()].filter(
+    (row) => wasMember(row) && !incomingIds.has(row.id) && !row.dirty && !row.tombstone,
+  );
+
+  if (gone.length > 0) {
+    await localdb.todos.bulkDelete(gone.map((row) => row.id));
+  }
+
+  notify();
+}
+
+/** Refresh the home mirror from the server. No-op while offline. */
+export async function pullOwn(): Promise<void> {
+  try {
+    const rows = await loadTodosSync();
+    const me = viewer?.id;
+
+    await mergeIncoming(
+      rows,
+      "own",
+      (row) => Boolean(me) && (row.user_id === me || row.assignee_id === me),
+    );
+    void migrateLegacyRows();
+  } catch {
+    // offline (or signed out) — the mirror keeps serving the last sync
+  }
+}
+
+/** Refresh the owner's team mirror. */
+export async function pullTeam(): Promise<void> {
+  try {
+    const rows = await loadTeamTodosSync();
+    const previousTeamIds = new Set((await getMeta<string[]>("team_ids")) ?? []);
+
+    await setMeta(
+      "team_ids",
+      rows.map((row) => row.id),
+    );
+    await mergeIncoming(rows, "team", (row) => previousTeamIds.has(row.id));
+    void migrateLegacyRows();
+  } catch {
+    // offline
+  }
+}
+
+/**
+ * The automatic migration for accounts that predate encryption: every
+ * plaintext row still in the mirror (or on the server) is re-written as
+ * ciphertext with the current content key and pushed through the normal
+ * outbox. Idempotent — encrypted rows are skipped — so it can run after
+ * every sync until nothing is left in the clear.
+ */
+export async function migrateLegacyRows(): Promise<number> {
+  const key = contentKey();
+
+  if (!key) {
+    return 0;
+  }
+
+  const rows = await allTodos();
+  let migrated = 0;
+
+  for (const row of rows) {
+    if (row.tombstone) {
+      continue;
+    }
+
+    const titleIsEncrypted = isEncrypted(row.title);
+    const blockerIsClear = !row.blocker || isEncrypted(row.blocker);
+
+    if (titleIsEncrypted && blockerIsClear) {
+      continue;
+    }
+
+    const next: LocalTodo = { ...row };
+
+    if (!titleIsEncrypted) {
+      next.title = await encryptField(key, row.title);
+    }
+
+    if (row.blocker && !isEncrypted(row.blocker)) {
+      next.blocker = await encryptField(key, row.blocker);
+    }
+
+    next.dirty = 1;
+    await putTodos([next]);
+    await enqueueOp({ kind: "upsert", todo_id: row.id, created_at: Date.now() });
+    migrated += 1;
+  }
+
+  if (migrated > 0) {
+    notify();
+    void flush();
+  }
+
+  return migrated;
+}
+
+/* --------------------------------------------------------------- flushing */
+
+async function flushOnce(): Promise<boolean> {
+  const ops = await pendingOps();
+
+  if (ops.length === 0) {
+    return false;
+  }
+
+  const payload: PushOp[] = [];
+  const byTodo = new Map<string, { opId: number; createdAt: number; kind: string }>();
+
+  for (const op of ops) {
+    if (op.kind === "delete") {
+      payload.push({ kind: "delete", id: op.todo_id });
+      byTodo.set(op.todo_id, { opId: op.id!, createdAt: op.created_at, kind: "delete" });
+      continue;
+    }
+
+    const row = await getTodo(op.todo_id);
+
+    if (!row || row.tombstone) {
+      // Nothing to upsert (a delete op covers vanished rows) — drop it.
+      await dropOp(op.id!);
+      continue;
+    }
+
+    payload.push(pushOpFor(row));
+    byTodo.set(op.todo_id, { opId: op.id!, createdAt: op.created_at, kind: "upsert" });
+  }
+
+  if (payload.length === 0) {
+    return false;
+  }
+
+  let results;
+
+  try {
+    results = await pushTodos(payload);
+  } catch {
+    return false; // offline — keep the outbox, retry later
+  }
+
+  for (const result of results) {
+    const meta = byTodo.get(result.id);
+
+    if (!meta) {
+      continue;
+    }
+
+    if (!result.ok) {
+      // A real server rejection (validation/permission): drop the op so the
+      // outbox cannot loop, tell the UI, and re-sync to server truth.
+      await dropOp(meta.opId);
+      emitSyncError(result.error ?? "A change could not be saved.");
+      continue;
+    }
+
+    // Only drop the op if nothing newer was queued while we were pushing.
+    const current = await localdb.ops.get(meta.opId);
+
+    if (!current || current.created_at !== meta.createdAt) {
+      continue;
+    }
+
+    await dropOp(meta.opId);
+
+    if (meta.kind === "delete") {
+      await localdb.todos.delete(result.id);
+    } else {
+      const row = await getTodo(result.id);
+
+      if (row) {
+        const stillPending = (await localdb.ops.where("todo_id").equals(result.id).count()) > 0;
+
+        if (!stillPending) {
+          await localdb.todos.update(result.id, { dirty: 0 });
+        }
+      }
+    }
+  }
+
+  notify();
+  return true;
+}
+
+/** Drain the outbox (keeps going while progress is made). */
+export async function flush(): Promise<void> {
+  if (flushing) {
+    return;
+  }
+
+  flushing = true;
+
+  try {
+    for (let round = 0; round < 10; round += 1) {
+      const progressed = await flushOnce();
+
+      if (!progressed) {
+        break;
+      }
+    }
+  } finally {
+    flushing = false;
+  }
+}
+
+/** Flush + refresh in one go (online event, focus, app start). */
+export async function syncNow(): Promise<void> {
+  await flush();
+  await pullOwn();
+}
+
+/** Wire the background loops. Idempotent. */
+export function startSync(): void {
+  if (started || typeof window === "undefined") {
+    return;
+  }
+
+  started = true;
+
+  window.addEventListener("online", () => {
+    void syncNow();
+  });
+
+  window.addEventListener("focus", () => {
+    void flush();
+  });
+
+  window.setInterval(() => {
+    void flush();
+  }, 20_000);
+}
+
+/** Sign-out: push what we can, then drop the device's copy. */
+export async function drainBeforeSignOut(): Promise<void> {
+  const deadline = Date.now() + 4000;
+
+  while (Date.now() < deadline) {
+    const ops = await pendingOps();
+
+    if (ops.length === 0) {
+      break;
+    }
+
+    const before = ops.length;
+    await flush();
+
+    if ((await pendingOps()).length === before) {
+      break; // offline — nothing more to give
+    }
+  }
+}
+
+export { clearOps };

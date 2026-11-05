@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { alertHeading, notificationUrl } from "@/lib/notifications";
+import { decorateNotification } from "@/lib/notifyDisplay";
 import { isDesktopApp } from "@/lib/push-client";
 import { playAlertSound } from "@/lib/sound";
 import type { NotificationKind } from "@/lib/types";
@@ -17,6 +18,7 @@ interface FeedItem {
   todo_id: string;
   title: string;
   detail: string;
+  blocker?: string | null;
 }
 
 type BadgeNavigator = Navigator & {
@@ -61,8 +63,10 @@ export function BrowserNotifications() {
     let timer = 0;
 
     async function show(item: FeedItem) {
-      const body = `${item.title} — ${item.detail}`;
-      const url = notificationUrl(item);
+      // Feed items carry ciphertext — decrypt before composing the alert.
+      const display = await decorateNotification(item);
+      const body = `${display.title} — ${display.detail}`;
+      const url = notificationUrl(display);
       const options: NotificationOptions & { data?: { url: string }; icon?: string; badge?: string } = {
         body,
         tag: item.key,

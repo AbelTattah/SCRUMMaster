@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-import { ReportControls } from "@/components/ReportControls";
-import { Icon } from "@/components/icons";
+import { ReportClient } from "@/components/ReportClient";
 import { requireOnboardedUser } from "@/lib/auth";
 import { buildReport, type ReportTask } from "@/lib/data/reports";
 import {
@@ -10,23 +9,15 @@ import {
   reportWindow,
   type ReportScope,
 } from "@/lib/reportPeriods";
-import { formatStamp, formatTimeRange } from "@/lib/time";
 import { firstParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Reports" };
 
-function statusOf(task: ReportTask): { key: string; label: string } {
-  if (task.completed) {
-    return { key: "done", label: "Completed" };
-  }
-
-  if (task.blocker) {
-    return { key: "blocked", label: "Blocked" };
-  }
-
-  return { key: "open", label: "In progress" };
-}
-
+/**
+ * Task titles are encrypted — the report body (rows + PDF) renders in the
+ * browser where they can be decrypted; only the query and the summary
+ * numbers stay server-side.
+ */
 export default async function ReportsPage({
   searchParams,
 }: {
@@ -54,7 +45,6 @@ export default async function ReportsPage({
     organizationName: user.organization?.name ?? null,
   });
 
-  const pdfHref = `/api/reports/pdf?period=${period}&date=${dateKey}&scope=${scope}`;
   const { summary } = data;
 
   return (
@@ -67,16 +57,6 @@ export default async function ReportsPage({
           </p>
         </div>
       </header>
-
-      <ReportControls
-        period={period}
-        dateKey={dateKey}
-        prevDate={window.prevDate}
-        nextDate={window.nextDate}
-        scope={scope}
-        canSwitchScope={Boolean(user.isOwner && user.organization)}
-        pdfHref={pdfHref}
-      />
 
       <div className="report-stats">
         <div className="stat-card">
@@ -106,55 +86,20 @@ export default async function ReportsPage({
         </div>
       </div>
 
-      <section className="panel report-tasks" aria-label="Tasks in this period">
-        {data.tasks.length === 0 ? (
-          <p className="empty">
-            No tasks were created in {window.label.toLowerCase()}.
-          </p>
-        ) : (
-          data.tasks.map((task) => {
-            const status = statusOf(task);
-            const range = formatTimeRange(task.start_time, task.end_time);
-
-            return (
-              <div
-                className={`report-task${task.completed ? " is-done" : ""}`}
-                key={task.id}
-              >
-                <span
-                  className={`report-dot report-dot--${status.key}`}
-                  aria-hidden="true"
-                />
-
-                <span className="report-task-title">{task.title}</span>
-
-                <span className="report-task-meta">
-                  {task.assignee_name ? (
-                    <span className="chip chip--assignee">{task.assignee_name}</span>
-                  ) : null}
-
-                  {scope === "org" && task.creator_name ? (
-                    <span className="report-by">by {task.creator_name}</span>
-                  ) : null}
-
-                  {range ? (
-                    <span className="report-range">
-                      <Icon name="clock" />
-                      <span>{range}</span>
-                    </span>
-                  ) : null}
-
-                  <span className="report-created">{formatStamp(task.created_at)}</span>
-
-                  <span className={`report-chip report-chip--${status.key}`}>
-                    {status.label}
-                  </span>
-                </span>
-              </div>
-            );
-          })
-        )}
-      </section>
+      <ReportClient
+        period={period}
+        dateKey={dateKey}
+        prevDate={window.prevDate}
+        nextDate={window.nextDate}
+        scope={scope}
+        canSwitchScope={Boolean(user.isOwner && user.organization)}
+        windowLabel={window.label}
+        filename={window.filename}
+        scopeLabel={data.scopeLabel}
+        authorName={user.profile.name}
+        tasks={data.tasks as ReportTask[]}
+        summary={summary}
+      />
     </>
   );
 }

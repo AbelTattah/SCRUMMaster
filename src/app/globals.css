@@ -1784,7 +1784,113 @@ svg {
 }
 
 /* --------------------------------------------------------------------------
-   Auth loading veil — covers the screen while sign in / sign up runs, so the
+   Encryption gate (locked / booting states)
+   -------------------------------------------------------------------------- */
+.crypto-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: grid;
+    place-items: center;
+    background: var(--auth-glow), var(--page-bg);
+}
+
+.crypto-gate-card {
+    width: min(460px, calc(100vw - 40px));
+}
+
+/* Generated sign-in key (no-password accounts) */
+.key-display {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 4px 0 6px;
+}
+
+.key-display-input {
+    flex: 1;
+    min-width: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+}
+
+.key-copy {
+    flex: none;
+    white-space: nowrap;
+}
+
+.key-hint {
+    margin: 0 0 10px;
+}
+
+/* Recovery phrase (sign-up step 2) */
+.recovery-block {
+    margin: 14px 0 4px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--search-bg);
+}
+
+.recovery-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.recovery-words {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    gap: 6px;
+    margin: 10px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.recovery-words li {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: var(--ink);
+}
+
+.recovery-index {
+    min-width: 16px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: right;
+}
+
+.recovery-copy {
+    margin-bottom: 10px;
+}
+
+.recovery-confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.recovery-confirm input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--purple);
+}
+
+/* --------------------------------------------------------------------------
+   Auth loading veil - covers the screen while sign in / sign up runs, so the
    wait between clicking the button and the app appearing reads as working
    rather than frozen. The mark breathes; the bar sweeps with a soft glow.
    -------------------------------------------------------------------------- */

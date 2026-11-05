@@ -56,13 +56,13 @@ export default async function RegisterTypePage({
 
       <RegisterTypeForm />
 
-      <p className="auth-switch">
+      <div className="auth-switch">
         <form action={signOut} className="auth-inline-form">
           <button type="submit" className="auth-link-button">
             Cancel and start over
           </button>
         </form>
-      </p>
+      </div>
     </div>
   );
 }

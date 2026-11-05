@@ -3,18 +3,18 @@
 import { useFormStatus } from "react-dom";
 
 /**
- * Full-screen veil shown while an auth form's server action runs.
+ * Full-screen veil shown while an auth form is working.
  *
- * Signing in or creating an account waits on Supabase and a redirect, which
- * can take a couple of seconds — long enough to read as a frozen window. This
- * renders inside the <form>, so the moment the user submits it covers the
- * screen with the app mark and a glowing indeterminate bar, and it disappears
- * on its own when the navigation lands.
+ * Signing in or creating an account waits on Supabase and the key setup,
+ * which can take a couple of seconds — long enough to read as a frozen
+ * window. Inside a server-action form it reads useFormStatus; client-driven
+ * forms (which call the action imperatively) pass `active` directly.
  */
-export function AuthLoading() {
+export function AuthLoading({ active }: { active?: boolean } = {}) {
   const { pending } = useFormStatus();
+  const show = active ?? pending;
 
-  if (!pending) {
+  if (!show) {
     return null;
   }
 

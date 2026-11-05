@@ -4,10 +4,9 @@ import { redirect } from "next/navigation";
 
 import { addMember, removeMember } from "@/app/actions/team";
 import { ConfirmForm } from "@/components/ConfirmForm";
-import { TaskRow } from "@/components/TaskRow";
+import { TaskBoard } from "@/components/TaskBoard";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
-import { listTeamTodos } from "@/lib/data/todos";
 import { levelFor } from "@/lib/gamification";
 import type { Member, PageFilter } from "@/lib/types";
 import { avatarUrl, firstParam } from "@/lib/utils";
@@ -54,10 +53,10 @@ export default async function TeamPage({
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  const [{ todos }, members] = await Promise.all([
-    listTeamTodos(organization.id, page, q),
-    listMembers(organization.id, organization.owner_id),
-  ]);
+  // Team todos arrive through the offline mirror (TaskBoard pulls them);
+  // the members list still comes from the server for the chips + assignee
+  // picker.
+  const members = await listMembers(organization.id, organization.owner_id);
 
   const leaderboard = [...members].sort(byScore);
   const returnTo = filterHref(page, q);
@@ -194,27 +193,23 @@ export default async function TeamPage({
       </nav>
 
       <section className="panel" aria-label="Team todos">
-        {todos.length === 0 ? (
-          <p className="empty">
-            {q ? (
-              <>No team todos match &ldquo;{q}&rdquo;.</>
-            ) : (
-              <>Nothing here yet — assign a task from Add Todo, or wait for your members to add their own.</>
-            )}
-          </p>
-        ) : (
-          todos.map((todo) => (
-            <TaskRow
-              key={todo.id}
-              todo={todo}
-              returnTo={returnTo}
-              variant="team"
-              currentUserId={user.id}
-              members={members}
-              canAssign
-            />
-          ))
-        )}
+        <TaskBoard
+          scope="team"
+          page={page}
+          q={q}
+          focusId=""
+          returnTo={returnTo}
+          members={members}
+          currentUserId={user.id}
+          canAssign
+          autoFocusAdd={false}
+          emptyHint={
+            <>
+              Nothing here yet — assign a task from Add Todo, or wait for your
+              members to add their own.
+            </>
+          }
+        />
       </section>
     </>
   );

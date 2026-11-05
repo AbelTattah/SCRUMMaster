@@ -42,6 +42,7 @@ export async function GET() {
     todo_id: item.todo_id,
     title: item.title,
     detail: item.detail,
+    blocker: item.blocker ?? null,
   }));
 
   // Nothing added yet today → raise the periodic planning nudge alongside
@@ -55,6 +56,7 @@ export async function GET() {
       todo_id: nudge.todo_id,
       title: nudge.title,
       detail: nudge.detail,
+      blocker: null,
     });
   }
 

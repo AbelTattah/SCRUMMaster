@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
 
-import { deleteTodo, saveTodoInline, setBlockerInline } from "@/app/actions/todos";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { TodoToggle } from "@/components/TodoToggle";
+import { deleteTodoLocal, saveTodoLocal, setBlockerLocal } from "@/lib/sync";
 import { formatTimeRange } from "@/lib/time";
 import type { Assignee, TeamTodo, Todo } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
@@ -93,15 +93,21 @@ export function TaskRow({
     fields: { title?: string; start_time?: string; end_time?: string; assignee?: string },
     after?: () => void,
   ) {
-    const data = new FormData();
-    data.set("id", todo.id);
-    data.set("title", fields.title ?? todo.title);
-    data.set("start_time", fields.start_time ?? todo.start_time?.slice(0, 5) ?? "");
-    data.set("end_time", fields.end_time ?? todo.end_time?.slice(0, 5) ?? "");
-    data.set("assignee", fields.assignee ?? todo.assignee_id ?? "");
+    // Offline-first: the row updates in the local mirror immediately and the
+    // encrypted change is pushed in the background.
+    const assigneeId =
+      fields.assignee !== undefined ? (fields.assignee || null) : todo.assignee_id;
+    const member = assigneeId ? (members.find((item) => item.id === assigneeId) ?? null) : null;
 
     startTransition(async () => {
-      const result = await saveTodoInline(data);
+      const result = await saveTodoLocal(todo.id, {
+        title: fields.title ?? todo.title,
+        start_time: fields.start_time ?? todo.start_time?.slice(0, 5) ?? "",
+        end_time: fields.end_time ?? todo.end_time?.slice(0, 5) ?? "",
+        assignee_id: assigneeId,
+        assignee_name: fields.assignee !== undefined ? (member?.name ?? null) : undefined,
+        assignee_avatar: fields.assignee !== undefined ? (member?.avatar_url ?? null) : undefined,
+      });
 
       if (result.error) {
         setError(result.error);
@@ -176,12 +182,8 @@ export function TaskRow({
   }
 
   function saveBlocker() {
-    const data = new FormData();
-    data.set("id", todo.id);
-    data.set("blocker", blockerDraft.trim());
-
     startTransition(async () => {
-      const result = await setBlockerInline(data);
+      const result = await setBlockerLocal(todo.id, blockerDraft.trim());
 
       if (result.error) {
         setError(result.error);
@@ -401,13 +403,13 @@ export function TaskRow({
 
               {canManage ? (
                 <ConfirmForm
-                  action={deleteTodo}
+                  action={async () => {
+                    await deleteTodoLocal(todo.id);
+                  }}
                   confirmTitle="Delete task?"
                   confirmMessage={`Delete “${todo.title}”? This cannot be undone.`}
                   confirmLabel="Delete"
                 >
-                  <input type="hidden" name="id" value={todo.id} />
-                  <input type="hidden" name="return_to" value={returnTo} />
                   <button type="submit" className="danger">
                     Delete
                   </button>
@@ -435,12 +437,8 @@ export function TaskRow({
                 className="blocker-clear"
                 disabled={pending || !todo.blocker}
                 onClick={() => {
-                  const data = new FormData();
-                  data.set("id", todo.id);
-                  data.set("blocker", "");
-
                   startTransition(async () => {
-                    const result = await setBlockerInline(data);
+                    const result = await setBlockerLocal(todo.id, "");
 
                     if (result.error) {
                       setError(result.error);

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { markAllInline, markReadInline } from "@/app/actions/notifications";
 import { Icon } from "@/components/icons";
+import { decorateAll, type NotificationDisplay } from "@/lib/notifyDisplay";
 import { notificationUrl } from "@/lib/notifications";
 import type { NotificationItem } from "@/lib/types";
 
@@ -25,9 +26,25 @@ export function NotificationBell({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [shown, setShown] = useState<NotificationDisplay[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Titles/blockers arrive as ciphertext — decrypt for display.
+  useEffect(() => {
+    let alive = true;
+
+    void decorateAll(notifications.slice(0, MAX_ITEMS)).then((items) => {
+      if (alive) {
+        setShown(items);
+      }
+    });
+
+    return () => {
+      alive = false;
+    };
+  }, [notifications]);
 
   // Close on outside click, Escape, and after navigating.
   useEffect(() => {
@@ -60,7 +77,7 @@ export function NotificationBell({
     setOpen(false);
   }, [pathname]);
 
-  function openItem(item: NotificationItem) {
+  function openItem(item: NotificationDisplay) {
     if (!item.read) {
       const data = new FormData();
       data.set("key", item.key);
@@ -80,8 +97,6 @@ export function NotificationBell({
       void markAllInline();
     });
   }
-
-  const shown = notifications.slice(0, MAX_ITEMS);
 
   return (
     <div className="bell-wrap" ref={rootRef}>

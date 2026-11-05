@@ -1,7 +1,7 @@
 ﻿import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { updatePassword } from "@/app/actions/auth";
+import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { getCurrentUser } from "@/lib/auth";
 import { firstParam } from "@/lib/utils";
 
@@ -24,55 +24,5 @@ export default async function ResetPasswordPage({
   const notice = firstParam(params.notice).trim();
   const error = firstParam(params.error).trim();
 
-  return (
-    <div className="auth-card">
-      <div className="auth-brand">Scrum Master</div>
-      <h1 className="auth-title">Choose a new password</h1>
-      <p className="auth-sub">Set a password you will remember for next time.</p>
-
-      {notice ? (
-        <p className="auth-note" role="status">
-          {notice}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p className="auth-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-
-      <form action={updatePassword} className="auth-form">
-        <label className="field">
-          <span>New password</span>
-          <input
-            className="input"
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            minLength={8}
-            required
-            autoFocus
-          />
-          <span className="field-hint">At least 8 characters.</span>
-        </label>
-
-        <label className="field">
-          <span>Confirm new password</span>
-          <input
-            className="input"
-            type="password"
-            name="password_confirm"
-            autoComplete="new-password"
-            minLength={8}
-            required
-          />
-        </label>
-
-        <button className="btn-primary" type="submit">
-          Save password
-        </button>
-      </form>
-    </div>
-  );
+  return <ResetPasswordForm notice={notice} initialError={error} />;
 }

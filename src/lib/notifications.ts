@@ -48,13 +48,16 @@ export function buildNotifications(
     const endTime = normalizeTime(todo.end_time);
 
     // A blocked task is the loudest thing on the list: it needs a person.
+    // The blocker text is ciphertext — it rides along in `blocker` and the
+    // client decorator turns it into "Blocked — …" after decrypting.
     if (todo.blocker) {
       items.push({
         key: `todo:${todo.id}:blocker`,
         kind: "blocker",
         todo_id: todo.id,
         title,
-        detail: `Blocked — ${todo.blocker}`,
+        detail: "Blocked",
+        blocker: todo.blocker,
         start_time: startTime,
         end_time: endTime,
         sort: -1,
@@ -229,17 +232,27 @@ export function todoNudge(now: Date = new Date()): Omit<NotificationItem, "read"
   };
 }
 
+/**
+ * The daily digest email.
+ *
+ * Task content is encrypted end-to-end — the server cannot read titles —
+ * so the digest carries counts by kind and a link into the app, never task
+ * text. (The in-app feed and OS alerts decrypt and show the real titles.)
+ */
 export function notificationDigest(
   items: NotificationItem[],
   profile: Pick<Profile, "name">,
 ): { subject: string; text: string; html: string } {
   const name = profile.name || "there";
-  const actionable = items.filter(
-    (item) =>
-      item.kind === "overdue" ||
-      item.kind === "blocker" ||
-      item.kind === "reminder",
-  ).length;
+  const counts: Record<string, number> = { overdue: 0, blocker: 0, reminder: 0, upcoming: 0 };
+
+  for (const item of items) {
+    if (item.kind in counts) {
+      counts[item.kind] += 1;
+    }
+  }
+
+  const actionable = counts.overdue + counts.blocker + counts.reminder;
 
   const subject =
     actionable === 0
@@ -253,6 +266,8 @@ export function notificationDigest(
       ? "Here is your day at a glance:"
       : "Here is what needs your attention today:";
 
+  const url = siteUrl();
+
   let text = `Hello ${name},\n\n${intro}\n\n`;
   let html =
     '<div style="font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;max-width:560px;margin:0 auto;padding:24px;">' +
@@ -261,37 +276,29 @@ export function notificationDigest(
     `<p style="font-size:14px;color:#727272;margin:0 0 20px;">${escapeHtml(intro)}</p>`;
 
   for (const kind of ["overdue", "blocker", "reminder", "upcoming"] as NotificationKind[]) {
-    const group = items.filter((item) => item.kind === kind);
+    const count = counts[kind];
 
-    if (group.length === 0) {
+    if (!count) {
       continue;
     }
 
     const label = notificationKindLabel(kind);
     const hint = notificationKindHint(kind);
+    const unit = count === 1 ? "task" : "tasks";
 
-    text += `${label.toUpperCase()} — ${hint}\n`;
-    group.forEach((item) => {
-      text += `- ${item.title}\n  ${item.detail}\n`;
-    });
-    text += "\n";
+    text += `${label.toUpperCase()} — ${hint}\n  ${count} ${unit}\n\n`;
 
     html +=
       `<h2 style="font-size:15px;font-weight:600;color:#21005D;margin:22px 0 2px;">${escapeHtml(label)}</h2>` +
       `<p style="font-size:12px;color:#727272;margin:0 0 8px;">${escapeHtml(hint)}</p>` +
-      '<ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.6;">';
-
-    group.forEach((item) => {
-      html +=
-        `<li><strong>${escapeHtml(item.title)}</strong><br>` +
-        `<span style="color:#727272;">${escapeHtml(item.detail)}</span></li>`;
-    });
-
-    html += "</ul>";
+      `<p style="font-size:14px;margin:0 0 8px;">${count} ${unit}</p>`;
   }
 
+  text += `Open Scrum Master to see them:\n${url}\n\n`;
   text += "Change these emails in Scrum Master → Settings.\n";
+
   html +=
+    `<p style="margin:22px 0 4px;"><a href="${escapeHtml(url)}" style="background:#21005D;color:#FFFFFF;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600;">Open Scrum Master</a></p>` +
     '<p style="font-size:12px;color:#727272;margin:26px 0 0;">' +
     "Change these emails in Scrum Master → Settings.</p></div>";
 

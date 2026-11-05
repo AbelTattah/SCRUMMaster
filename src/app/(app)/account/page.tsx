@@ -6,9 +6,9 @@ import {
   createOrganizationAction,
   leaveOrganization,
   removeMember,
-  updatePasswordAction,
   updateProfileAction,
 } from "@/app/actions/profile";
+import { ChangePasswordForm, SetPasswordForm } from "@/components/account/PasswordForms";
 import { AvatarForm } from "@/components/AvatarForm";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { requireOnboardedUser } from "@/lib/auth";
@@ -214,84 +214,16 @@ export default async function AccountPage({
                     your email address.
                   </p>
 
-                  <form action={updatePasswordAction} className="stack-form">
-                    <div className="form-row">
-                      <label className="field">
-                        <span>New password</span>
-                        <input
-                          className="input"
-                          type="password"
-                          name="password"
-                          autoComplete="new-password"
-                          minLength={8}
-                          required
-                        />
-                      </label>
-
-                      <label className="field">
-                        <span>Confirm new password</span>
-                        <input
-                          className="input"
-                          type="password"
-                          name="password_confirm"
-                          autoComplete="new-password"
-                          minLength={8}
-                          required
-                        />
-                      </label>
-                    </div>
-
-                    <button className="btn-primary btn-small" type="submit">
-                      Set password
-                    </button>
-                  </form>
+                  <SetPasswordForm />
                 </>
               ) : (
                 <>
-                  <p className="card-sub">Use at least 8 characters.</p>
+                  <p className="card-sub">
+                    Use at least 8 characters — your tasks stay readable with
+                    the new password.
+                  </p>
 
-                  <form action={updatePasswordAction} className="stack-form">
-                    <label className="field">
-                      <span>Current password</span>
-                      <input
-                        className="input"
-                        type="password"
-                        name="current_password"
-                        autoComplete="current-password"
-                        required
-                      />
-                    </label>
-
-                    <div className="form-row">
-                      <label className="field">
-                        <span>New password</span>
-                        <input
-                          className="input"
-                          type="password"
-                          name="password"
-                          autoComplete="new-password"
-                          minLength={8}
-                          required
-                        />
-                      </label>
-
-                      <label className="field">
-                        <span>Confirm new password</span>
-                        <input
-                          className="input"
-                          type="password"
-                          name="password_confirm"
-                          autoComplete="new-password"
-                          minLength={8}
-                          required
-                        />
-                      </label>
-                    </div>
-
-                    <button className="btn-primary btn-small" type="submit">
-                      Change password
-                    </button>
-                  </form>
+                  <ChangePasswordForm />
                 </>
               )}
             </div>
