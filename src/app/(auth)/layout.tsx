@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="auth-side">
         <header className="auth-topbar">
           <Link className="auth-logo" href="/">
-            Scrum Master
+            <img src="/logo-wordmark.png" alt="Scrum Master" />
           </Link>
           <Link className="auth-home-link" href="/">
             ← Back to home

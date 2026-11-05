@@ -69,7 +69,9 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
 
   return (
     <aside className="sidebar">
-      <div className="logo">Scrum Master</div>
+      <div className="logo">
+        <img src="/logo-wordmark.png" alt="Scrum Master" />
+      </div>
 
       <nav className="nav" aria-label="Primary">
         <Link
@@ -269,7 +271,7 @@ export function Topbar({ user, unread }: { user: CurrentUser; unread: number }) 
   return (
     <header className="topbar">
       <Link className="mobile-brand" href="/">
-        Scrum Master
+        <img src="/logo-wordmark.png" alt="Scrum Master" />
       </Link>
 
       <form className="search" method="get" action={team ? "/team" : "/"} role="search">

@@ -9,7 +9,7 @@
  *
  * API responses are never cached — tasks and sessions stay network-only.
  */
-const CACHE = "scrum-master-v2";
+const CACHE = "scrum-master-v3";
 const SHELL = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -146,6 +146,12 @@ self.addEventListener("push", (event) => {
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",
       });
+
+      // The worker cannot play audio — ask any open window to play the
+      // bundled alert sound alongside the toast.
+      for (const client of windows) {
+        client.postMessage({ type: "alert-sound" });
+      }
     })(),
   );
 });

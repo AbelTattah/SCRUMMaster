@@ -2,8 +2,12 @@
 
 import { useEffect } from "react";
 
+import { playAlertSound } from "@/lib/sound";
+
 /**
- * Registers the service worker (offline shell + notification display).
+ * Registers the service worker (offline shell + notification display) and
+ * relays the worker's "play the alert sound" message — the worker has no
+ * audio of its own, but it raises notifications when no tab is focused.
  *
  * Registered in development too — the worker keeps localhost chunk requests on
  * the network (see sw.js) so HMR is unaffected, and the Settings screen needs
@@ -15,20 +19,30 @@ export function PwaRegister() {
       return;
     }
 
+    function onMessage(event: MessageEvent) {
+      if ((event.data as { type?: string } | null)?.type === "alert-sound") {
+        playAlertSound();
+      }
+    }
+
     function register() {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
         // A blocked worker (private mode, disabled SW) must not break the app.
       });
     }
 
+    navigator.serviceWorker.addEventListener("message", onMessage);
+
     if (document.readyState === "complete") {
       register();
-      return;
+    } else {
+      window.addEventListener("load", register);
     }
 
-    window.addEventListener("load", register);
-
-    return () => window.removeEventListener("load", register);
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", onMessage);
+      window.removeEventListener("load", register);
+    };
   }, []);
 
   return null;

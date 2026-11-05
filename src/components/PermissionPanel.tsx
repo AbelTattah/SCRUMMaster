@@ -8,6 +8,7 @@ import {
   unsubscribePush,
   type PushState,
 } from "@/lib/push-client";
+import { playAlertSound } from "@/lib/sound";
 
 const LABELS: Record<PushState, string> = {
   unsupported: "This browser does not support desktop notifications.",
@@ -88,6 +89,7 @@ export function PermissionPanel() {
       new Notification("Scrum Master", {
         body: "This is what an alert looks like.",
       });
+      playAlertSound();
       setTestNote("Test alert sent — you should see it now.");
     } catch {
       setTestNote("The browser blocked the test alert.");
