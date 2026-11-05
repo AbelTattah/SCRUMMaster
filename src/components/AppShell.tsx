@@ -71,7 +71,8 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
   return (
     <aside className="sidebar">
       <div className="logo">
-        <img src="/logo-wordmark.png" alt="Scrum Master" />
+        <img className="brand-img brand-img--light" src="/logo-wordmark.png" alt="Scrum Master" />
+        <img className="brand-img brand-img--dark" src="/logo-wordmark-white.png" alt="Scrum Master" />
       </div>
 
       <nav className="nav" aria-label="Primary">
@@ -280,7 +281,8 @@ export function Topbar({
   return (
     <header className="topbar">
       <Link className="mobile-brand" href="/">
-        <img src="/logo-wordmark.png" alt="Scrum Master" />
+        <img className="brand-img brand-img--light" src="/logo-wordmark.png" alt="Scrum Master" />
+        <img className="brand-img brand-img--dark" src="/logo-wordmark-white.png" alt="Scrum Master" />
       </Link>
 
       <form className="search" method="get" action={team ? "/team" : "/"} role="search">

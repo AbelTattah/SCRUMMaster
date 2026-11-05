@@ -3806,3 +3806,26 @@ button.chip:disabled {
 .pop-foot a:hover {
     color: var(--purple-ink);
 }
+
+/* --- brand wordmark: white logo on dark surfaces ------------------------- */
+:root img.brand-img--dark {
+    display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) img.brand-img--dark {
+        display: block;
+    }
+
+    :root:not([data-theme="light"]) img.brand-img--light {
+        display: none;
+    }
+}
+
+:root[data-theme="dark"] img.brand-img--dark {
+    display: block;
+}
+
+:root[data-theme="dark"] img.brand-img--light {
+    display: none;
+}
