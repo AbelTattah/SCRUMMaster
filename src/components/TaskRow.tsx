@@ -256,6 +256,7 @@ export function TaskRow({
   return (
     <div
       ref={rootRef}
+      data-todo-id={todo.id}
       className={`todo-item${variant === "team" ? " team-row" : ""}${expanded ? " is-expanded" : ""}`}
     >
       <TodoToggle todoId={todo.id} completed={todo.completed} title={todo.title} />

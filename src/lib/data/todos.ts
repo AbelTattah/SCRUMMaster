@@ -138,16 +138,31 @@ export async function createTodo(
   startTime: string | null,
   endTime: string | null,
   assigneeId: string | null = null,
-): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient().from("todos").insert({
-    user_id: userId,
-    title,
-    start_time: startTime,
-    end_time: endTime,
-    assignee_id: assigneeId,
-  });
+): Promise<{ error: string | null; id: string | null }> {
+  const { data, error } = await createAdminClient()
+    .from("todos")
+    .insert({
+      user_id: userId,
+      title,
+      start_time: startTime,
+      end_time: endTime,
+      assignee_id: assigneeId,
+    })
+    .select("id")
+    .single();
 
-  return { error: error?.message ?? null };
+  return { error: error?.message ?? null, id: data?.id ?? null };
+}
+
+/** How many todos this user *created* since a point in time (nudge logic). */
+export async function countTodosCreatedSince(userId: string, since: Date): Promise<number> {
+  const { count } = await createAdminClient()
+    .from("todos")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", since.toISOString());
+
+  return count ?? 0;
 }
 
 /**

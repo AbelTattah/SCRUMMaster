@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { completeRegistration } from "@/app/actions/auth";
+import { AuthLoading } from "@/components/AuthLoading";
 
 export function RegisterTypeForm() {
   const [type, setType] = useState<"personal" | "organization">("personal");
@@ -55,6 +56,8 @@ export function RegisterTypeForm() {
           <span className="field-hint">Only used for organization accounts.</span>
         </label>
       ) : null}
+
+      <AuthLoading />
 
       <button className="btn-primary" type="submit">
         Create account

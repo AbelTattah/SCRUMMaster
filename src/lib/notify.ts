@@ -1,13 +1,17 @@
 import { notificationRecipients, findProfileByEmail } from "@/lib/data/profiles";
 import { markNotificationsEmailed, notificationsForUser } from "@/lib/data/notifications";
+import { countTodosCreatedSince } from "@/lib/data/todos";
 import { subscriptionCount } from "@/lib/data/push";
 import {
   alertHeading,
   notificationDigest,
   notificationUrl,
+  todoNudge,
+  todoNudgeEmail,
 } from "@/lib/notifications";
 import { pushConfigured, pushPendingAlerts, type PushPayload } from "@/lib/push";
 import { mailTransport, sendMail } from "@/lib/mail";
+import { startOfToday } from "@/lib/time";
 import type { NotificationItem, Profile } from "@/lib/types";
 
 export interface DigestOptions {
@@ -78,6 +82,94 @@ export async function runDigest(options: DigestOptions = {}): Promise<DigestResu
     const pending = items.filter((item) => !item.emailed && ALERT_KINDS.has(item.kind));
 
     if (pending.length === 0) {
+      // Nothing actionable — but if the day is still empty, the digest itself
+      // becomes the reminder to plan it (periodic nudge, see todoNudge).
+      const nudge = todoNudge();
+
+      if (nudge && (await countTodosCreatedSince(user.id, startOfToday())) === 0) {
+        const digest = todoNudgeEmail(user);
+        const payload: PushPayload = {
+          title: "Plan your day",
+          body: `${nudge.title} — ${nudge.detail}`,
+          url: "/?add=1",
+          tag: nudge.key,
+        };
+
+        if (options.dryRun) {
+          let mentioned = false;
+
+          if (user.notify_email) {
+            lines.push(`  would nudge  ${label} — ${digest.subject}`);
+            mentioned = true;
+          }
+
+          if (pushConfigured() && user.notify_browser) {
+            const devices = await subscriptionCount(user.id);
+
+            if (devices > 0) {
+              lines.push(`  would push   ${label} — ${devices} device(s): ${payload.title}`);
+              mentioned = true;
+            }
+          }
+
+          if (mentioned) {
+            sent += 1;
+          } else {
+            lines.push(`  skip  ${label} — no delivery channel for the nudge`);
+            skipped += 1;
+          }
+
+          continue;
+        }
+
+        const failures: string[] = [];
+        let delivered = false;
+
+        if (user.notify_email) {
+          const result = await sendMail({
+            to: user.email,
+            subject: digest.subject,
+            text: digest.text,
+            html: digest.html,
+            userId: user.id,
+          });
+
+          if (result.ok) {
+            lines.push(`  nudge  ${label} — ${digest.subject}`);
+            delivered = true;
+          } else {
+            failures.push(`email: ${result.error ?? "unknown mail error"}`);
+          }
+        }
+
+        if (pushConfigured() && user.notify_browser) {
+          const outcome = await pushPendingAlerts(user, payload);
+
+          if (outcome === "sent") {
+            lines.push(`  push   ${label} — ${payload.title}`);
+            delivered = true;
+          } else if (outcome === "failed") {
+            failures.push("push: send failed");
+          }
+          // "none" — no subscribed devices; not a failure.
+        }
+
+        if (delivered) {
+          sent += 1;
+          continue;
+        }
+
+        if (failures.length > 0) {
+          lines.push(`  FAIL  ${label} — ${failures.join("; ")}`);
+          failed += 1;
+          continue;
+        }
+
+        lines.push(`  skip  ${label} — no delivery channel for the nudge`);
+        skipped += 1;
+        continue;
+      }
+
       lines.push(`  skip  ${label} — nothing new needs attention`);
       skipped += 1;
       continue;
