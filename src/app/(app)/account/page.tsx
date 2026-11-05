@@ -71,7 +71,7 @@ export default async function AccountPage({
                 <ul className="member-list">
                   {members.map((member) => (
                     <li className="member" key={member.id}>
-                      <img src={avatarUrl(member.avatar_url)} alt="" />
+                      <img src={avatarUrl(member.avatar_url, member.name, member.id)} alt="" />
 
                       <span className="member-info">
                         <span className="member-line">
@@ -169,7 +169,9 @@ export default async function AccountPage({
               {!user.hasPassword ? <span className="chip chip--google">Google</span> : null}
             </p>
 
-            <AvatarForm avatar={avatarUrl(user.profile.avatar_url)} />
+            <AvatarForm
+              avatar={avatarUrl(user.profile.avatar_url, user.profile.name, user.profile.id)}
+            />
 
             <form action={updateProfileAction} className="stack-form">
               <div className="form-row">

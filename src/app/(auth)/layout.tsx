@@ -22,7 +22,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <ul className="auth-brand-points">
             <li>Plan tasks with times and get reminded before they start</li>
             <li>Daily, weekly and monthly task reports, downloadable as PDF</li>
-            <li>Browser and email alerts — even when the app is closed</li>
           </ul>
         </div>
       </aside>
@@ -32,9 +31,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <Link className="auth-logo auth-logo--stacked" href="/">
             <img className="brand-img brand-img--light" src="/logo-wordmark.png" alt="Scrum Master" />
             <img className="brand-img brand-img--dark" src="/logo-wordmark-white.png" alt="Scrum Master" />
-          </Link>
-          <Link className="auth-home-link" href="/">
-            ← Back to home
           </Link>
         </header>
 

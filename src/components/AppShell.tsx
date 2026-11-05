@@ -143,7 +143,7 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
 
       <div className="sidebar-footer">
         <Link className="sidebar-user" href={links.profile} title="Your account">
-          <img src={avatarUrl(user.profile.avatar_url)} alt="" />
+          <img src={avatarUrl(user.profile.avatar_url, user.profile.name, user.profile.id)} alt="" />
           <span className="sidebar-user-text">
             <span className="sidebar-user-name">{user.profile.name}</span>
             <span className="sidebar-user-meta">{orgName}</span>
@@ -314,7 +314,10 @@ export function Topbar({
         </Link>
 
         <Link className="avatar" href="/account" title="Your profile">
-          <img src={avatarUrl(user.profile.avatar_url)} alt="Profile picture" />
+          <img
+            src={avatarUrl(user.profile.avatar_url, user.profile.name, user.profile.id)}
+            alt="Profile picture"
+          />
         </Link>
       </div>
     </header>

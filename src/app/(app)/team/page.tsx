@@ -101,7 +101,7 @@ export default async function TeamPage({
         <div className="member-chips">
           {members.map((member) => (
             <span className="chip" key={member.id}>
-              <img src={avatarUrl(member.avatar_url)} alt="" />
+              <img src={avatarUrl(member.avatar_url, member.name, member.id)} alt="" />
               {member.name}
               <span className="chip-count">{member.todo_count}</span>
 
@@ -148,7 +148,11 @@ export default async function TeamPage({
                 {index + 1}
               </span>
 
-              <img className="leader-avatar" src={avatarUrl(member.avatar_url)} alt="" />
+              <img
+                className="leader-avatar"
+                src={avatarUrl(member.avatar_url, member.name, member.id)}
+                alt=""
+              />
 
               <span className="leader-name">
                 {member.name}
