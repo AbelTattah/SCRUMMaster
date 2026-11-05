@@ -1383,6 +1383,103 @@ svg {
     text-align: center;
 }
 
+/* The branded half of the desktop split — hidden below 1000px, where the
+   card is centred on its own (phone/tablet). */
+.auth-brand-panel {
+    display: none;
+}
+
+.auth-side {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (min-width: 1000px) {
+    .auth-body {
+        flex-direction: row;
+    }
+
+    .auth-side {
+        flex: 0 0 clamp(560px, 45%, 760px);
+    }
+
+    .auth-brand-panel {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+        padding: 56px clamp(40px, 6vw, 90px);
+        background:
+            radial-gradient(700px 420px at 110% -10%, rgba(224, 166, 6, 0.26), rgba(224, 166, 6, 0) 60%),
+            linear-gradient(150deg, #2E0480 0%, #21005D 55%, #160043 100%);
+        color: var(--surface);
+    }
+}
+
+.auth-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--surface);
+}
+
+.auth-brand-name {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--surface);
+}
+
+.auth-brand-tagline {
+    margin: 0;
+    max-width: 26em;
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.auth-brand-points {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.auth-brand-points li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.auth-brand-points li::before {
+    content: "✓";
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    border-radius: 50%;
+    background: rgba(245, 196, 81, 0.18);
+    color: #F5C451;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 .auth-card {
     padding: 40px;
     background: var(--surface);

@@ -21,8 +21,7 @@ export default async function LoginPage({
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">Scrum Master</div>
-      <h1 className="auth-title">Welcome back</h1>
+     <h1 className="auth-title">Welcome back</h1>
       <p className="auth-sub">Sign in to pick up where you left off.</p>
 
       {notice ? (
@@ -68,7 +67,7 @@ export default async function LoginPage({
         </button>
       </form>
 
-      <GoogleButton />
+      {/* <GoogleButton /> */}
 
       <p className="auth-switch">
         <Link href="/forgot-password">Forgot your password?</Link>
