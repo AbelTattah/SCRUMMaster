@@ -325,7 +325,7 @@ export function TaskRow({
                 title={canAssign ? "Click to re-assign" : `Assigned to ${assignee.name}`}
                 onClick={openAssignee}
               >
-                <img src={avatarUrl(assignee.avatar_url)} alt="" />
+                <img src={avatarUrl(assignee.avatar_url, assignee.name, assignee.id)} alt="" />
                 <span>{assigneeLabel}</span>
               </button>
             ) : canAssign && canManage ? (
@@ -362,7 +362,7 @@ export function TaskRow({
           ) : (
             <span className="todo-meta">
               <span className="todo-owner">
-                <img src={avatarUrl(todo.owner_avatar)} alt="" />
+                <img src={avatarUrl(todo.owner_avatar, todo.owner_name, todo.user_id)} alt="" />
                 {todo.owner_name}
               </span>
 

@@ -1471,18 +1471,6 @@ svg {
     height: 30px;
 }
 
-.auth-home-link {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.15s ease;
-}
-
-.auth-home-link:hover {
-    color: var(--purple-ink);
-}
-
 .auth-wrap {
     width: 100%;
     max-width: 460px;
