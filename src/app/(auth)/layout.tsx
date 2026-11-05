@@ -10,18 +10,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="auth-body">
       <aside className="auth-brand-panel">
-        <span className="auth-brand-mark" aria-hidden="true">
-          ✓
-        </span>
         <span className="auth-brand-name">Scrum Master</span>
         <p className="auth-brand-tagline">
           Record what gets done, stay accountable, and level up every day.
         </p>
-        <ul className="auth-brand-points">
-          <li>Plan tasks with times and get reminded before they start</li>
-          <li>Daily reports with streaks, XP and a team leaderboard</li>
-          <li>Browser and email alerts — even when the app is closed</li>
-        </ul>
       </aside>
 
       <div className="auth-side">

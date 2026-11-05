@@ -4,7 +4,6 @@ export type NotificationKind =
   | "overdue"
   | "blocker"
   | "reminder"
-  | "report"
   | "upcoming";
 
 export interface Profile {
@@ -18,9 +17,6 @@ export interface Profile {
   notify_lead_minutes: number;
   onboarding_complete: boolean;
   xp: number;
-  streak: number;
-  best_streak: number;
-  last_report_date: string | null;
   /** Set when an owner created this account for an invitee; cleared on first sign-in. */
   invited_at: string | null;
   created_at: string;
@@ -62,8 +58,6 @@ export interface Member {
   todo_count: number;
   completed_count: number;
   xp: number;
-  streak: number;
-  last_report_date: string | null;
   /** Not null while the person has never signed in to the account we created. */
   invited_at: string | null;
 }
@@ -79,23 +73,9 @@ export interface Counts {
   in_progress: number;
 }
 
-/** One "yesterday / today / blockers" entry for a calendar day. */
-export interface DailyReport {
-  id: string;
-  user_id: string;
-  /** YYYY-MM-DD in the application timezone. */
-  report_date: string;
-  yesterday: string;
-  today: string;
-  blockers: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface NotificationItem {
   key: string;
   kind: NotificationKind;
-  /** Empty for items that are not tied to a single task (daily report). */
   todo_id: string;
   title: string;
   detail: string;

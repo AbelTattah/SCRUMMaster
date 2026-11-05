@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
-  serverExternalPackages: ["nodemailer"],
+  serverExternalPackages: ["nodemailer", "pdfkit"],
 };
 
 export default nextConfig;

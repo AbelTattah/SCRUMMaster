@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AddTaskRow, AddTodoButton, AddTodoFab } from "@/components/AddTask";
 import { TaskRow } from "@/components/TaskRow";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
-import { getReport } from "@/lib/data/reports";
 import { listTodos } from "@/lib/data/todos";
-import { levelFor } from "@/lib/gamification";
-import { dateKey, greetingFor, todayLine } from "@/lib/time";
+import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
@@ -42,12 +39,11 @@ export default async function HomePage({
   const focusId = firstParam(params.edit);
   const openAdd = params.add !== undefined;
 
-  const [todos, members, todayReport] = await Promise.all([
+  const [todos, members] = await Promise.all([
     listTodos(user.id, page, q),
     user.organization
       ? listMembers(user.organization.id, user.organization.owner_id)
       : Promise.resolve([]),
-    getReport(user.id, dateKey()),
   ]);
 
   const search = new URLSearchParams();
@@ -69,32 +65,6 @@ export default async function HomePage({
 
         <AddTodoButton returnTo={returnTo} />
       </header>
-
-      <div className={`report-nudge${todayReport ? " is-done" : ""}`}>
-        <div className="report-nudge-text">
-          {todayReport ? (
-            <>
-              <strong>Today&rsquo;s report is filed</strong>
-              <span>
-                Level {levelFor(user.profile.xp)} · {user.profile.xp} XP ·{" "}
-                {user.profile.streak}-day streak
-              </span>
-            </>
-          ) : (
-            <>
-              <strong>Daily report not filed yet</strong>
-              <span>
-                Yesterday&rsquo;s wins, today&rsquo;s plan and blockers — it takes a
-                minute.
-              </span>
-            </>
-          )}
-        </div>
-
-        <Link className="btn-primary btn-small" href="/reports">
-          {todayReport ? "View report" : "File report"}
-        </Link>
-      </div>
 
       <AddTodoFab returnTo={returnTo} />
 

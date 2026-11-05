@@ -7,10 +7,8 @@ import { ConfirmForm } from "@/components/ConfirmForm";
 import { TaskRow } from "@/components/TaskRow";
 import { requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
-import { reportedUserIds } from "@/lib/data/reports";
 import { listTeamTodos } from "@/lib/data/todos";
 import { levelFor } from "@/lib/gamification";
-import { dateKey } from "@/lib/time";
 import type { Member, PageFilter } from "@/lib/types";
 import { avatarUrl, firstParam } from "@/lib/utils";
 
@@ -31,7 +29,7 @@ function filterHref(page: PageFilter, q: string): string {
 }
 
 function byScore(a: Member, b: Member): number {
-  return b.xp - a.xp || b.streak - a.streak || a.name.localeCompare(b.name);
+  return b.xp - a.xp || a.name.localeCompare(b.name);
 }
 
 export default async function TeamPage({
@@ -56,10 +54,9 @@ export default async function TeamPage({
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  const [{ todos }, members, reported] = await Promise.all([
+  const [{ todos }, members] = await Promise.all([
     listTeamTodos(organization.id, page, q),
     listMembers(organization.id, organization.owner_id),
-    reportedUserIds(organization.id, dateKey()),
   ]);
 
   const leaderboard = [...members].sort(byScore);
@@ -141,8 +138,7 @@ export default async function TeamPage({
       <section className="card team-board">
         <h2 className="card-title">Leaderboard</h2>
         <p className="card-sub">
-          XP from completed tasks (+10) and daily reports (+20, plus a streak
-          bonus). Levels come every 250 XP.
+          XP from completed tasks (+10). A level every 250 XP.
         </p>
 
         <ol className="leaderboard">
@@ -162,19 +158,11 @@ export default async function TeamPage({
               <span className="leader-level">Lv {levelFor(member.xp)}</span>
               <span className="leader-xp">{member.xp} XP</span>
 
-              <span className="leader-streak">
-                {member.streak > 0 ? `${member.streak}-day streak` : "No streak"}
-              </span>
-
               {member.invited_at ? (
                 <span className="chip-pending" title="They have not signed in yet">
                   Invite pending
                 </span>
-              ) : reported.has(member.id) ? (
-                <span className="chip chip--reported">Reported today</span>
-              ) : (
-                <span className="leader-noreport">No report yet</span>
-              )}
+              ) : null}
             </li>
           ))}
         </ol>

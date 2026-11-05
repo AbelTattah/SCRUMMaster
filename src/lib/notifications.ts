@@ -1,5 +1,5 @@
 import type { NotificationItem, NotificationKind, Profile, Todo } from "@/lib/types";
-import { dateKey, formatMinutes, formatTime, normalizeTime, nowMinutes } from "@/lib/time";
+import { formatMinutes, formatTime, normalizeTime, nowMinutes } from "@/lib/time";
 
 /** Lead-time choices offered on the settings page (minutes). */
 export const NOTIFICATION_LEAD_OPTIONS = [5, 10, 15, 30, 60, 120] as const;
@@ -17,23 +17,16 @@ export function notificationLeadMinutes(profile: Pick<Profile, "notify_lead_minu
 export interface BuildOptions {
   /** Minutes since midnight in the app timezone. */
   now?: number;
-  /** Today's daily report is still missing. */
-  reportMissing?: boolean;
-  /** YYYY-MM-DD used in the reminder key. */
-  reportDate?: string;
 }
 
 /**
- * Turn the user's open todos (and reporting state) into the notification list.
+ * Turn the user's open todos into the notification list.
  *
  * Each todo produces at most one item — the most urgent state wins:
  *   blocker   a blocker was recorded on the task (needs help)
  *   overdue   still open and its end time has passed
  *   reminder  starting within the lead window, or under way
  *   upcoming  later today
- *
- * On top of that, a "daily report" nudge appears after the local afternoon
- * when the day's report has not been filed.
  */
 export function buildNotifications(
   todos: Pick<Todo, "id" | "title" | "completed" | "start_time" | "end_time" | "blocker">[],
@@ -122,25 +115,11 @@ export function buildNotifications(
     });
   }
 
-  if (options.reportMissing) {
-    items.push({
-      key: `report:${options.reportDate ?? dateKey()}`,
-      kind: "report",
-      todo_id: "",
-      title: "Daily report not filed yet",
-      detail: "Record yesterday's wins, today's plan and blockers — it takes a minute.",
-      start_time: null,
-      end_time: null,
-      sort: 1440,
-    });
-  }
-
   const rank: Record<NotificationKind, number> = {
     overdue: 0,
     blocker: 1,
     reminder: 2,
-    report: 3,
-    upcoming: 4,
+    upcoming: 3,
   };
 
   return items.sort((a, b) => rank[a.kind] - rank[b.kind] || a.sort - b.sort);
@@ -159,9 +138,7 @@ export function notificationKindLabel(kind: NotificationKind): string {
       ? "Blocked"
       : kind === "reminder"
         ? "Reminders"
-        : kind === "report"
-          ? "Daily report"
-          : "Coming up";
+        : "Coming up";
 }
 
 export function notificationKindHint(kind: NotificationKind): string {
@@ -171,9 +148,7 @@ export function notificationKindHint(kind: NotificationKind): string {
       ? "Tasks waiting on someone or something."
       : kind === "reminder"
         ? "Starting soon or happening right now."
-        : kind === "report"
-          ? "Not filed yet today."
-          : "Scheduled for later today.";
+        : "Scheduled for later today.";
 }
 
 /** "Coming up" is listed on the screen but would be noise as an OS alert. */
@@ -181,10 +156,7 @@ export function alertableNotifications(items: NotificationItem[]): NotificationI
   return items.filter(
     (item) =>
       !item.read &&
-      (item.kind === "overdue" ||
-        item.kind === "blocker" ||
-        item.kind === "reminder" ||
-        item.kind === "report"),
+      (item.kind === "overdue" || item.kind === "blocker" || item.kind === "reminder"),
   );
 }
 
@@ -194,19 +166,13 @@ export function alertHeading(kind: NotificationKind): string {
     ? "Overdue task"
     : kind === "blocker"
       ? "Blocked task"
-      : kind === "report"
-        ? "Daily report not filed"
-        : kind === "reminder"
-          ? "Starting soon"
-          : "Scrum Master";
+      : kind === "reminder"
+        ? "Starting soon"
+        : "Scrum Master";
 }
 
 /** Where an alert's click should land. */
 export function notificationUrl(item: Pick<NotificationItem, "kind" | "todo_id">): string {
-  if (item.kind === "report") {
-    return "/reports";
-  }
-
   if (item.kind === "blocker") {
     return "/notifications";
   }
@@ -223,8 +189,7 @@ export function notificationDigest(
     (item) =>
       item.kind === "overdue" ||
       item.kind === "blocker" ||
-      item.kind === "reminder" ||
-      item.kind === "report",
+      item.kind === "reminder",
   ).length;
 
   const subject =
@@ -246,7 +211,7 @@ export function notificationDigest(
     `<p style="font-size:14px;color:#727272;margin:0 0 8px;">Hello ${escapeHtml(name)},</p>` +
     `<p style="font-size:14px;color:#727272;margin:0 0 20px;">${escapeHtml(intro)}</p>`;
 
-  for (const kind of ["overdue", "blocker", "reminder", "report", "upcoming"] as NotificationKind[]) {
+  for (const kind of ["overdue", "blocker", "reminder", "upcoming"] as NotificationKind[]) {
     const group = items.filter((item) => item.kind === kind);
 
     if (group.length === 0) {
