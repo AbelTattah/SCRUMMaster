@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 
 import { PwaRegister } from "@/components/PwaRegister";
 
@@ -25,10 +26,6 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Scrum Master",
   },
-  other: {
-    // iOS reads the legacy tag; the standard one above covers everyone else.
-    "apple-mobile-web-app-capable": "yes",
-  },
 };
 
 export const viewport: Viewport = {
@@ -38,10 +35,19 @@ export const viewport: Viewport = {
   themeColor: "#21005D",
 };
 
+// Applies the stored theme before first paint so the right palette is there
+// from frame one (no flash). System preference is handled purely in CSS.
+const THEME_INIT = `try{var t=localStorage.getItem("scrum-master.theme");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;}}catch(e){}`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT }}
+        />
         {children}
         <PwaRegister />
       </body>

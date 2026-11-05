@@ -4,6 +4,7 @@ import { signOut } from "@/app/actions/auth";
 import { saveNotificationSettings, sendTestEmail } from "@/app/actions/settings";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { PermissionPanel } from "@/components/PermissionPanel";
+import { ThemeSetting } from "@/components/ThemeSetting";
 import { requireOnboardedUser } from "@/lib/auth";
 import { mailIsConfigured, mailTransport } from "@/lib/mail";
 import {
@@ -25,11 +26,21 @@ export default async function SettingsPage() {
       <header className="page-header">
         <div className="page-heading">
           <h1 className="greeting">Settings</h1>
-          <p className="date-line">Notifications and account access.</p>
+          <p className="date-line">Appearance, notifications and account access.</p>
         </div>
       </header>
 
       <div className="settings-stack">
+        <section className="card">
+          <h2 className="card-title">Appearance</h2>
+          <p className="card-sub">
+            Dark mode follows your device by default. Pick a theme to pin this
+            browser to light or dark instead.
+          </p>
+
+          <ThemeSetting />
+        </section>
+
         <section className="card">
           <h2 className="card-title">Notifications</h2>
           <p className="card-sub">

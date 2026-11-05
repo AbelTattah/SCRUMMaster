@@ -58,6 +58,100 @@
     --topbar-h: 107px;
     --radius-sm: 8px;
     --radius-lg: 16px;
+
+    /* Semantic colours (light values; dark below). */
+    --auth-glow: radial-gradient(900px 460px at 50% -180px, #EFE9FA 0%, rgba(239, 233, 250, 0) 70%);
+    --avatar-bg: #FEF2E6;
+    --danger-soft: #FDECEC;
+    --danger-text: #B3261E;
+    --danger-line: #F5C7C7;
+    --success-text: #1E7A46;
+    --success-soft: #E9F5EE;
+    --tint-purple: #F4F0FB;
+    --tint-purple-hover: #E9DFF9;
+    --amber-soft: #FFF4DC;
+    --amber-text: #8A5A00;
+    --hover-faint: #FBFAFE;
+    --border-strong: #EAEAEA;
+    --modal-handle: #E0E0E0;
+    --purple-ink: #21005D;
+    --purple-ring: rgba(33, 0, 93, 0.16);
+    --on-accent: #FFFFFF;
+}
+
+/* --------------------------------------------------------------------------
+   Dark theme — follows the system preference, unless an explicit choice
+   (System / Light / Dark in Settings) is stored in localStorage and applied
+   as data-theme on <html> by the inline script in the root layout.
+   -------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+
+        --page-bg: #0E0E12;
+        --panel-bg: #15151B;
+        --surface: #1A1A21;
+        --search-bg: #22222A;
+        --ink: #F4F4F7;
+        --nav-ink: #E7E7EE;
+        --muted: #9C9CA8;
+        --line: #2A2A34;
+        --sidebar-line: #232330;
+        --field-line: #34343F;
+
+        --auth-glow: radial-gradient(900px 460px at 50% -180px, rgba(126, 101, 214, 0.24) 0%, rgba(126, 101, 214, 0) 70%);
+        --avatar-bg: #2B241A;
+        --danger-soft: #35151A;
+        --danger-text: #FF8A85;
+        --danger-line: #58272A;
+        --success-text: #4CD07D;
+        --success-soft: #12291D;
+        --tint-purple: #251B40;
+        --tint-purple-hover: #302452;
+        --amber-soft: #33280A;
+        --amber-text: #F0C36A;
+        --hover-faint: #22222B;
+        --border-strong: #35353F;
+        --modal-handle: #3A3A42;
+        --purple-ink: #B9A6F5;
+        --purple-ring: rgba(185, 166, 245, 0.3);
+    }
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --page-bg: #0E0E12;
+    --panel-bg: #15151B;
+    --surface: #1A1A21;
+    --search-bg: #22222A;
+    --ink: #F4F4F7;
+    --nav-ink: #E7E7EE;
+    --muted: #9C9CA8;
+    --line: #2A2A34;
+    --sidebar-line: #232330;
+    --field-line: #34343F;
+
+    --auth-glow: radial-gradient(900px 460px at 50% -180px, rgba(126, 101, 214, 0.24) 0%, rgba(126, 101, 214, 0) 70%);
+    --avatar-bg: #2B241A;
+    --danger-soft: #35151A;
+    --danger-text: #FF8A85;
+    --danger-line: #58272A;
+    --success-text: #4CD07D;
+    --success-soft: #12291D;
+    --tint-purple: #251B40;
+    --tint-purple-hover: #302452;
+    --amber-soft: #33280A;
+    --amber-text: #F0C36A;
+    --hover-faint: #22222B;
+    --border-strong: #35353F;
+    --modal-handle: #3A3A42;
+    --purple-ink: #B9A6F5;
+    --purple-ring: rgba(185, 166, 245, 0.3);
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
 }
 
 /* --------------------------------------------------------------------------
@@ -175,12 +269,12 @@ svg {
 }
 
 .nav-item:hover:not(.is-active) {
-    background: #F6F4FA;
+    background: var(--hover-faint);
 }
 
 .nav-item.is-active {
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
 }
 
 .nav-item svg {
@@ -203,7 +297,7 @@ svg {
     border-radius: 10px;
     font-size: 11px;
     font-weight: 600;
-    color: var(--surface);
+    color: var(--on-accent);
     font-variant-numeric: tabular-nums;
 }
 
@@ -236,7 +330,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .sidebar-user-text {
@@ -295,12 +389,12 @@ svg {
 
 .icon-btn.is-active {
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
 }
 
 .icon-btn--danger:hover {
-    background: #FDECEC;
-    color: #B3261E;
+    background: var(--danger-soft);
+    color: var(--danger-text);
 }
 
 .icon-btn svg {
@@ -389,7 +483,7 @@ svg {
     height: 30px;
     padding: 0;
     background: var(--surface);
-    border: 1.5px solid #EAEAEA;
+    border: 1.5px solid var(--border-strong);
     border-radius: 50%;
     color: var(--nav-ink);
     cursor: pointer;
@@ -402,8 +496,8 @@ svg {
 }
 
 .bell.has-unread {
-    border-color: var(--purple);
-    color: var(--purple);
+    border-color: var(--purple-ink);
+    color: var(--purple-ink);
 }
 
 .bell svg {
@@ -448,7 +542,7 @@ svg {
     height: 54px;
     border-radius: 50%;
     overflow: hidden;
-    background: #FEF2E6; /* peach backdrop behind the design's portrait */
+    background: var(--avatar-bg); /* peach backdrop behind the design's portrait */
     cursor: pointer;
 }
 
@@ -501,7 +595,7 @@ svg {
     padding: 0 20px;
     border-radius: var(--radius-sm);
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
     font-size: 17px;
     font-weight: 600;
     text-decoration: none;
@@ -531,7 +625,7 @@ svg {
     height: 56px;
     border-radius: 50%;
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
     box-shadow: 0 10px 26px rgba(33, 0, 93, 0.35);
     text-decoration: none;
     transition: transform 0.12s ease, background-color 0.15s ease;
@@ -608,12 +702,12 @@ svg {
 }
 
 .todo-check:hover {
-    border-color: var(--purple);
+    border-color: var(--purple-ink);
 }
 
 .todo-check:checked {
     background: var(--purple);
-    border-color: var(--purple);
+    border-color: var(--purple-ink);
 }
 
 .todo-check:checked::after {
@@ -722,8 +816,8 @@ svg {
 }
 
 .kebab-menu button.danger:hover {
-    background: #FDECEC;
-    color: #B3261E;
+    background: var(--danger-soft);
+    color: var(--danger-text);
 }
 
 /* --------------------------------------------------------------------------
@@ -822,7 +916,7 @@ svg {
 }
 
 .input:focus {
-    border-color: var(--purple);
+    border-color: var(--purple-ink);
 }
 
 .time-row {
@@ -853,7 +947,7 @@ svg {
     padding: 0 20px;
     border: 0;
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
     font-size: 16px;
     font-weight: 600;
     border-radius: var(--radius-sm);
@@ -884,7 +978,7 @@ svg {
 .form-error {
     margin: 14px 0 0;
     font-size: 14px;
-    color: #B3261E;
+    color: var(--danger-text);
     text-align: center;
 }
 
@@ -907,7 +1001,7 @@ svg {
     height: 88px;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .avatar-picker .hint {
@@ -918,7 +1012,7 @@ svg {
     padding: 6px 0 14px;
     border-radius: 0 0 44px 44px;
     background: rgba(33, 0, 93, 0.82);
-    color: var(--surface);
+    color: var(--on-accent);
     font-size: 11px;
     font-weight: 500;
     text-align: center;
@@ -1098,7 +1192,7 @@ svg {
 }
 
 .tab.is-active {
-    color: var(--purple);
+    color: var(--purple-ink);
     font-weight: 600;
 }
 
@@ -1300,7 +1394,7 @@ svg {
         height: 4px;
         margin: 0 auto 14px;
         border-radius: 2px;
-        background: #E0E0E0;
+        background: var(--modal-handle);
     }
 
     .toast {
@@ -1351,9 +1445,7 @@ svg {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background:
-        radial-gradient(900px 460px at 50% -180px, #EFE9FA 0%, rgba(239, 233, 250, 0) 70%),
-        var(--page-bg);
+    background: var(--auth-glow), var(--page-bg);
 }
 
 .auth-topbar {
@@ -1361,7 +1453,7 @@ svg {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 24px 32px;
+    padding: 16px 32px;
 }
 
 .auth-logo {
@@ -1389,18 +1481,18 @@ svg {
 }
 
 .auth-home-link:hover {
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 .auth-wrap {
     width: 100%;
     max-width: 460px;
     margin: auto;
-    padding: 16px 20px 48px;
+    padding: 8px 20px 20px;
 }
 
 .auth-foot {
-    padding: 0 20px 32px;
+    padding: 0 20px 16px;
     font-size: 13px;
     color: var(--muted);
     text-align: center;
@@ -1419,6 +1511,22 @@ svg {
     min-width: 0;
 }
 
+/* The logo belongs at the top-left of the page, over the purple panel —
+   positioned against .auth-body so it sits in the page corner. */
+.auth-panel-logo {
+    position: absolute;
+    top: 28px;
+    left: clamp(40px, 6vw, 90px);
+    z-index: 1;
+    display: block;
+}
+
+.auth-panel-logo img {
+    display: block;
+    width: auto;
+    height: 36px;
+}
+
 @media (min-width: 1000px) {
     .auth-body {
         flex-direction: row;
@@ -1426,6 +1534,13 @@ svg {
 
     .auth-side {
         flex: 0 0 clamp(560px, 45%, 760px);
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    /* The panel carries the logo up here — the stacked one would duplicate it. */
+    .auth-logo--stacked {
+        display: none;
     }
 
     .auth-brand-panel {
@@ -1438,36 +1553,17 @@ svg {
         background:
             radial-gradient(700px 420px at 110% -10%, rgba(224, 166, 6, 0.26), rgba(224, 166, 6, 0) 60%),
             linear-gradient(150deg, #2E0480 0%, #21005D 55%, #160043 100%);
-        color: var(--surface);
+        color: var(--on-accent);
     }
-}
-
-.auth-brand-mark {
-    display: grid;
-    place-items: center;
-    width: 58px;
-    height: 58px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.12);
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--surface);
-}
-
-.auth-brand-name {
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    color: var(--surface);
 }
 
 .auth-brand-tagline {
     margin: 0;
-    max-width: 26em;
-    font-size: 18px;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.82);
+    max-width: 24em;
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.92);
 }
 
 .auth-brand-points {
@@ -1504,7 +1600,7 @@ svg {
 }
 
 .auth-card {
-    padding: 40px;
+    padding: 28px 32px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);
@@ -1520,14 +1616,14 @@ svg {
 }
 
 .auth-title {
-    margin: 18px 0 4px;
+    margin: 10px 0 4px;
     font-size: 24px;
     font-weight: 600;
     color: var(--ink);
 }
 
 .auth-sub {
-    margin: 0 0 24px;
+    margin: 0 0 14px;
     font-size: 15px;
     color: var(--muted);
 }
@@ -1587,7 +1683,7 @@ svg {
 .steps {
     display: flex;
     gap: 10px;
-    margin: 0 0 22px;
+    margin: 0 0 14px;
     padding: 0;
     list-style: none;
 }
@@ -1622,12 +1718,12 @@ svg {
 
 .step.is-current span {
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
 }
 
 .step.is-done span {
-    background: #E9F5EE;
-    color: #1E7A46;
+    background: var(--success-soft);
+    color: var(--success-text);
 }
 
 /* Who is signing up (step 2) */
@@ -1648,7 +1744,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .signup-summary-text {
@@ -1679,7 +1775,7 @@ svg {
     flex: none;
     font-size: 13px;
     font-weight: 600;
-    color: var(--purple);
+    color: var(--purple-ink);
     text-decoration: none;
 }
 
@@ -1692,15 +1788,23 @@ svg {
     margin-top: 8px;
 }
 
+.auth-form .field {
+    margin-bottom: 12px;
+}
+
+.auth-form .input {
+    height: 44px;
+}
+
 .auth-switch {
-    margin: 22px 0 0;
+    margin: 14px 0 0;
     font-size: 14px;
     color: var(--muted);
     text-align: center;
 }
 
 .auth-switch a {
-    color: var(--purple);
+    color: var(--purple-ink);
     font-weight: 600;
     text-decoration: none;
 }
@@ -1719,15 +1823,15 @@ svg {
 }
 
 .auth-note {
-    background: #F4F0FB;
+    background: var(--tint-purple);
     border-left: 3px solid var(--purple);
     color: var(--nav-ink);
 }
 
 .auth-error {
-    background: #FDECEC;
-    border-left: 3px solid #B3261E;
-    color: #8C1D18;
+    background: var(--danger-soft);
+    border-left: 3px solid var(--danger-text);
+    color: var(--danger-text);
 }
 
 .field-hint {
@@ -1785,13 +1889,13 @@ svg {
 }
 
 .seg label:has(input:checked) {
-    border-color: var(--purple);
-    background: #F4F0FB;
-    color: var(--purple);
+    border-color: var(--purple-ink);
+    background: var(--tint-purple);
+    color: var(--purple-ink);
 }
 
 .seg label:focus-within {
-    outline: 2px solid rgba(33, 0, 93, 0.25);
+    outline: 2px solid var(--purple-ring);
     outline-offset: 2px;
 }
 
@@ -1818,7 +1922,7 @@ svg {
 }
 
 .page-tab.is-active {
-    color: var(--purple);
+    color: var(--purple-ink);
     font-weight: 600;
 }
 
@@ -1955,9 +2059,9 @@ svg {
     height: 38px;
     padding: 0 14px;
     background: var(--surface);
-    border: 1.5px solid #F0C4C4;
+    border: 1.5px solid var(--danger-line);
     border-radius: var(--radius-sm);
-    color: #B3261E;
+    color: var(--danger-text);
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
@@ -1965,7 +2069,7 @@ svg {
 }
 
 .btn-danger:hover {
-    background: #FDECEC;
+    background: var(--danger-soft);
 }
 
 .inline-form {
@@ -2008,7 +2112,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .member-info {
@@ -2060,8 +2164,8 @@ svg {
 }
 
 .chip--owner {
-    background: #F4F0FB;
-    color: var(--purple);
+    background: var(--tint-purple);
+    color: var(--purple-ink);
 }
 
 .chip--google {
@@ -2089,7 +2193,7 @@ svg {
     height: 24px;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .chip-count {
@@ -2123,9 +2227,9 @@ svg {
 }
 
 .pill.is-active {
-    border-color: var(--purple);
+    border-color: var(--purple-ink);
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
 }
 
 .todo-meta {
@@ -2155,7 +2259,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 /* The team checkbox is a real toggle now (owner actions) — the base
@@ -2227,11 +2331,11 @@ svg {
 }
 
 .setting-status[data-state="granted"] {
-    color: #1E7A46;
+    color: var(--success-text);
 }
 
 .setting-status[data-state="denied"] {
-    color: #B3261E;
+    color: var(--danger-text);
 }
 
 .settings-stack code {
@@ -2290,7 +2394,7 @@ svg {
 }
 
 .switch input:focus-visible + .switch-track {
-    outline: 2px solid rgba(33, 0, 93, 0.25);
+    outline: 2px solid var(--purple-ring);
     outline-offset: 2px;
 }
 
@@ -2369,7 +2473,7 @@ svg {
 }
 
 .notification-item.is-unread {
-    background: #FCFAFF;
+    background: var(--hover-faint);
 }
 
 .notification-dot {
@@ -2424,7 +2528,7 @@ svg {
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
-    color: var(--purple);
+    color: var(--purple-ink);
     text-decoration: none;
     cursor: pointer;
 }
@@ -2449,7 +2553,7 @@ svg {
 .empty-card svg {
     width: 36px;
     height: 36px;
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 .empty-card h2 {
@@ -2643,7 +2747,7 @@ svg {
    Next.js additions
    -------------------------------------------------------------------------- */
 .toast--error {
-    border-left-color: #B3261E;
+    border-left-color: var(--danger-text);
 }
 
 .auth-inline-form {
@@ -2655,7 +2759,7 @@ svg {
     padding: 0;
     border: 0;
     background: none;
-    color: var(--purple);
+    color: var(--purple-ink);
     font: inherit;
     cursor: pointer;
     text-decoration: underline;
@@ -2681,8 +2785,8 @@ svg {
     max-width: 160px;
     padding: 0 10px 0 4px;
     gap: 6px;
-    background: #F4F0FB;
-    color: var(--purple);
+    background: var(--tint-purple);
+    color: var(--purple-ink);
     font-size: 12px;
     overflow: hidden;
 }
@@ -2693,7 +2797,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .chip--assignee span {
@@ -2708,10 +2812,10 @@ svg {
     gap: 6px;
     height: 26px;
     padding: 0 10px;
-    border: 1px solid #F5C7C7;
+    border: 1px solid var(--danger-line);
     border-radius: 999px;
-    background: #FDECEC;
-    color: #B3261E;
+    background: var(--danger-soft);
+    color: var(--danger-text);
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
@@ -2722,7 +2826,7 @@ svg {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #B3261E;
+    background: var(--danger-text);
 }
 
 /* --- reports page: stat cards --------------------------------------------- */
@@ -2805,8 +2909,8 @@ svg {
 }
 
 .chip-x:hover {
-    background: #FDECEC;
-    color: #B3261E;
+    background: var(--danger-soft);
+    color: var(--danger-text);
 }
 
 /* --- team: leaderboard ---------------------------------------------------- */
@@ -2865,7 +2969,7 @@ svg {
     flex: none;
     border-radius: 50%;
     object-fit: cover;
-    background: #FEF2E6;
+    background: var(--avatar-bg);
 }
 
 .leader-name {
@@ -2885,8 +2989,8 @@ svg {
     flex: none;
     padding: 3px 9px;
     border-radius: 999px;
-    background: #F4F0FB;
-    color: var(--purple);
+    background: var(--tint-purple);
+    color: var(--purple-ink);
     font-size: 12px;
     font-weight: 700;
 }
@@ -2907,8 +3011,8 @@ svg {
     gap: 6px;
     padding: 3px 9px;
     border-radius: 999px;
-    background: #FFF4DC;
-    color: #8A5A00;
+    background: var(--amber-soft);
+    color: var(--amber-text);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -2926,7 +3030,6 @@ svg {
 
 /* --- notifications: new kinds --------------------------------------------- */
 .notification-dot--blocker { background: #E11D48; }
-.notification-dot--report { background: #0F766E; }
 
 /* --- phone ---------------------------------------------------------------- */
 @media (max-width: 700px) {
@@ -3009,7 +3112,7 @@ svg {
 }
 
 .todo-title.is-clickable:hover {
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 /* Renaming: an input that keeps the title's metrics */
@@ -3021,7 +3124,7 @@ svg {
     border: 1.5px solid var(--purple);
     border-radius: 8px;
     background: var(--surface);
-    box-shadow: 0 0 0 3px rgba(33, 0, 93, 0.12);
+    box-shadow: 0 0 0 3px var(--purple-ring);
     outline: none;
     font-family: inherit;
     font-size: 19px;
@@ -3040,7 +3143,7 @@ svg {
 }
 
 .todo-time--action:hover {
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 .todo-time-empty {
@@ -3050,7 +3153,7 @@ svg {
 }
 
 .todo-time--action:hover .todo-time-empty {
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 .inline-times {
@@ -3072,7 +3175,7 @@ svg {
 }
 
 .inline-times input:focus {
-    border-color: var(--purple);
+    border-color: var(--purple-ink);
 }
 
 .inline-done {
@@ -3081,7 +3184,7 @@ svg {
     border: 0;
     border-radius: 8px;
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
@@ -3104,7 +3207,7 @@ button.chip:disabled {
 }
 
 .chip--action:hover {
-    background: #E9DFF9;
+    background: var(--tint-purple-hover);
 }
 
 .chip-assign {
@@ -3125,8 +3228,8 @@ button.chip:disabled {
 }
 
 .chip-assign:hover {
-    border-color: var(--purple);
-    color: var(--purple);
+    border-color: var(--purple-ink);
+    color: var(--purple-ink);
 }
 
 .inline-select {
@@ -3149,7 +3252,7 @@ button.chip:disabled {
     flex-direction: column;
     gap: 8px;
     padding: 10px 12px;
-    border: 1px solid #F5C7C7;
+    border: 1px solid var(--danger-line);
     border-radius: 10px;
     background: #FFF8F8;
 }
@@ -3158,7 +3261,7 @@ button.chip:disabled {
     width: 100%;
     min-height: 54px;
     padding: 8px 10px;
-    border: 1.5px solid #F5C7C7;
+    border: 1.5px solid var(--danger-line);
     border-radius: 8px;
     background: var(--surface);
     outline: none;
@@ -3170,7 +3273,7 @@ button.chip:disabled {
 }
 
 .blocker-editor textarea:focus {
-    border-color: #B3261E;
+    border-color: var(--danger-text);
 }
 
 .blocker-editor-actions {
@@ -3197,7 +3300,7 @@ button.chip:disabled {
 
 .blocker-save {
     background: var(--purple);
-    color: var(--surface);
+    color: var(--on-accent);
 }
 
 .blocker-save:hover:not(:disabled) {
@@ -3210,15 +3313,15 @@ button.chip:disabled {
 }
 
 .blocker-editor-actions .blocker-clear {
-    border: 1.5px solid #F0C4C4;
+    border: 1.5px solid var(--danger-line);
     background: none;
-    color: #B3261E;
+    color: var(--danger-text);
 }
 
 .row-error {
     font-size: 12.5px;
     font-weight: 500;
-    color: #B3261E;
+    color: var(--danger-text);
 }
 
 /* Inline composer at the bottom of the list */
@@ -3242,9 +3345,9 @@ button.chip:disabled {
 }
 
 .add-task-placeholder:hover {
-    border-color: var(--purple);
-    background: #FBFAFE;
-    color: var(--purple);
+    border-color: var(--purple-ink);
+    background: var(--hover-faint);
+    color: var(--purple-ink);
 }
 
 .add-task-placeholder svg {
@@ -3268,7 +3371,7 @@ button.chip:disabled {
 .add-task-plus {
     display: grid;
     place-items: center;
-    color: var(--purple);
+    color: var(--purple-ink);
 }
 
 .add-task-plus svg {
@@ -3386,8 +3489,8 @@ button.chip:disabled {
 }
 
 .pager-btn:hover {
-    border-color: var(--purple);
-    color: var(--purple);
+    border-color: var(--purple-ink);
+    color: var(--purple-ink);
 }
 
 .report-date {
@@ -3431,7 +3534,7 @@ button.chip:disabled {
 }
 
 .report-dot--done {
-    background: #1E7A46;
+    background: var(--success-text);
 }
 
 .report-dot--open {
@@ -3439,7 +3542,7 @@ button.chip:disabled {
 }
 
 .report-dot--blocked {
-    background: #B3261E;
+    background: var(--danger-text);
 }
 
 .report-task-title {
@@ -3499,18 +3602,18 @@ button.chip:disabled {
 }
 
 .report-chip--done {
-    background: #E9F5EE;
-    color: #1E7A46;
+    background: var(--success-soft);
+    color: var(--success-text);
 }
 
 .report-chip--open {
-    background: #FEF5E0;
-    color: #8A5A00;
+    background: var(--amber-soft);
+    color: var(--amber-text);
 }
 
 .report-chip--blocked {
-    background: #FDECEC;
-    color: #B3261E;
+    background: var(--danger-soft);
+    color: var(--danger-text);
 }
 
 @media (max-width: 700px) {
@@ -3545,6 +3648,7 @@ button.chip:disabled {
 }
 
 /* --- notification permission panel actions ------------------------------- */
+/* --- notification bell popup --------------------------------------------- */
 .permission-actions {
     display: flex;
     flex-wrap: wrap;
@@ -3554,4 +3658,151 @@ button.chip:disabled {
 
 .permission-actions + .setting-status {
     margin-top: 12px;
+}
+
+.bell-wrap {
+    position: relative;
+}
+
+.notification-pop {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 80;
+    width: min(380px, calc(100vw - 32px));
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+}
+
+.pop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.pop-head a {
+    color: var(--purple-ink);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pop-head a:hover {
+    text-decoration: underline;
+}
+
+.pop-empty {
+    margin: 0;
+    padding: 26px 16px;
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.pop-list {
+    max-height: 320px;
+    margin: 0;
+    padding: 6px;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.pop-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.pop-item:hover {
+    background: var(--search-bg);
+}
+
+.pop-item .notification-dot {
+    margin-top: 6px;
+}
+
+.pop-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.pop-text strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.pop-text > span {
+    overflow: hidden;
+    display: -webkit-box;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--muted);
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.pop-unread {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: var(--purple);
+}
+
+.pop-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+}
+
+.pop-mark {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--purple-ink);
+    cursor: pointer;
+}
+
+.pop-mark:disabled {
+    color: var(--muted);
+    cursor: default;
+}
+
+.pop-foot a {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.pop-foot a:hover {
+    color: var(--purple-ink);
 }
