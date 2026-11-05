@@ -6,7 +6,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
-import type { Counts, CurrentUser, PageFilter } from "@/lib/types";
+import { NotificationBell } from "@/components/NotificationBell";
+import type { Counts, CurrentUser, NotificationItem, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
 type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports";
@@ -264,7 +265,15 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
   );
 }
 
-export function Topbar({ user, unread }: { user: CurrentUser; unread: number }) {
+export function Topbar({
+  user,
+  unread,
+  notifications,
+}: {
+  user: CurrentUser;
+  unread: number;
+  notifications: NotificationItem[];
+}) {
   const { view, page, q } = useLocation();
   const team = view === "team";
 
@@ -291,19 +300,7 @@ export function Topbar({ user, unread }: { user: CurrentUser; unread: number }) 
       </form>
 
       <div className="topbar-right">
-        <Link
-          className={`bell${unread > 0 ? " has-unread" : ""}`}
-          href="/notifications"
-          aria-label={unread > 0 ? `Notifications (${unread} unread)` : "Notifications"}
-          title="Notifications"
-        >
-          <Icon name="bell" />
-          {unread > 0 ? (
-            <span className="bell-badge" aria-hidden="true">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          ) : null}
-        </Link>
+        <NotificationBell unread={unread} notifications={notifications} />
 
         <Link
           className="icon-btn topbar-settings"

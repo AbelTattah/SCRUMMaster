@@ -4,8 +4,8 @@ import { Sidebar, Tabbar, Topbar } from "@/components/AppShell";
 import { BrowserNotifications } from "@/components/BrowserNotifications";
 import { FlashToast } from "@/components/FlashToast";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
-import { unreadNotificationCount } from "@/lib/data/notifications";
 import { countTodos } from "@/lib/data/todos";
+import { notificationsForUser } from "@/lib/data/notifications";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   // Signed-out visitors get no shell: each page decides what happens next.
@@ -18,10 +18,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const user = await requireOnboardedUser();
-  const [counts, unread] = await Promise.all([
+  const [counts, notifications] = await Promise.all([
     countTodos(user.id),
-    unreadNotificationCount(user.profile),
+    notificationsForUser(user.profile),
   ]);
+  const unread = notifications.filter((item) => !item.read).length;
 
   return (
     <>
@@ -31,7 +32,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
       <div className="main">
         <Suspense fallback={null}>
-          <Topbar user={user} unread={unread} />
+          <Topbar user={user} unread={unread} notifications={notifications} />
         </Suspense>
 
         <main className="content">{children}</main>
