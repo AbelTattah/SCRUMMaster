@@ -30,6 +30,8 @@ export interface LocalTodo {
   dirty: number;
   /** 1 after a local delete until the server confirms it. */
   tombstone: number;
+  /** Epoch ms of the last local write — pull results older than this lose. */
+  local_updated: number;
 }
 
 /**
