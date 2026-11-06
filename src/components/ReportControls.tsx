@@ -25,6 +25,8 @@ export function ReportControls({
   canSwitchScope,
   onDownload,
   downloading,
+  onDownloadWord,
+  downloadingWord,
 }: {
   period: ReportPeriod;
   dateKey: string;
@@ -34,6 +36,9 @@ export function ReportControls({
   canSwitchScope: boolean;
   onDownload: () => void;
   downloading?: boolean;
+  /** Wired once the .docx builder lands; hidden while undefined. */
+  onDownloadWord?: () => void;
+  downloadingWord?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -128,6 +133,18 @@ export function ReportControls({
       >
         {downloading ? "Preparing…" : "Download PDF"}
       </button>
+
+      {onDownloadWord ? (
+        <button
+          className="btn-ghost btn-small report-download"
+          type="button"
+          onClick={onDownloadWord}
+          disabled={downloadingWord}
+          title="Export the stand-up report as a Word document"
+        >
+          {downloadingWord ? "Preparing…" : "Download Word"}
+        </button>
+      ) : null}
     </div>
   );
 }
