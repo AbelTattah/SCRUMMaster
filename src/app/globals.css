@@ -2442,6 +2442,7 @@ svg {
    Stand-up meeting report document (screen twin of the PDF export)
    -------------------------------------------------------------------------- */
 .standup-doc {
+    margin-top: 22px;
     padding: 28px 32px 26px;
     background: var(--surface);
     border: 1px solid var(--line);

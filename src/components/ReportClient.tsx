@@ -371,7 +371,14 @@ function buildPdf(input: {
 
 /* ------------------------------------------------------------------- Word */
 
-/** Word paragraph helpers (sizes are half-points: 21 = 10.5 pt). */
+/** Word paragraph helpers (sizes are half-points: 21 = 10.5 pt).
+ *
+ * Bullets are drawn as literal "• " prefixes with a left indent rather than
+ * via the numbering part — visually identical, and it removes the entire
+ * list/numbering machinery from the file (the most common source of Word's
+ * "unreadable content" repair prompts). Rule lines carry a space so no run
+ * in the file is empty.
+ */
 function wordPara(
   text: string,
   opts: {
@@ -386,10 +393,12 @@ function wordPara(
     rule?: boolean;
   } = {},
 ): Paragraph {
+  const body = opts.bullet ? `• ${text}` : text || " ";
+
   return new Paragraph({
     children: [
       new TextRun({
-        text,
+        text: body,
         bold: opts.bold,
         italics: opts.italics,
         color: opts.color ? opts.color.replace("#", "") : undefined,
@@ -397,8 +406,7 @@ function wordPara(
       }),
     ],
     spacing: { after: opts.after ?? 60, before: opts.before ?? 0 },
-    bullet: opts.bullet ? { level: 0 } : undefined,
-    indent: opts.left ? { left: opts.left } : undefined,
+    indent: opts.left || opts.bullet ? { left: opts.left ?? 360 } : undefined,
     border: opts.rule
       ? { bottom: { style: BorderStyle.SINGLE, size: 6, color: "E4E4E4", space: 6 } }
       : undefined,
