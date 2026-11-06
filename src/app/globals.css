@@ -2438,6 +2438,192 @@ svg {
     color: var(--danger-text);
 }
 
+/* --------------------------------------------------------------------------
+   Stand-up meeting report document (screen twin of the PDF export)
+   -------------------------------------------------------------------------- */
+.standup-doc {
+    padding: 28px 32px 26px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+}
+
+.standup-title {
+    margin: 0 0 14px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--purple-ink);
+}
+
+.standup-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 6px 24px;
+    margin: 0;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.standup-meta div {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.standup-meta dt {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.standup-meta dt::after {
+    content: ":";
+}
+
+.standup-meta dd {
+    margin: 0;
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.standup-section {
+    padding: 18px 0 6px;
+    border-bottom: 1px solid var(--line);
+}
+
+.standup-section:last-of-type {
+    border-bottom: 0;
+}
+
+.standup-section > h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+}
+
+.standup-section > p {
+    margin: 0 0 10px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+}
+
+.standup-attendance {
+    margin: 0;
+    padding-left: 22px;
+}
+
+.standup-attendance li {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+}
+
+.standup-member {
+    margin: 12px 0;
+    padding: 14px 16px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--search-bg);
+}
+
+.standup-member h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--purple-ink);
+}
+
+.standup-member h5 {
+    margin: 12px 0 4px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.standup-member ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.standup-member li {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--nav-ink);
+}
+
+.standup-fallback {
+    margin: 0;
+    font-size: 13.5px;
+    font-style: italic;
+    color: var(--muted);
+}
+
+.standup-blocker,
+.standup-action {
+    padding: 8px 0 2px;
+}
+
+.standup-blocker-title,
+.standup-action-title {
+    margin: 0 0 2px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.standup-sub {
+    margin: 0 0 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.standup-taskref {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.standup-section h5 {
+    margin: 12px 0 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.standup-section ul {
+    margin: 0 0 6px;
+    padding-left: 22px;
+}
+
+.standup-section li {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--nav-ink);
+}
+
+.standup-status {
+    font-size: 15px;
+}
+
+.standup-foot {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.standup-foot p {
+    margin: 0 0 4px;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
 .chip-count {
     color: var(--muted);
     font-weight: 500;
