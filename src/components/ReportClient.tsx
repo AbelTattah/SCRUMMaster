@@ -12,6 +12,7 @@
  */
 import { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
+import { BorderStyle, Document, Packer, Paragraph, TextRun } from "docx";
 
 import { ReportControls } from "@/components/ReportControls";
 import { decryptText } from "@/lib/sync";
@@ -368,11 +369,249 @@ function buildPdf(input: {
   doc.save(input.filename);
 }
 
+/* ------------------------------------------------------------------- Word */
+
+/** Word paragraph helpers (sizes are half-points: 21 = 10.5 pt). */
+function wordPara(
+  text: string,
+  opts: {
+    size?: number;
+    bold?: boolean;
+    italics?: boolean;
+    color?: string;
+    after?: number;
+    before?: number;
+    bullet?: boolean;
+    left?: number;
+    rule?: boolean;
+  } = {},
+): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({
+        text,
+        bold: opts.bold,
+        italics: opts.italics,
+        color: opts.color ? opts.color.replace("#", "") : undefined,
+        size: opts.size ?? 21,
+      }),
+    ],
+    spacing: { after: opts.after ?? 60, before: opts.before ?? 0 },
+    bullet: opts.bullet ? { level: 0 } : undefined,
+    indent: opts.left ? { left: opts.left } : undefined,
+    border: opts.rule
+      ? { bottom: { style: BorderStyle.SINGLE, size: 6, color: "E4E4E4", space: 6 } }
+      : undefined,
+  });
+}
+
+function wordPair(label: string, value: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: `${label}: `, bold: true, size: 21 }),
+      new TextRun({ text: value, size: 21 }),
+    ],
+    spacing: { after: 40 },
+  });
+}
+
+/** The stand-up document as a real .docx (same sections as screen and PDF). */
+async function buildDocx(input: {
+  period: ReportPeriod;
+  periodRange: string;
+  meetingDate: string;
+  orgName: string;
+  authorName: string;
+  tasks: ReportTask[];
+  summary: ReportSummary;
+  filename: string;
+}): Promise<void> {
+  const people = groupByMember(input.tasks, input.authorName);
+  const blockedTasks = input.tasks.filter((task) => !task.completed && task.blocker);
+  const openTasks = input.tasks.filter((task) => !task.completed);
+  const status = summaryStatus(input.summary);
+
+  const children: Paragraph[] = [];
+
+  const section = (title: string) => {
+    children.push(wordPara(title.toUpperCase(), {
+      size: 24,
+      bold: true,
+      color: PURPLE,
+      before: 280,
+      after: 100,
+    }));
+  };
+
+  // --- header --------------------------------------------------------------
+  children.push(
+    wordPara(`${PERIOD_TITLE[input.period]} STAND-UP MEETING REPORT`, {
+      size: 34,
+      bold: true,
+      color: PURPLE,
+      after: 140,
+    }),
+  );
+  children.push(wordPair("Organization", input.orgName));
+  children.push(wordPair("Reporting Period", input.periodRange));
+  children.push(wordPair("Meeting Date", input.meetingDate));
+  children.push(wordPair("Facilitator", input.authorName));
+  children.push(wordPara("", { after: 40, rule: true }));
+
+  if (input.tasks.length === 0) {
+    children.push(wordPara("No tasks were created in this period.", { italics: true, color: MUTED }));
+  }
+
+  // --- 1. attendance -------------------------------------------------------
+  section("1. Attendance");
+
+  if (people.length === 0) {
+    children.push(wordPara("No progress updates were recorded in this period.", { color: MUTED }));
+  } else {
+    children.push(wordPara("The following team members provided progress updates:", { after: 60 }));
+
+    for (const person of people) {
+      children.push(wordPara(person.name, { bullet: true, after: 30 }));
+    }
+  }
+
+  // --- 2. individual progress updates --------------------------------------
+  section("2. Individual progress updates");
+
+  for (const person of people) {
+    children.push(
+      wordPara(person.name, { size: 23, bold: true, color: PURPLE, before: 160, after: 60 }),
+    );
+    children.push(wordPara("Previous Progress and Accomplishments", { size: 20, bold: true, after: 40 }));
+
+    if (person.completed.length === 0) {
+      children.push(wordPara("No completed tasks in this period.", { italics: true, color: MUTED }));
+    } else {
+      for (const task of person.completed) {
+        children.push(wordPara(taskLine(task), { bullet: true, size: 20, after: 30 }));
+      }
+    }
+
+    children.push(wordPara("Planned Work", { size: 20, bold: true, before: 80, after: 40 }));
+
+    if (person.open.length === 0 && person.blocked.length === 0) {
+      children.push(wordPara("No planned work recorded.", { italics: true, color: MUTED }));
+    } else {
+      for (const task of [...person.open, ...person.blocked]) {
+        children.push(wordPara(taskLine(task), { bullet: true, size: 20, after: 30 }));
+      }
+    }
+
+    children.push(wordPara("Blockers / Challenges", { size: 20, bold: true, before: 80, after: 40 }));
+
+    if (person.blocked.length === 0) {
+      children.push(wordPara("No blockers reported.", { italics: true, color: MUTED, after: 80 }));
+    } else {
+      for (const task of person.blocked) {
+        children.push(
+          wordPara(`${task.blocker} — “${task.title}”`, { bullet: true, size: 20, after: 30 }),
+        );
+      }
+    }
+  }
+
+  // --- 3. blockers and dependencies ---------------------------------------
+  section("3. Blockers and dependencies");
+
+  if (blockedTasks.length === 0) {
+    children.push(wordPara("No blockers were formally recorded in this period.", { color: MUTED }));
+  } else {
+    blockedTasks.forEach((task, index) => {
+      children.push(wordPara(`${index + 1}. ${task.blocker}`, { bold: true, size: 21, after: 30 }));
+      children.push(
+        wordPara(
+          `Affected member: ${personOf(task, input.authorName)} · Task: ${task.title}`,
+          { size: 18, color: MUTED, left: 240, after: 120 },
+        ),
+      );
+    });
+  }
+
+  // --- 4. action items ------------------------------------------------------
+  section("4. Action items and follow-ups");
+
+  if (openTasks.length === 0) {
+    children.push(wordPara("No open action items in this period.", { color: MUTED }));
+  } else {
+    for (const task of openTasks) {
+      children.push(wordPara(task.title, { bold: true, size: 21, after: 30 }));
+      children.push(
+        wordPara(
+          `Responsible: ${personOf(task, input.authorName)}  ·  Due: ${dueLabel(task)}  ·  Status: ${statusOf(task)}`,
+          { size: 18, color: MUTED, left: 240, after: 110 },
+        ),
+      );
+    }
+  }
+
+  // --- 5. meeting summary --------------------------------------------------
+  section("5. Meeting summary");
+  children.push(
+    wordPara(`Status: ${status.text}`, { size: 22, bold: true, color: status.color, after: 60 }),
+  );
+  children.push(
+    wordPara(
+      `${input.summary.created} tasks were created, ${input.summary.completed} completed, ` +
+        `${input.summary.inProgress} remain in progress` +
+        (input.summary.blocked > 0
+          ? `, and ${input.summary.blocked} blocked.`
+          : ", with no blocked tasks formally recorded."),
+      { after: 80 },
+    ),
+  );
+
+  if (blockedTasks.length > 0) {
+    children.push(wordPara("Outstanding Blockers", { size: 20, bold: true, after: 40 }));
+
+    for (const task of blockedTasks) {
+      children.push(
+        wordPara(`${task.blocker} — ${personOf(task, input.authorName)}`, {
+          bullet: true,
+          size: 20,
+          after: 30,
+        }),
+      );
+    }
+  }
+
+  // --- footer ---------------------------------------------------------------
+  children.push(wordPara("", { after: 40, rule: true }));
+  children.push(wordPara(`Document Prepared By: ${input.authorName}`, { size: 18, color: MUTED, after: 30 }));
+  children.push(wordPara("Role: Scrum Master", { size: 18, color: MUTED, after: 30 }));
+  children.push(wordPara(`Date Recorded: ${input.meetingDate}`, { size: 18, color: MUTED, after: 30 }));
+  children.push(wordPara(`Organization: ${input.orgName}`, { size: 18, color: MUTED }));
+
+  const doc = new Document({
+    creator: "Scrum Master",
+    title: `${PERIOD_TITLE[input.period]} stand-up meeting report`,
+    description: `Stand-up report for ${input.periodRange}`,
+    sections: [{ children }],
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = input.filename.replace(/\.pdf$/, ".docx");
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
 /* ----------------------------------------------------------------- screen */
 
 export function ReportClient(props: Props) {
   const [tasks, setTasks] = useState<ReportTask[] | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [wordBusy, setWordBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -421,6 +660,29 @@ export function ReportClient(props: Props) {
     }
   }
 
+  async function downloadWord() {
+    if (!tasks || wordBusy) {
+      return;
+    }
+
+    setWordBusy(true);
+
+    try {
+      await buildDocx({
+        period: props.period,
+        periodRange: props.periodRange,
+        meetingDate: props.meetingDate,
+        orgName: props.orgName,
+        authorName: props.authorName,
+        tasks,
+        summary: props.summary,
+        filename: props.filename,
+      });
+    } finally {
+      setWordBusy(false);
+    }
+  }
+
   const people = tasks ? groupByMember(tasks, props.authorName) : [];
   const blockedTasks = tasks ? tasks.filter((t) => !t.completed && t.blocker) : [];
   const openTasks = tasks ? tasks.filter((t) => !t.completed) : [];
@@ -437,6 +699,8 @@ export function ReportClient(props: Props) {
         canSwitchScope={props.canSwitchScope}
         onDownload={download}
         downloading={downloading}
+        onDownloadWord={downloadWord}
+        downloadingWord={wordBusy}
       />
 
       <article className="standup-doc">
