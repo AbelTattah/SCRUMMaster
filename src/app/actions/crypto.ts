@@ -152,6 +152,16 @@ export async function saveCryptoMaterial(patch: {
     return { error: "Could not read your account." };
   }
 
+  // Never replace a stored organization key: a different wrap would orphan
+  // every task encrypted under the stored one (racing first-unlocks included).
+  if (patchMeta.crypto_org_wrapped) {
+    const existing = readMetadata(authUser.user.user_metadata);
+
+    if (existing.org_wrapped && existing.org_wrapped !== patchMeta.crypto_org_wrapped) {
+      delete patchMeta.crypto_org_wrapped;
+    }
+  }
+
   const merged = { ...authUser.user.user_metadata, ...patchMeta };
 
   const { error } = await admin.auth.admin.updateUserById(current.id, {

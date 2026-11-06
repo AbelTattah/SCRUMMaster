@@ -9,7 +9,9 @@
  *
  * API responses are never cached — tasks and sessions stay network-only.
  */
-const CACHE = "scrum-master-v3";
+// Bumped when the shell assets change — the install step re-caches them
+// (offline.html carries the "boot into the cached app" redirect).
+const CACHE = "scrum-master-v4";
 const SHELL = [
   "/offline.html",
   "/manifest.webmanifest",

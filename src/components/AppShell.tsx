@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { signOut } from "@/app/actions/auth";
 import { ConfirmForm } from "@/components/ConfirmForm";
@@ -312,6 +313,8 @@ export function Topbar({
       </form>
 
       <div className="topbar-right">
+        <NetworkPill />
+
         <NotificationBell unread={unread} notifications={notifications} />
 
         <Link
@@ -331,5 +334,42 @@ export function Topbar({
         </Link>
       </div>
     </header>
+  );
+}
+
+/**
+ * Header-only connection status. The offline-first app keeps working with no
+ * network (the local mirror serves everything), so a bad connection is a
+ * quiet pill in the top bar — never a screen-covering page.
+ */
+function NetworkPill() {
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  if (online) {
+    return null;
+  }
+
+  return (
+    <span
+      className="net-pill"
+      role="status"
+      title="Working offline — your changes are saved on this device and sync when the connection is back."
+    >
+      <span className="net-pill-dot" aria-hidden="true" />
+      Offline
+    </span>
   );
 }
