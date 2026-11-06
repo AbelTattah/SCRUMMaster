@@ -1,29 +1,38 @@
 "use client";
 
 /**
- * The report body: decrypts the task rows the server produced (it can only
- * see ciphertext), renders them, and exports the PDF with jsPDF — the same
- * layout as the old server renderer, built here where the titles exist.
+ * The report body as a stand-up meeting document.
+ *
+ * Structure mirrors the team's written stand-up report — header block,
+ * attendance, per-member progress updates, blockers & dependencies, action
+ * items, meeting summary, prepared-by footer — derived **only from data the
+ * app holds** (tasks, states, blockers, times, members). Titles/blockers
+ * are decrypted here; the server only ever sees ciphertext, so the PDF is
+ * generated in the browser with the same section layout.
  */
 import { useEffect, useState } from "react";
 import { jsPDF } from "jspdf";
 
 import { ReportControls } from "@/components/ReportControls";
-import { Icon } from "@/components/icons";
 import { decryptText } from "@/lib/sync";
 import type { ReportTask } from "@/lib/data/reports";
 import type { ReportPeriod, ReportScope } from "@/lib/reportPeriods";
-import { formatStamp, formatTimeRange } from "@/lib/time";
+import { formatTime, formatTimeRange } from "@/lib/time";
 
 const PURPLE = "#21005D";
 const INK = "#1A1A1A";
 const MUTED = "#727272";
 const LINE = "#E4E4E4";
-const ROW_ALT = "#F8F7FC";
 const GREEN = "#1E7A46";
 const RED = "#B3261E";
 const AMBER = "#B45309";
 const MARGIN = 48;
+
+const PERIOD_TITLE: Record<ReportPeriod, string> = {
+  daily: "DAILY",
+  weekly: "WEEKLY",
+  monthly: "MONTHLY",
+};
 
 interface ReportSummary {
   created: number;
@@ -43,30 +52,85 @@ interface Props {
   windowLabel: string;
   filename: string;
   scopeLabel: string;
+  /** "2 November – 8 November 2026" — computed server-side in the app tz. */
+  periodRange: string;
+  /** "6 November 2026" — today, app timezone. */
+  meetingDate: string;
+  orgName: string;
   authorName: string;
   tasks: ReportTask[];
   summary: ReportSummary;
 }
 
-function statusOf(task: ReportTask): { key: string; label: string } {
-  if (task.completed) {
-    return { key: "done", label: "Completed" };
-  }
+/* --------------------------------------------------------------- grouping */
 
-  if (task.blocker) {
-    return { key: "blocked", label: "Blocked" };
-  }
-
-  return { key: "open", label: "In progress" };
+interface MemberReport {
+  name: string;
+  completed: ReportTask[];
+  open: ReportTask[];
+  blocked: ReportTask[];
 }
 
-function statusColor(task: ReportTask): string {
-  if (task.completed) {
-    return GREEN;
+function personOf(task: ReportTask, fallback: string): string {
+  return task.assignee_name || task.creator_name || fallback;
+}
+
+/** Groups the window's tasks per person, preserving first-appearance order. */
+function groupByMember(tasks: ReportTask[], fallback: string): MemberReport[] {
+  const groups = new Map<string, MemberReport>();
+
+  for (const task of tasks) {
+    const name = personOf(task, fallback);
+    let group = groups.get(name);
+
+    if (!group) {
+      group = { name, completed: [], open: [], blocked: [] };
+      groups.set(name, group);
+    }
+
+    if (task.completed) {
+      group.completed.push(task);
+    } else if (task.blocker) {
+      group.blocked.push(task);
+    } else {
+      group.open.push(task);
+    }
   }
 
-  return task.blocker ? RED : AMBER;
+  return [...groups.values()];
 }
+
+function taskLine(task: ReportTask): string {
+  const range = formatTimeRange(task.start_time, task.end_time);
+
+  return range ? `${task.title} · ${range}` : task.title;
+}
+
+function dueLabel(task: ReportTask): string {
+  return task.end_time ? `Today, ${formatTime(task.end_time)}` : "No due date";
+}
+
+function statusOf(task: ReportTask): "Blocked" | "In progress" {
+  return task.blocker ? "Blocked" : "In progress";
+}
+
+function summaryStatus(summary: ReportSummary): { text: string; color: string } {
+  if (summary.blocked > 0) {
+    return { text: "At Risk — Monitoring Required", color: RED };
+  }
+
+  if (summary.created === 0) {
+    return { text: "No activity in this period", color: MUTED };
+  }
+
+  if (summary.rate >= 60) {
+    return { text: "On track", color: GREEN };
+  }
+
+  return { text: "In progress — Monitoring Required", color: AMBER };
+}
+
+/* ------------------------------------------------------------------- PDF */
 
 function hex(value: string): [number, number, number] {
   const raw = value.replace("#", "");
@@ -78,46 +142,12 @@ function hex(value: string): [number, number, number] {
   ];
 }
 
-const generatedFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-});
-
-const createdFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-});
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function truncate(doc: jsPDF, text: string, maxWidth: number): string {
-  if (doc.getTextWidth(text) <= maxWidth) {
-    return text;
-  }
-
-  let out = text;
-
-  while (out.length > 1 && doc.getTextWidth(`${out}…`) > maxWidth) {
-    out = out.slice(0, -1);
-  }
-
-  return `${out}…`;
-}
-
-/** A4 portrait, brand header, summary row, paginated task table. */
+/** A4 portrait document with the same sections as the on-screen report. */
 function buildPdf(input: {
-  period: string;
-  label: string;
-  scopeLabel: string;
+  period: ReportPeriod;
+  periodRange: string;
+  meetingDate: string;
+  orgName: string;
   authorName: string;
   tasks: ReportTask[];
   summary: ReportSummary;
@@ -126,158 +156,219 @@ function buildPdf(input: {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const contentWidth = pageW - MARGIN * 2;
+  const cw = pageW - MARGIN * 2;
+  let y = MARGIN;
 
-  /** Text with a top-of-line coordinate (matches the old pdfkit layout). */
-  function text(
-    value: string,
-    x: number,
-    top: number,
-    size: number,
-    color: string,
-    options: { bold?: boolean; width?: number; align?: "right" | "center" } = {},
-  ): number {
-    doc.setFont("helvetica", options.bold ? "bold" : "normal");
+  const ensure = (height: number) => {
+    if (y + height > pageH - MARGIN) {
+      doc.addPage();
+      y = MARGIN;
+    }
+  };
+
+  const font = (style: "normal" | "bold" | "italic", size: number, color: string) => {
+    doc.setFont("helvetica", style);
     doc.setFontSize(size);
     const [r, g, b] = hex(color);
     doc.setTextColor(r, g, b);
+  };
 
-    let out = value;
+  const para = (
+    value: string,
+    opts: {
+      size?: number;
+      color?: string;
+      style?: "normal" | "bold" | "italic";
+      indent?: number;
+      bullet?: boolean;
+      after?: number;
+    } = {},
+  ) => {
+    const size = opts.size ?? 10;
+    const indent = opts.indent ?? 0;
+    const bullet = opts.bullet ? 12 : 0;
+    const lines = doc.splitTextToSize(value, cw - indent - bullet) as string[];
+    const lineHeight = size + 3.5;
 
-    if (options.width) {
-      out = truncate(doc, value, options.width);
+    ensure(lines.length * lineHeight + (opts.after ?? 4));
+    font(opts.style ?? "normal", size, opts.color ?? INK);
+
+    for (const line of lines) {
+      if (opts.bullet && line === lines[0]) {
+        doc.text("•", MARGIN + indent, y + size);
+      }
+
+      doc.text(line, MARGIN + indent + bullet, y + size);
+      y += lineHeight;
     }
 
-    doc.text(out, x, top + size, options.align ? { align: options.align } : undefined);
-    return top + size;
-  }
+    y += opts.after ?? 4;
+  };
 
-  function rule(atY: number): void {
+  const rule = () => {
+    ensure(16);
     const [r, g, b] = hex(LINE);
     doc.setDrawColor(r, g, b);
     doc.setLineWidth(1);
-    doc.line(MARGIN, atY, MARGIN + contentWidth, atY);
-  }
+    doc.line(MARGIN, y, MARGIN + cw, y);
+    y += 16;
+  };
 
-  function tableHeader(top: number): number {
-    const widths = [22, contentWidth - 22 - 70 - 92 - 84, 70, 92, 84];
-    const titles = ["#", "TASK", "STATUS", "WHO", "CREATED"];
-    let x = MARGIN;
+  const section = (title: string) => {
+    ensure(34);
+    y += 8;
+    para(title.toUpperCase(), { size: 12, style: "bold", color: PURPLE, after: 6 });
+  };
 
-    for (let index = 0; index < titles.length; index += 1) {
-      text(titles[index], x, top, 8, MUTED, { bold: true, width: widths[index] - 4 });
-      x += widths[index];
-    }
+  const people = groupByMember(input.tasks, input.authorName);
+  const blockedTasks = input.tasks.filter((task) => !task.completed && task.blocker);
+  const openTasks = input.tasks.filter((task) => !task.completed);
+  const status = summaryStatus(input.summary);
 
-    rule(top + 12);
-    return top + 20;
-  }
-
-  let y = MARGIN;
-
-  // --- header ------------------------------------------------------------
-  text("Scrum Master", MARGIN, y, 20, PURPLE, {
-    bold: true,
-    width: contentWidth * 0.6,
+  // --- header --------------------------------------------------------------
+  para(`${PERIOD_TITLE[input.period]} STAND-UP MEETING REPORT`, {
+    size: 17,
+    style: "bold",
+    color: PURPLE,
+    after: 6,
   });
-  text(`Generated ${generatedFormatter.format(new Date())}`, MARGIN + contentWidth, y + 4, 9, MUTED, {
-    align: "right",
-    width: contentWidth,
-  });
-
-  y += 34;
-  text(`${capitalize(input.period)} report`, MARGIN, y, 16, INK, { bold: true });
-  y += 22;
-  text(`${input.label} · ${input.scopeLabel} · ${input.authorName}`, MARGIN, y, 11, MUTED, {
-    width: contentWidth,
-  });
-
-  y += 20;
-  rule(y);
-  y += 18;
-
-  // --- summary row -------------------------------------------------------
-  const metrics: [string, string][] = [
-    [String(input.summary.created), "Tasks created"],
-    [String(input.summary.completed), "Completed"],
-    [String(input.summary.inProgress), "In progress"],
-    [String(input.summary.blocked), "Blocked"],
-    [`${input.summary.rate}%`, "Completion rate"],
-  ];
-  const columnWidth = contentWidth / metrics.length;
-
-  for (let index = 0; index < metrics.length; index += 1) {
-    const [value, caption] = metrics[index];
-    const x = MARGIN + index * columnWidth;
-
-    text(value, x, y, 18, PURPLE, { bold: true, width: columnWidth - 10 });
-    text(caption, x, y + 24, 9, MUTED, { width: columnWidth - 10 });
-  }
-
-  y += 52;
-
-  // --- task table --------------------------------------------------------
-  const widths = [22, contentWidth - 22 - 70 - 92 - 84, 70, 92, 84];
-  y = tableHeader(y);
+  para(`Organization: ${input.orgName}`, { size: 10.5, after: 2 });
+  para(`Reporting Period: ${input.periodRange}`, { size: 10.5, after: 2 });
+  para(`Meeting Date: ${input.meetingDate}`, { size: 10.5, after: 2 });
+  para(`Facilitator: ${input.authorName}`, { size: 10.5, after: 4 });
+  rule();
 
   if (input.tasks.length === 0) {
-    y = text("No tasks were created in this period.", MARGIN, y, 11, MUTED, {
-      width: contentWidth,
+    para("No tasks were created in this period.", {
+      size: 11,
+      color: MUTED,
     });
   }
 
-  input.tasks.forEach((task, index) => {
-    const rowHeight = 20;
+  // --- 1. attendance -------------------------------------------------------
+  section("1. Attendance");
 
-    if (y + rowHeight > pageH - MARGIN) {
-      doc.addPage();
-      y = tableHeader(MARGIN);
+  if (people.length === 0) {
+    para("No progress updates were recorded in this period.", { color: MUTED });
+  } else {
+    para("The following team members provided progress updates:", { after: 3 });
+
+    for (const person of people) {
+      para(person.name, { bullet: true, size: 10, after: 1 });
+    }
+  }
+
+  // --- 2. individual progress updates --------------------------------------
+  section("2. Individual progress updates");
+
+  for (const person of people) {
+    ensure(70);
+    para(person.name, { size: 11.5, style: "bold", color: PURPLE, after: 3 });
+    para("Previous Progress and Accomplishments", { size: 10, style: "bold", after: 2 });
+
+    if (person.completed.length === 0) {
+      para("No completed tasks in this period.", { indent: 6, color: MUTED, size: 9.5 });
+    } else {
+      for (const task of person.completed) {
+        para(taskLine(task), { bullet: true, indent: 6, size: 9.5, after: 1 });
+      }
     }
 
-    if (index % 2 === 1) {
-      const [r, g, b] = hex(ROW_ALT);
-      doc.setFillColor(r, g, b);
-      doc.rect(MARGIN, y - 4, contentWidth, rowHeight, "F");
+    para("Planned Work", { size: 10, style: "bold", after: 2 });
+
+    if (person.open.length === 0 && person.blocked.length === 0) {
+      para("No planned work recorded.", { indent: 6, color: MUTED, size: 9.5 });
+    } else {
+      for (const task of [...person.open, ...person.blocked]) {
+        para(taskLine(task), { bullet: true, indent: 6, size: 9.5, after: 1 });
+      }
     }
 
-    const who = task.assignee_name || task.creator_name || "—";
-    const created = createdFormatter.format(new Date(task.created_at));
-    let x = MARGIN;
+    para("Blockers / Challenges", { size: 10, style: "bold", after: 2 });
 
-    text(String(index + 1), x, y, 9, MUTED, { width: widths[0] - 4 });
-    x += widths[0];
+    if (person.blocked.length === 0) {
+      para("No blockers reported.", { indent: 6, color: MUTED, size: 9.5, after: 6 });
+    } else {
+      for (const task of person.blocked) {
+        para(`${task.blocker} — “${task.title}”`, {
+          bullet: true,
+          indent: 6,
+          size: 9.5,
+          after: 1,
+        });
+      }
 
-    text(task.title, x, y, 9.5, INK, { bold: true, width: widths[1] - 8 });
-    x += widths[1];
+      y += 5;
+    }
+  }
 
-    text(statusOf(task).label, x, y, 8.5, statusColor(task), {
-      bold: true,
-      width: widths[2] - 6,
+  // --- 3. blockers and dependencies ---------------------------------------
+  section("3. Blockers and dependencies");
+
+  if (blockedTasks.length === 0) {
+    para("No blockers were formally recorded in this period.", { color: MUTED });
+  } else {
+    blockedTasks.forEach((task, index) => {
+      para(`${index + 1}. ${task.blocker}`, { size: 10.5, style: "bold", after: 1 });
+      para(`Affected member: ${personOf(task, input.authorName)} · Task: ${task.title}`, {
+        size: 9,
+        color: MUTED,
+        indent: 10,
+        after: 6,
+      });
     });
-    x += widths[2];
+  }
 
-    text(who, x, y, 9, INK, { width: widths[3] - 6 });
-    x += widths[3];
+  // --- 4. action items ------------------------------------------------------
+  section("4. Action items and follow-ups");
 
-    text(created, x, y, 9, MUTED, { width: widths[4] });
+  if (openTasks.length === 0) {
+    para("No open action items in this period.", { color: MUTED });
+  } else {
+    for (const task of openTasks) {
+      para(task.title, { size: 10, style: "bold", after: 1 });
+      para(
+        `Responsible: ${personOf(task, input.authorName)}  ·  Due: ${dueLabel(task)}  ·  Status: ${statusOf(task)}`,
+        { size: 9, color: MUTED, indent: 10, after: 5 },
+      );
+    }
+  }
 
-    y += rowHeight;
-  });
-
-  // --- footer ------------------------------------------------------------
-  y = Math.min(y + 10, pageH - MARGIN - 10);
-  rule(y);
-  text(
-    "Scrum Master report — tasks selected by creation time within the period.",
-    MARGIN + contentWidth / 2,
-    y + 8,
-    8,
-    MUTED,
-    { align: "center", width: contentWidth },
+  // --- 5. meeting summary --------------------------------------------------
+  section("5. Meeting summary");
+  para(`Status: ${status.text}`, { size: 11, style: "bold", color: status.color, after: 3 });
+  para(
+    `${input.summary.created} tasks were created, ${input.summary.completed} completed, ` +
+      `${input.summary.inProgress} remain in progress` +
+      (input.summary.blocked > 0
+        ? `, and ${input.summary.blocked} blocked.`
+        : ", with no blocked tasks formally recorded."),
+    { after: 4 },
   );
+
+  if (blockedTasks.length > 0) {
+    para("Outstanding Blockers", { size: 10, style: "bold", after: 2 });
+
+    for (const task of blockedTasks) {
+      para(`${task.blocker} — ${personOf(task, input.authorName)}`, {
+        bullet: true,
+        size: 9.5,
+        after: 1,
+      });
+    }
+  }
+
+  // --- footer ---------------------------------------------------------------
+  rule();
+  para(`Document Prepared By: ${input.authorName}`, { size: 9, color: MUTED, after: 1 });
+  para("Role: Scrum Master", { size: 9, color: MUTED, after: 1 });
+  para(`Date Recorded: ${input.meetingDate}`, { size: 9, color: MUTED, after: 1 });
+  para(`Organization: ${input.orgName}`, { size: 9, color: MUTED });
 
   doc.save(input.filename);
 }
+
+/* ----------------------------------------------------------------- screen */
 
 export function ReportClient(props: Props) {
   const [tasks, setTasks] = useState<ReportTask[] | null>(null);
@@ -317,8 +408,9 @@ export function ReportClient(props: Props) {
     try {
       buildPdf({
         period: props.period,
-        label: props.windowLabel,
-        scopeLabel: props.scopeLabel,
+        periodRange: props.periodRange,
+        meetingDate: props.meetingDate,
+        orgName: props.orgName,
         authorName: props.authorName,
         tasks,
         summary: props.summary,
@@ -328,6 +420,11 @@ export function ReportClient(props: Props) {
       setDownloading(false);
     }
   }
+
+  const people = tasks ? groupByMember(tasks, props.authorName) : [];
+  const blockedTasks = tasks ? tasks.filter((t) => !t.completed && t.blocker) : [];
+  const openTasks = tasks ? tasks.filter((t) => !t.completed) : [];
+  const status = summaryStatus(props.summary);
 
   return (
     <>
@@ -342,52 +439,175 @@ export function ReportClient(props: Props) {
         downloading={downloading}
       />
 
-      <section className="panel report-tasks" aria-label="Tasks in this period">
+      <article className="standup-doc">
+        <header className="standup-head">
+          <h2 className="standup-title">
+            {PERIOD_TITLE[props.period]} stand-up meeting report
+          </h2>
+          <dl className="standup-meta">
+            <div>
+              <dt>Organization</dt>
+              <dd>{props.orgName}</dd>
+            </div>
+            <div>
+              <dt>Reporting period</dt>
+              <dd>{props.periodRange}</dd>
+            </div>
+            <div>
+              <dt>Meeting date</dt>
+              <dd>{props.meetingDate}</dd>
+            </div>
+            <div>
+              <dt>Facilitator</dt>
+              <dd>{props.authorName}</dd>
+            </div>
+          </dl>
+        </header>
+
         {tasks === null ? (
-          <p className="empty">Loading tasks…</p>
+          <p className="empty">Loading report…</p>
         ) : tasks.length === 0 ? (
           <p className="empty">No tasks were created in {props.windowLabel.toLowerCase()}.</p>
         ) : (
-          tasks.map((task) => {
-            const status = statusOf(task);
-            const range = formatTimeRange(task.start_time, task.end_time);
+          <>
+            <section className="standup-section">
+              <h3>1. Attendance</h3>
+              <p>The following team members provided progress updates:</p>
+              <ul className="standup-attendance">
+                {people.map((person) => (
+                  <li key={person.name}>{person.name}</li>
+                ))}
+              </ul>
+            </section>
 
-            return (
-              <div className={`report-task${task.completed ? " is-done" : ""}`} key={task.id}>
-                <span
-                  className={`report-dot report-dot--${status.key}`}
-                  aria-hidden="true"
-                />
+            <section className="standup-section">
+              <h3>2. Individual progress updates</h3>
 
-                <span className="report-task-title">{task.title}</span>
+              {people.map((person) => (
+                <div className="standup-member" key={person.name}>
+                  <h4>{person.name}</h4>
 
-                <span className="report-task-meta">
-                  {task.assignee_name ? (
-                    <span className="chip chip--assignee">{task.assignee_name}</span>
-                  ) : null}
+                  <h5>Previous Progress and Accomplishments</h5>
+                  {person.completed.length === 0 ? (
+                    <p className="standup-fallback">No completed tasks in this period.</p>
+                  ) : (
+                    <ul>
+                      {person.completed.map((task) => (
+                        <li key={task.id}>{taskLine(task)}</li>
+                      ))}
+                    </ul>
+                  )}
 
-                  {props.scope === "org" && task.creator_name ? (
-                    <span className="report-by">by {task.creator_name}</span>
-                  ) : null}
+                  <h5>Planned Work</h5>
+                  {person.open.length === 0 && person.blocked.length === 0 ? (
+                    <p className="standup-fallback">No planned work recorded.</p>
+                  ) : (
+                    <ul>
+                      {[...person.open, ...person.blocked].map((task) => (
+                        <li key={task.id}>{taskLine(task)}</li>
+                      ))}
+                    </ul>
+                  )}
 
-                  {range ? (
-                    <span className="report-range">
-                      <Icon name="clock" />
-                      <span>{range}</span>
-                    </span>
-                  ) : null}
+                  <h5>Blockers / Challenges</h5>
+                  {person.blocked.length === 0 ? (
+                    <p className="standup-fallback">No blockers reported.</p>
+                  ) : (
+                    <ul>
+                      {person.blocked.map((task) => (
+                        <li key={task.id}>
+                          {task.blocker}
+                          <span className="standup-taskref"> — {task.title}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </section>
 
-                  <span className="report-created">{formatStamp(task.created_at)}</span>
+            <section className="standup-section">
+              <h3>3. Blockers and dependencies</h3>
 
-                  <span className={`report-chip report-chip--${status.key}`}>
-                    {status.label}
-                  </span>
-                </span>
-              </div>
-            );
-          })
+              {blockedTasks.length === 0 ? (
+                <p className="standup-fallback">
+                  No blockers were formally recorded in this period.
+                </p>
+              ) : (
+                blockedTasks.map((task, index) => (
+                  <div className="standup-blocker" key={task.id}>
+                    <p className="standup-blocker-title">
+                      {index + 1}. {task.blocker}
+                    </p>
+                    <p className="standup-sub">
+                      Affected member: {personOf(task, props.authorName)} · Task: {task.title}
+                    </p>
+                  </div>
+                ))
+              )}
+            </section>
+
+            <section className="standup-section">
+              <h3>4. Action items and follow-ups</h3>
+
+              {openTasks.length === 0 ? (
+                <p className="standup-fallback">No open action items in this period.</p>
+              ) : (
+                openTasks.map((task) => (
+                  <div className="standup-action" key={task.id}>
+                    <p className="standup-action-title">{task.title}</p>
+                    <p className="standup-sub">
+                      Responsible: {personOf(task, props.authorName)} · Due: {dueLabel(task)} ·
+                      Status: {statusOf(task)}
+                    </p>
+                  </div>
+                ))
+              )}
+            </section>
+
+            <section className="standup-section">
+              <h3>5. Meeting summary</h3>
+              <p>
+                <strong className="standup-status" style={{ color: status.color }}>
+                  Status: {status.text}
+                </strong>
+              </p>
+              <p>
+                The report indicates that <strong>{props.summary.created}</strong> tasks were
+                created, <strong>{props.summary.completed}</strong> completed,{" "}
+                <strong>{props.summary.inProgress}</strong> remain in progress
+                {props.summary.blocked > 0 ? (
+                  <>
+                    , and <strong>{props.summary.blocked}</strong> blocked.
+                  </>
+                ) : (
+                  ", with no blocked tasks formally recorded."
+                )}
+              </p>
+
+              {blockedTasks.length > 0 ? (
+                <>
+                  <h5>Outstanding blockers</h5>
+                  <ul>
+                    {blockedTasks.map((task) => (
+                      <li key={task.id}>
+                        {task.blocker} — {personOf(task, props.authorName)}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+            </section>
+
+            <footer className="standup-foot">
+              <p>Document Prepared By: {props.authorName}</p>
+              <p>Role: Scrum Master</p>
+              <p>Date Recorded: {props.meetingDate}</p>
+              <p>Organization: {props.orgName}</p>
+            </footer>
+          </>
         )}
-      </section>
+      </article>
     </>
   );
 }
