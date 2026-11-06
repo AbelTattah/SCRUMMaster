@@ -31,7 +31,6 @@ import {
   listKeyGrantsNeeded,
   grantOrgKeyToMember,
   provisionPassword,
-  requestOrgKeyGrant,
   saveCryptoMaterial,
   type CryptoMaterial,
 } from "@/app/actions/crypto";
@@ -237,14 +236,16 @@ async function resolveOrgKey(
     try {
       return { key: await openOrgGrant(session.priv, mat.org_grant) };
     } catch {
-      // A stale grant (identity rotated) — request a fresh one below.
+      // A stale grant (identity rotated) — the owner re-issues one; below.
     }
   }
 
-  if (mat && !mat.org_pending) {
-    await requestOrgKeyGrant().catch(() => undefined);
-  }
-
+  // No metadata writes from the member side: the owner's grant pass keys off
+  // "has a public key, no grant" anyway, and a read-merge-write here could
+  // race an incoming grant and wipe it (the waiting screen re-appearing
+  // after it had already gone away). Just keep waiting — the owner's
+  // session or the team page's Activate button delivers the grant, and the
+  // retry loop above picks it up.
   return { waiting: true };
 }
 

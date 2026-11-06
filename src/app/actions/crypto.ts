@@ -176,14 +176,6 @@ export async function saveCryptoMaterial(patch: {
   return { error: null };
 }
 
-/**
- * A member whose organization key grant has not arrived yet asks the owner's
- * next session to hand one over.
- */
-export async function requestOrgKeyGrant(): Promise<{ error: string | null }> {
-  return saveCryptoMaterial({ org_pending: true });
-}
-
 /** Members of my organization who have a public key but no grant yet. */
 export async function listKeyGrantsNeeded(): Promise<
   { id: string; name: string; pub: string }[]

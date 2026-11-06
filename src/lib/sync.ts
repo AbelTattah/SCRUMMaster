@@ -197,6 +197,7 @@ async function applyUpsert(
     scope: existing?.scope ?? "own",
     dirty: 1,
     tombstone: 0,
+    local_updated: Date.now(),
   };
 
   await putTodos([row]);
@@ -373,7 +374,7 @@ export async function deleteTodoLocal(id: string): Promise<InlineResult> {
     return { error: null };
   }
 
-  await localdb.todos.update(id, { tombstone: 1, dirty: 1 });
+  await localdb.todos.update(id, { tombstone: 1, dirty: 1, local_updated: Date.now() });
   await enqueueOp({ kind: "delete", todo_id: id, created_at: Date.now() });
   notify();
   void flush();
@@ -407,6 +408,7 @@ function toLocal(
     // A device with pending writes keeps its own version until it pushes.
     dirty: previous?.dirty ?? 0,
     tombstone: previous?.tombstone ?? 0,
+    local_updated: previous?.local_updated ?? 0,
   };
 }
 
@@ -414,6 +416,7 @@ async function mergeIncoming(
   incoming: TeamTodo[],
   scope: "own" | "team",
   wasMember: (row: LocalTodo) => boolean,
+  pullStartedAt: number,
 ): Promise<void> {
   const existing = new Map((await allTodos()).map((row) => [row.id, row]));
   const incomingIds = new Set(incoming.map((row) => row.id));
@@ -426,16 +429,29 @@ async function mergeIncoming(
       continue; // local changes win until they are pushed
     }
 
+    // A pull that started before a local write can carry pre-write server
+    // data — applying it would revert the change the user just made (the
+    // task "coming back" after it was checked). Local writes that began
+    // after this pull started always win.
+    if (previous && previous.local_updated > pullStartedAt) {
+      continue;
+    }
+
     keep.push(toLocal(row, scope, previous));
   }
 
   await putTodos(keep);
 
   // Rows this pull is responsible for that the server no longer serves are
-  // deleted locally — but only when the device has nothing pending. Rows
-  // from the other scope (home vs team) are left alone.
+  // deleted locally — but only when the device has nothing pending and no
+  // fresh local write. Rows from the other scope (home vs team) are left alone.
   const gone = [...existing.values()].filter(
-    (row) => wasMember(row) && !incomingIds.has(row.id) && !row.dirty && !row.tombstone,
+    (row) =>
+      wasMember(row) &&
+      !incomingIds.has(row.id) &&
+      !row.dirty &&
+      !row.tombstone &&
+      !(row.local_updated > pullStartedAt),
   );
 
   if (gone.length > 0) {
@@ -447,6 +463,10 @@ async function mergeIncoming(
 
 /** Refresh the home mirror from the server. No-op while offline. */
 export async function pullOwn(): Promise<void> {
+  // Captured before the fetch: any local write that starts while the pull is
+  // in flight is newer than the server snapshot we are about to receive.
+  const startedAt = Date.now();
+
   try {
     const rows = await loadTodosSync();
     const me = viewer?.id;
@@ -455,6 +475,7 @@ export async function pullOwn(): Promise<void> {
       rows,
       "own",
       (row) => Boolean(me) && (row.user_id === me || row.assignee_id === me),
+      startedAt,
     );
     void migrateLegacyRows();
   } catch {
@@ -464,6 +485,8 @@ export async function pullOwn(): Promise<void> {
 
 /** Refresh the owner's team mirror. */
 export async function pullTeam(): Promise<void> {
+  const startedAt = Date.now();
+
   try {
     const rows = await loadTeamTodosSync();
     const previousTeamIds = new Set((await getMeta<string[]>("team_ids")) ?? []);
@@ -472,7 +495,7 @@ export async function pullTeam(): Promise<void> {
       "team_ids",
       rows.map((row) => row.id),
     );
-    await mergeIncoming(rows, "team", (row) => previousTeamIds.has(row.id));
+    await mergeIncoming(rows, "team", (row) => previousTeamIds.has(row.id), startedAt);
     void migrateLegacyRows();
   } catch {
     // offline
@@ -583,10 +606,29 @@ async function flushOnce(): Promise<boolean> {
     }
 
     if (!result.ok) {
-      // A real server rejection (validation/permission): drop the op so the
-      // outbox cannot loop, tell the UI, and re-sync to server truth.
+      // A real server rejection (validation/permission): drop the op, clear
+      // the pending flags so the reconciliation below can actually apply,
+      // tell the UI, and re-pull server truth immediately instead of on the
+      // next scheduled pull.
       await dropOp(meta.opId);
+
+      const remaining = await localdb.ops.where("todo_id").equals(result.id).count();
+
+      if (remaining === 0) {
+        const row = await getTodo(result.id);
+
+        if (row) {
+          // The server kept its version — un-tombstone/ un-dirty the row so
+          // the fresh pull can restore it (a rejected delete keeps the task).
+          await localdb.todos.update(result.id, { dirty: 0, tombstone: 0 });
+        }
+      }
+
       emitSyncError(result.error ?? "A change could not be saved.");
+      void pullOwn();
+      if (viewer?.isOwner) {
+        void pullTeam();
+      }
       continue;
     }
 
