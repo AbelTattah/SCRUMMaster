@@ -3,9 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { addMember, removeMember } from "@/app/actions/team";
+import { ActivateMemberButton } from "@/components/ActivateMemberButton";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { TaskBoard } from "@/components/TaskBoard";
 import { requireOnboardedUser } from "@/lib/auth";
+import { memberGrantStatus } from "@/lib/data/grants";
 import { listMembers } from "@/lib/data/profiles";
 import { levelFor } from "@/lib/gamification";
 import type { Member, PageFilter } from "@/lib/types";
@@ -55,8 +57,12 @@ export default async function TeamPage({
 
   // Team todos arrive through the offline mirror (TaskBoard pulls them);
   // the members list still comes from the server for the chips + assignee
-  // picker.
-  const members = await listMembers(organization.id, organization.owner_id);
+  // picker. Grant status drives the per-member Activate button (who still
+  // needs the organization key to open tasks).
+  const [members, grantStatus] = await Promise.all([
+    listMembers(organization.id, organization.owner_id),
+    memberGrantStatus(organization.id, user.id),
+  ]);
 
   const leaderboard = [...members].sort(byScore);
   const returnTo = filterHref(page, q);
@@ -98,39 +104,51 @@ export default async function TeamPage({
         </form>
 
         <div className="member-chips">
-          {members.map((member) => (
-            <span className="chip" key={member.id}>
-              <img src={avatarUrl(member.avatar_url, member.name, member.id)} alt="" />
-              {member.name}
-              <span className="chip-count">{member.todo_count}</span>
+          {members.map((member) => {
+            const grant = grantStatus[member.id];
 
-              {member.invited_at ? (
-                <span className="chip-pending" title="They have not signed in yet">
-                  Invite pending
-                </span>
-              ) : null}
+            return (
+              <span className="chip" key={member.id}>
+                <img src={avatarUrl(member.avatar_url, member.name, member.id)} alt="" />
+                {member.name}
+                <span className="chip-count">{member.todo_count}</span>
 
-              {member.is_owner ? null : (
-                <ConfirmForm
-                  action={removeMember}
-                  className="member-remove"
-                  confirmTitle="Remove member?"
-                  confirmMessage={`${member.name} will lose access to this organization's tasks. Their own tasks and reports stay with them.`}
-                  confirmLabel="Remove"
-                >
-                  <input type="hidden" name="member_id" value={member.id} />
-                  <button
-                    type="submit"
-                    className="chip-x"
-                    aria-label={`Remove ${member.name}`}
-                    title={`Remove ${member.name}`}
+                {member.invited_at ? (
+                  <span className="chip-pending" title="They have not signed in yet">
+                    Invite pending
+                  </span>
+                ) : null}
+
+                {!member.is_owner && grant?.needsGrant && grant.pub ? (
+                  <ActivateMemberButton
+                    memberId={member.id}
+                    memberName={member.name}
+                    pub={grant.pub}
+                  />
+                ) : null}
+
+                {member.is_owner ? null : (
+                  <ConfirmForm
+                    action={removeMember}
+                    className="member-remove"
+                    confirmTitle="Remove member?"
+                    confirmMessage={`${member.name} will lose access to this organization's tasks. Their own tasks and reports stay with them.`}
+                    confirmLabel="Remove"
                   >
-                    ×
-                  </button>
-                </ConfirmForm>
-              )}
-            </span>
-          ))}
+                    <input type="hidden" name="member_id" value={member.id} />
+                    <button
+                      type="submit"
+                      className="chip-x"
+                      aria-label={`Remove ${member.name}`}
+                      title={`Remove ${member.name}`}
+                    >
+                      ×
+                    </button>
+                  </ConfirmForm>
+                )}
+              </span>
+            );
+          })}
         </div>
       </section>
 

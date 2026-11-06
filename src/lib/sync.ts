@@ -24,7 +24,7 @@ import {
   setMeta,
   type LocalTodo,
 } from "@/lib/localdb";
-import { contentKey, keys } from "@/lib/keys";
+import { contentKey, grantPendingMembers, keys } from "@/lib/keys";
 import type { TeamTodo } from "@/lib/types";
 
 export interface InlineResult {
@@ -664,6 +664,26 @@ export function startSync(): void {
   window.setInterval(() => {
     void flush();
   }, 20_000);
+
+  // Passive organization-key grants: while the owner's app stays open, a
+  // member who signs up receives their grant within a minute — their
+  // waiting screen re-checks on its own and enters the app. Password logins
+  // grant immediately, and the team page's Activate button is the on-demand
+  // path, so no member stays behind the "organization key" barrier.
+  let granting = false;
+
+  window.setInterval(() => {
+    if (granting || !viewer?.isOwner) {
+      return;
+    }
+
+    granting = true;
+    void grantPendingMembers()
+      .catch(() => undefined)
+      .finally(() => {
+        granting = false;
+      });
+  }, 60_000);
 }
 
 /** Sign-out: push what we can, then drop the device's copy. */

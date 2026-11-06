@@ -455,9 +455,9 @@ export async function restoreFromDevice(ctx: OrgContext): Promise<boolean> {
       return false;
     }
 
-    if (ctx.isOwner && session?.orgKey) {
-      void grantPendingMembers();
-    }
+    // No instant grant on restore: the throttled sync interval (and the team
+    // page's Activate button) handle new members, which also keeps the
+    // button's state deterministic on page load.
 
     return true;
   } catch (error) {
