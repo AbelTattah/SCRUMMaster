@@ -402,6 +402,29 @@ svg {
     height: 18px;
 }
 
+/* Header-only connection status (the app keeps working from the local
+   mirror while offline — no full-screen warning ever interrupts it). */
+.net-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--amber-soft);
+    color: var(--amber-text);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.net-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
 /* --------------------------------------------------------------------------
    Main column + top bar
    -------------------------------------------------------------------------- */
@@ -411,6 +434,9 @@ svg {
 }
 
 .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40; /* above page content; below modals (100+) and the gate (300) */
     display: flex;
     align-items: center;
     justify-content: space-between;

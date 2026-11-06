@@ -183,13 +183,30 @@ async function resolveOrgKey(
       try {
         return { key: await openOrgKey(session.dek, mat.org_wrapped) };
       } catch {
-        // Wrapped with an older DEK — fall through to a fresh mint below.
+        // The stored key would not open with this device's key. Never mint a
+        // replacement here: a new key would orphan every task encrypted under
+        // the stored one. Fall through to a fresh server read, then report.
       }
     }
 
-    // First unlock as an owner (or after a password reset): mint once and
-    // persist immediately — member grants must always target this one key.
-    const { key, wrapped } = await createOrgKey(session.dek);
+    // Stale-cache guard: the cached material may predate a wrap the server
+    // already has (a re-mint would orphan all organization tasks), so ask the
+    // server before ever minting.
+    const fresh = await fetchMaterial();
+    const stored = fresh.material?.org_wrapped;
+
+    if (stored) {
+      try {
+        return { key: await openOrgKey(session.dek, stored) };
+      } catch {
+        return { error: "The organization key on file could not be opened." };
+      }
+    }
+
+    // Truly absent on the server: mint once. saveCryptoMaterial refuses to
+    // overwrite an existing wrap, and the session adopts whatever the server
+    // actually kept - racing unlocks always converge on one key.
+    const { wrapped } = await createOrgKey(session.dek);
 
     try {
       const saved = await saveCryptoMaterial({ org_wrapped: wrapped });
@@ -198,12 +215,21 @@ async function resolveOrgKey(
         return { error: saved.error };
       }
     } catch {
-      return { error: "You are offline — reconnect to set up the organization key." };
+      return { error: "You are offline - reconnect to set up the organization key." };
     }
 
-    await fetchMaterial();
+    const final = await fetchMaterial();
+    const useWrap = final.material?.org_wrapped;
 
-    return { key };
+    if (!useWrap) {
+      return { error: "The organization key could not be saved." };
+    }
+
+    try {
+      return { key: await openOrgKey(session.dek, useWrap) };
+    } catch {
+      return { error: "The organization key could not be opened." };
+    }
   }
 
   // Member.

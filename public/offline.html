@@ -70,5 +70,23 @@
     </p>
     <button onclick="location.reload()">Try again</button>
   </div>
+
+  <script>
+    /*
+     * Logged-in users already have the app shell cached (a cached "/" means a
+     * session loaded it successfully before). Boot straight into it — the
+     * offline-first mirror serves the tasks and the header shows the offline
+     * status. This card stays only for visitors with no cached app, and never
+     * replaces itself at "/" where there is nothing else to show.
+     */
+    if ("caches" in window && location.pathname !== "/") {
+      caches
+        .match("/")
+        .then(function (hit) {
+          if (hit) location.replace("/");
+        })
+        .catch(function () {});
+    }
+  </script>
 </body>
 </html>
