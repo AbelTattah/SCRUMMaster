@@ -114,7 +114,11 @@ export function newMnemonic(): string {
 /* ------------------------------------------------------------- AES-GCM */
 
 async function importAesKey(raw: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, [
+  // Extractable on purpose: granting the organization key to a member (see
+  // grantOrgKey) exports these raw bytes and wraps them to the member's
+  // public key. The bytes never leave the page otherwise — the DEK already
+  // exists as plaintext inside the local key package.
+  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, true, [
     "encrypt",
     "decrypt",
   ]);
