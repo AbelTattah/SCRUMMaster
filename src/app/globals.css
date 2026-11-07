@@ -402,6 +402,96 @@ svg {
     height: 18px;
 }
 
+/* Header ghost button next to Add Todo (sticky-notes PiP toggle). */
+.page-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-sticky {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 46px;
+    padding: 0 18px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-sticky:hover {
+    background: var(--search-bg);
+    border-color: var(--border-strong);
+}
+
+.btn-sticky.is-active {
+    background: var(--tint-purple);
+    border-color: var(--purple-ink);
+    color: var(--purple-ink);
+}
+
+.btn-sticky svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Inline fallback when Picture-in-Picture and popups are unavailable. */
+.sticky-float {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 60;
+    width: min(370px, calc(100vw - 40px));
+    max-height: min(560px, calc(100vh - 40px));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 18px 50px rgba(33, 0, 93, 0.25);
+}
+
+.sticky-float-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+}
+
+.sticky-float-bar button {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+}
+
+.sticky-float-bar button:hover {
+    color: var(--ink);
+}
+
+.sticky-float > div:last-child {
+    overflow-y: auto;
+    min-height: 120px;
+}
+
 /* Header-only connection status (the app keeps working from the local
    mirror while offline — no full-screen warning ever interrupts it). */
 .net-pill {
