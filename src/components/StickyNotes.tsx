@@ -66,6 +66,14 @@ const STICKY_CSS = `
     text-transform: uppercase; color: #6B5B1E;
   }
   .sticky-count { font-size: 11px; font-weight: 600; color: #8A7A3E; }
+  .sticky-search {
+    width: 100%; font: inherit; font-size: 11.5px;
+    padding: 4px 7px; margin: 0 0 5px;
+    border: 1px solid #D8CD9A; border-radius: 4px;
+    background: #FFFDF3; color: #35321F; outline: none;
+  }
+  .sticky-search:focus { border-color: #B9A24A; }
+  .sticky-search::placeholder { color: #9A8C52; }
   .sticky-notes { display: grid; grid-template-columns: 1fr; gap: 5px; }
   .sticky-note {
     position: relative;
@@ -73,6 +81,8 @@ const STICKY_CSS = `
     border-radius: 2px 2px 8px 2px;
     box-shadow: 0 2px 4px rgba(60, 50, 10, 0.18);
     transform: rotate(-0.5deg);
+    /* Pastel notes always use dark ink — keeps text readable in dark mode. */
+    color: #35321F;
   }
   .sticky-note:nth-child(2n) { transform: rotate(0.6deg); }
   .sticky-note:nth-child(3n) { transform: rotate(-0.3deg); }
@@ -153,20 +163,18 @@ const STICKY_CSS = `
     padding: 20px 8px; font-size: 12px;
   }
   @media (prefers-color-scheme: dark) {
-    .sticky-root { background: #17151C; color: #E6E1F2; }
+    .sticky-root { background: #17151C; }
     .sticky-title { color: #E8D98F; }
     .sticky-count { color: #A99A5E; }
     .sticky-empty { color: #8B86A0; }
-    .sticky-time { color: #B3A161; }
-    .sticky-edit-btn { color: #A99A5E; }
     .sticky-composer {
       background: rgba(255, 255, 255, 0.04);
       border-top-color: rgba(232, 217, 143, 0.18);
     }
-    .sticky-new, .sticky-edit, .sticky-times input {
+    .sticky-new, .sticky-search {
       background: #211E2B; border-color: #3A3549; color: #EDEAF7;
     }
-    .sticky-cancel { color: #C7BC8A; border-color: #4A4326 !important; }
+    .sticky-search::placeholder { color: #7A7494; }
     .sticky-msg { color: #FF9A8B; }
   }
 `;
@@ -454,6 +462,43 @@ function ensureComposer(doc: Document, root: Element, hooks: StickyHooks): void 
   });
 }
 
+function drawGrid(
+  doc: Document,
+  grid: Element,
+  todos: TeamTodo[],
+  query: string,
+  hooks: StickyHooks,
+): void {
+  grid.textContent = "";
+
+  const needle = query.trim().toLowerCase();
+  const shown = needle
+    ? todos.filter((todo) => todo.title.toLowerCase().includes(needle))
+    : todos;
+
+  if (shown.length === 0) {
+    const empty = doc.createElement("div");
+    empty.className = "sticky-empty";
+    empty.textContent = todos.length === 0
+      ? "Nothing here yet — add your first task."
+      : "No tasks match your search.";
+    grid.appendChild(empty);
+    return;
+  }
+
+  shown.forEach((todo) => {
+    // Keep a note's color stable across searches (tied to its position in the
+    // full day list, not the filtered view).
+    const index = todos.indexOf(todo);
+    const note = doc.createElement("div");
+    note.className = `sticky-note ${NOTE_COLORS[(index >= 0 ? index : 0) % NOTE_COLORS.length]}${
+      todo.completed ? " done" : ""
+    }`;
+    paintNoteBody(doc, note, todo, hooks);
+    grid.appendChild(note);
+  });
+}
+
 /** Draw the notes into any host document (idempotent — replaces content). */
 function renderSticky(doc: Document, el: Element, todos: TeamTodo[], hooks: StickyHooks): void {
   // A sync update must never blow away a form the user is typing in —
@@ -473,6 +518,14 @@ function renderSticky(doc: Document, el: Element, todos: TeamTodo[], hooks: Stic
   }
 
   ensureComposer(doc, el, hooks);
+
+  // Preserve the search query across re-renders (sync updates).
+  const existingSearch = body.querySelector<HTMLInputElement>(".sticky-search");
+  const query = existingSearch?.value ?? "";
+  const searchFocused = !!existingSearch && doc.activeElement === existingSearch;
+  const selStart = searchFocused ? existingSearch.selectionStart : null;
+  const selEnd = searchFocused ? existingSearch.selectionEnd : null;
+
   body.textContent = "";
 
   const head = doc.createElement("div");
@@ -489,26 +542,36 @@ function renderSticky(doc: Document, el: Element, todos: TeamTodo[], hooks: Stic
         : `${remaining} of ${todos.length} to do`;
   }
 
+  const search = doc.createElement("input");
+  search.className = "sticky-search";
+  search.type = "search";
+  search.placeholder = "Search tasks…";
+  search.value = query;
+  search.setAttribute("aria-label", "Search today's tasks");
+  body.appendChild(search);
+
   const grid = doc.createElement("div");
   grid.className = "sticky-notes";
   body.appendChild(grid);
 
-  if (todos.length === 0) {
-    const empty = doc.createElement("div");
-    empty.className = "sticky-empty";
-    empty.textContent = "Nothing here yet — add your first task.";
-    grid.appendChild(empty);
-    return;
-  }
+  const redraw = () => {
+    drawGrid(doc, grid, todos, search.value, hooks);
+    // Keep the count reflecting the full list (context), not the filter.
+  };
 
-  todos.forEach((todo, index) => {
-    const note = doc.createElement("div");
-    note.className = `sticky-note ${NOTE_COLORS[index % NOTE_COLORS.length]}${
-      todo.completed ? " done" : ""
-    }`;
-    paintNoteBody(doc, note, todo, hooks);
-    grid.appendChild(note);
-  });
+  search.addEventListener("input", redraw);
+  redraw();
+
+  if (searchFocused) {
+    search.focus();
+    if (selStart !== null && selEnd !== null) {
+      try {
+        search.setSelectionRange(selStart, selEnd);
+      } catch {
+        // search inputs in some hosts reject selection ranges
+      }
+    }
+  }
 }
 
 /** The floating panel host reuses the same stylesheet in the app document. */

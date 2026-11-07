@@ -37,6 +37,8 @@ interface TaskBoardProps {
   emptyHint?: ReactNode;
 }
 
+const PAGE_SIZE = 20;
+
 export function TaskBoard({
   scope,
   page,
@@ -52,6 +54,8 @@ export function TaskBoard({
   const [rows, setRows] = useState<TeamTodo[]>([]);
   const [booted, setBooted] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [localQ, setLocalQ] = useState("");
+  const [listPage, setListPage] = useState(1);
 
   useEffect(() => {
     let alive = true;
@@ -99,7 +103,9 @@ export function TaskBoard({
   }, [scope]);
 
   const visible = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needles = [q, localQ]
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
 
     return rows
       .filter((row) => {
@@ -111,14 +117,44 @@ export function TaskBoard({
           return false;
         }
 
-        if (needle && !row.title.toLowerCase().includes(needle)) {
+        if (needles.some((needle) => !row.title.toLowerCase().includes(needle))) {
           return false;
         }
 
         return true;
       })
       .sort((a, b) => a.created_at.localeCompare(b.created_at));
-  }, [rows, page, q]);
+  }, [rows, page, q, localQ]);
+
+  // Filters changed -> back to the first page.
+  useEffect(() => {
+    setListPage(1);
+  }, [page, q, localQ]);
+
+  // A focused row (deep-link) must land on a visible page.
+  useEffect(() => {
+    if (!focusId) {
+      return;
+    }
+
+    const index = visible.findIndex((row) => row.id === focusId);
+
+    if (index >= 0) {
+      setListPage(Math.floor(index / PAGE_SIZE) + 1);
+    }
+  }, [focusId, visible]);
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(listPage, totalPages);
+  const paged = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  useEffect(() => {
+    if (listPage !== safePage) {
+      setListPage(safePage);
+    }
+  }, [listPage, safePage]);
+
+  const searching = q.trim() || localQ.trim();
 
   return (
     <>
@@ -128,19 +164,37 @@ export function TaskBoard({
         </p>
       ) : null}
 
+      {booted ? (
+        <div className="list-tools">
+          <input
+            className="list-search"
+            type="search"
+            placeholder="Search tasks…"
+            value={localQ}
+            onChange={(event) => setLocalQ(event.target.value)}
+            aria-label="Search tasks"
+          />
+          {visible.length > 0 ? (
+            <span className="list-count">
+              {visible.length} task{visible.length === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       {!booted ? <p className="empty">Loading your tasks…</p> : null}
 
       {booted && visible.length === 0 ? (
         <p className="empty">
-          {q ? (
-            <>No todos match &ldquo;{q}&rdquo;.</>
+          {searching ? (
+            <>No todos match &ldquo;{(localQ || q).trim()}&rdquo;.</>
           ) : (
             (emptyHint ?? <>Nothing here yet — add your first task below.</>)
           )}
         </p>
       ) : null}
 
-      {visible.map((todo) => (
+      {paged.map((todo) => (
         <TaskRow
           key={todo.id}
           todo={todo}
@@ -152,6 +206,30 @@ export function TaskBoard({
           focus={focusId !== "" && todo.id === focusId}
         />
       ))}
+
+      {totalPages > 1 ? (
+        <nav className="pager" aria-label="Tasks pages">
+          <button
+            type="button"
+            className="pager-btn"
+            onClick={() => setListPage((value) => Math.max(1, value - 1))}
+            disabled={safePage <= 1}
+          >
+            Prev
+          </button>
+          <span className="pager-status">
+            Page {safePage} of {totalPages}
+          </span>
+          <button
+            type="button"
+            className="pager-btn"
+            onClick={() => setListPage((value) => Math.min(totalPages, value + 1))}
+            disabled={safePage >= totalPages}
+          >
+            Next
+          </button>
+        </nav>
+      ) : null}
 
       <AddTaskRow returnTo={returnTo} autoFocus={autoFocusAdd} />
     </>

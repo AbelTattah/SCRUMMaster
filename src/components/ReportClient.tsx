@@ -620,6 +620,7 @@ export function ReportClient(props: Props) {
   const [tasks, setTasks] = useState<ReportTask[] | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [wordBusy, setWordBusy] = useState(false);
+  const [q, setQ] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -691,9 +692,25 @@ export function ReportClient(props: Props) {
     }
   }
 
-  const people = tasks ? groupByMember(tasks, props.authorName) : [];
-  const blockedTasks = tasks ? tasks.filter((t) => !t.completed && t.blocker) : [];
-  const openTasks = tasks ? tasks.filter((t) => !t.completed) : [];
+  // On-screen search filters the view only — exports always use the full
+  // (unfiltered) period data passed in props.tasks.
+  const needle = q.trim().toLowerCase();
+  const displayTasks = !tasks
+    ? null
+    : needle
+      ? tasks.filter((t) => {
+          const who = (t.assignee_name || t.creator_name || "").toLowerCase();
+          return (
+            t.title.toLowerCase().includes(needle) ||
+            (t.blocker ?? "").toLowerCase().includes(needle) ||
+            who.includes(needle)
+          );
+        })
+      : tasks;
+
+  const people = displayTasks ? groupByMember(displayTasks, props.authorName) : [];
+  const blockedTasks = displayTasks ? displayTasks.filter((t) => !t.completed && t.blocker) : [];
+  const openTasks = displayTasks ? displayTasks.filter((t) => !t.completed) : [];
   const status = summaryStatus(props.summary);
 
   return (
@@ -741,6 +758,26 @@ export function ReportClient(props: Props) {
         ) : tasks.length === 0 ? (
           <p className="empty">No tasks were created in {props.windowLabel.toLowerCase()}.</p>
         ) : (
+          <>
+            <div className="list-tools">
+              <input
+                className="list-search"
+                type="search"
+                placeholder="Search this report…"
+                value={q}
+                onChange={(event) => setQ(event.target.value)}
+                aria-label="Search this report"
+              />
+              {displayTasks && displayTasks.length > 0 ? (
+                <span className="list-count">
+                  {displayTasks.length} task{displayTasks.length === 1 ? "" : "s"}
+                </span>
+              ) : null}
+            </div>
+
+            {displayTasks && displayTasks.length === 0 ? (
+              <p className="empty">No tasks match &ldquo;{q.trim()}&rdquo;.</p>
+            ) : (
           <>
             <section className="standup-section">
               <h3>1. Attendance</h3>
@@ -877,6 +914,8 @@ export function ReportClient(props: Props) {
               <p>Date Recorded: {props.meetingDate}</p>
               <p>Organization: {props.orgName}</p>
             </footer>
+          </>
+            )}
           </>
         )}
       </article>
