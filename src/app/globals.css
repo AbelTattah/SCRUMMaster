@@ -453,7 +453,7 @@ svg {
     bottom: 20px;
     z-index: 60;
     width: min(300px, calc(100vw - 40px));
-    max-height: min(440px, calc(100vh - 40px));
+    height: min(380px, calc(100vh - 40px));
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -490,9 +490,14 @@ svg {
     color: var(--ink);
 }
 
-.sticky-float > div:last-child {
-    overflow-y: auto;
-    min-height: 120px;
+/* The notes root fills the panel below its bar: fixed height (overrides the
+   host documents' 100vh) with its own inner scroll area for the cards. */
+.sticky-float > div:last-child,
+.sticky-float .sticky-root {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
 }
 
 /* Header-only connection status (the app keeps working from the local
