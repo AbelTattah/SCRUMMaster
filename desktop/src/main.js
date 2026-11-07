@@ -328,6 +328,28 @@ function createWindow(url) {
   // Anything that leaves our origin opens in the default browser (Google
   // sign-in, password-reset links, docs) instead of a new Electron window.
   window.webContents.setWindowOpenHandler(({ url: target }) => {
+    // The sticky-notes mini window opens a *blank* document (window.open(""))
+    // and writes the notes into it. about:blank has origin "null", so it must
+    // be allowed explicitly — otherwise the popup is denied, window.open()
+    // returns null, and the notes degrade to a panel inside this window
+    // instead of a real, separate mini window.
+    const isBlank = !target || target === "about:blank";
+
+    if (isBlank) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          width: 330,
+          height: 440,
+          minWidth: 260,
+          minHeight: 220,
+          autoHideMenuBar: true,
+          resizable: true,
+          title: "Today — Scrum Master",
+        },
+      };
+    }
+
     try {
       if (new URL(target).origin !== origin) {
         shell.openExternal(target);
