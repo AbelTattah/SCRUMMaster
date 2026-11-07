@@ -6,6 +6,17 @@ import { saveNotificationSettings, sendTestEmail } from "@/app/actions/settings"
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { PermissionPanel } from "@/components/PermissionPanel";
 import { ThemeSetting } from "@/components/ThemeSetting";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { requireOnboardedUser } from "@/lib/auth";
 import { mailIsConfigured, mailTransport } from "@/lib/mail";
 import {
@@ -67,129 +78,145 @@ export default async function SettingsPage({
 
       <div className="settings-stack">
         {tab === "appearance" ? (
-          <section className="card">
-            <h2 className="card-title">Appearance</h2>
-            <p className="card-sub">
-              Dark mode follows your device by default. Pick a theme to pin this
-              browser to light or dark instead.
-            </p>
-
-            <ThemeSetting />
-          </section>
+          <Card>
+            <CardHeader>
+              <CardTitle>Appearance</CardTitle>
+              <CardDescription>
+                Dark mode follows your device by default. Pick a theme to pin this
+                browser to light or dark instead.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemeSetting />
+            </CardContent>
+          </Card>
         ) : null}
 
         {tab === "notifications" ? (
           <>
-            <section className="card">
-              <h2 className="card-title">Notifications</h2>
-              <p className="card-sub">
-                Choose how Scrum Master reminds you about overdue tasks, tasks that start soon and
-                everything coming up later today.
-              </p>
-
-              <form action={saveNotificationSettings} className="settings-form">
-                <label className="setting-row">
-                  <span className="setting-text">
-                    <span className="setting-name">Browser notifications</span>
-                    <span className="setting-hint">
-                      Show a desktop alert for overdue tasks and tasks that are starting. Your
-                      browser must allow notifications for this site.
+            <Card>
+              <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>
+                  Choose how Scrum Master reminds you about overdue tasks, tasks
+                  that start soon and everything coming up later today.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={saveNotificationSettings} className="settings-form">
+                  <label className="setting-row">
+                    <span className="setting-text">
+                      <span className="setting-name">Browser notifications</span>
+                      <span className="setting-hint">
+                        Show a desktop alert for overdue tasks and tasks that are
+                        starting. Your browser must allow notifications for this
+                        site.
+                      </span>
                     </span>
-                  </span>
 
-                  <span className="switch">
-                    <input
-                      type="checkbox"
+                    <Switch
                       name="notify_browser"
                       value="1"
                       defaultChecked={user.profile.notify_browser}
                     />
-                    <span className="switch-track" aria-hidden="true" />
-                  </span>
-                </label>
+                  </label>
 
-                <label className="setting-row">
-                  <span className="setting-text">
-                    <span className="setting-name">Email notifications</span>
-                    <span className="setting-hint">
-                      Send a digest to <strong>{user.profile.email}</strong> when something needs
-                      your attention.
+                  <label className="setting-row">
+                    <span className="setting-text">
+                      <span className="setting-name">Email notifications</span>
+                      <span className="setting-hint">
+                        Send a digest to <strong>{user.profile.email}</strong> when
+                        something needs your attention.
+                      </span>
                     </span>
-                  </span>
 
-                  <span className="switch">
-                    <input
-                      type="checkbox"
+                    <Switch
                       name="notify_email"
                       value="1"
                       defaultChecked={user.profile.notify_email}
                     />
-                    <span className="switch-track" aria-hidden="true" />
-                  </span>
-                </label>
+                  </label>
 
-                <label className="field setting-lead">
-                  <span>Remind me before a task starts</span>
-                  <select className="input" name="notify_lead_minutes" defaultValue={leadMinutes}>
-                    {NOTIFICATION_LEAD_OPTIONS.map((minutes) => (
-                      <option value={minutes} key={minutes}>
-                        {formatMinutes(minutes)} before
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <div className="field setting-lead">
+                    <Label htmlFor="notify_lead_minutes">
+                      Remind me before a task starts
+                    </Label>
+                    <select
+                      className="input"
+                      id="notify_lead_minutes"
+                      name="notify_lead_minutes"
+                      defaultValue={leadMinutes}
+                    >
+                      {NOTIFICATION_LEAD_OPTIONS.map((minutes) => (
+                        <option value={minutes} key={minutes}>
+                          {formatMinutes(minutes)} before
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <button className="btn-primary btn-small" type="submit">
-                  Save notification settings
-                </button>
-              </form>
-            </section>
+                  <Button type="submit" size="sm">
+                    Save notification settings
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
-            <section className="card">
-              <h2 className="card-title">Browser permission</h2>
-              <p className="card-sub">
-                Scrum Master asks the browser once. If alerts do not appear, allow notifications for this
-                site in your browser&rsquo;s settings.
-              </p>
+            <Card>
+              <CardHeader>
+                <CardTitle>Browser permission</CardTitle>
+                <CardDescription>
+                  Scrum Master asks the browser once. If alerts do not appear, allow
+                  notifications for this site in your browser&rsquo;s settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PermissionPanel />
+              </CardContent>
+            </Card>
 
-              <PermissionPanel />
-            </section>
-
-            <section className="card">
-              <h2 className="card-title">Email delivery</h2>
-              <p className="card-sub">
-                The notification job sends a digest to <strong>{user.profile.email}</strong> using
-                the <code>{transport}</code> transport
-                {configured ? "." : ", which still needs configuring."}
-              </p>
-
-              <form action={sendTestEmail}>
-                <button className="btn-ghost btn-small" type="submit">
-                  Send test email
-                </button>
-              </form>
-            </section>
+            <Card>
+              <CardHeader>
+                <CardTitle>Email delivery</CardTitle>
+                <CardDescription>
+                  The notification job sends a digest to{" "}
+                  <strong>{user.profile.email}</strong> using the{" "}
+                  <code>{transport}</code> transport
+                  {configured ? "." : ", which still needs configuring."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={sendTestEmail}>
+                  <Button type="submit" variant="outline" size="sm">
+                    Send test email
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </>
         ) : null}
 
         {tab === "access" ? (
-          <section className="card">
-            <h2 className="card-title">Account access</h2>
-            <p className="card-sub">
-              Manage access to this browser session. To change your name, email or
-              password, open{" "}
-              <Link className="inline-link" href="/account">
-                your account
-              </Link>
-              .
-            </p>
-
-            <div className="card-section">
-              <h3 className="card-title">Sign out</h3>
-              <p className="card-sub">
-                You will need to sign in again to see your tasks. This browser will forget the
-                current session.
-              </p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Account access</CardTitle>
+              <CardDescription>
+                Manage access to this browser session. To change your name, email or
+                password, open{" "}
+                <Link className="inline-link" href="/account">
+                  your account
+                </Link>
+                .
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="card-title">Sign out</h3>
+                <p className="card-sub mt-1">
+                  You will need to sign in again to see your tasks. This browser will
+                  forget the current session.
+                </p>
+              </div>
 
               <ConfirmForm
                 action={signOut}
@@ -197,12 +224,12 @@ export default async function SettingsPage({
                 confirmMessage="You will need to sign in again to see your tasks."
                 confirmLabel="Sign out"
               >
-                <button className="btn-ghost btn-small" type="submit">
+                <Button type="submit" variant="outline" size="sm">
                   Sign out
-                </button>
+                </Button>
               </ConfirmForm>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         ) : null}
       </div>
     </>
