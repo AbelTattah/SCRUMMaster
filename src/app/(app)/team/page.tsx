@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { addMember, removeMember } from "@/app/actions/team";
-import { ActivateMemberButton } from "@/components/ActivateMemberButton";
-import { ConfirmForm } from "@/components/ConfirmForm";
 import { TaskBoard } from "@/components/TaskBoard";
+import { TeamLeaderboard } from "@/components/TeamLeaderboard";
+import { TeamMembers } from "@/components/TeamMembers";
 import { requireOnboardedUser } from "@/lib/auth";
 import { memberGrantStatus } from "@/lib/data/grants";
 import { listMembers } from "@/lib/data/profiles";
-import { levelFor } from "@/lib/gamification";
-import type { Member, PageFilter } from "@/lib/types";
-import { avatarUrl, firstParam } from "@/lib/utils";
+import type { PageFilter } from "@/lib/types";
+import { firstParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Team" };
 
@@ -27,10 +25,6 @@ function filterHref(page: PageFilter, q: string): string {
   const query = params.toString();
 
   return query ? `/team?${query}` : "/team";
-}
-
-function byScore(a: Member, b: Member): number {
-  return b.xp - a.xp || a.name.localeCompare(b.name);
 }
 
 export default async function TeamPage({
@@ -64,7 +58,6 @@ export default async function TeamPage({
     memberGrantStatus(organization.id, user.id),
   ]);
 
-  const leaderboard = [...members].sort(byScore);
   const returnTo = filterHref(page, q);
 
   return (
@@ -86,70 +79,7 @@ export default async function TeamPage({
           they first sign in.
         </p>
 
-        <form action={addMember} className="inline-form member-add">
-          <label className="field">
-            <span>Email address</span>
-            <input
-              className="input"
-              type="email"
-              name="email"
-              placeholder="teammate@example.com"
-              autoComplete="email"
-              required
-            />
-          </label>
-          <button className="btn-primary btn-small" type="submit">
-            Add member
-          </button>
-        </form>
-
-        <div className="member-chips">
-          {members.map((member) => {
-            const grant = grantStatus[member.id];
-
-            return (
-              <span className="chip" key={member.id}>
-                <img src={avatarUrl(member.avatar_url, member.name, member.id)} alt="" />
-                {member.name}
-                <span className="chip-count">{member.todo_count}</span>
-
-                {member.invited_at ? (
-                  <span className="chip-pending" title="They have not signed in yet">
-                    Invite pending
-                  </span>
-                ) : null}
-
-                {!member.is_owner && grant?.needsGrant && grant.pub ? (
-                  <ActivateMemberButton
-                    memberId={member.id}
-                    memberName={member.name}
-                    pub={grant.pub}
-                  />
-                ) : null}
-
-                {member.is_owner ? null : (
-                  <ConfirmForm
-                    action={removeMember}
-                    className="member-remove"
-                    confirmTitle="Remove member?"
-                    confirmMessage={`${member.name} will lose access to this organization's tasks. Their own tasks and reports stay with them.`}
-                    confirmLabel="Remove"
-                  >
-                    <input type="hidden" name="member_id" value={member.id} />
-                    <button
-                      type="submit"
-                      className="chip-x"
-                      aria-label={`Remove ${member.name}`}
-                      title={`Remove ${member.name}`}
-                    >
-                      ×
-                    </button>
-                  </ConfirmForm>
-                )}
-              </span>
-            );
-          })}
-        </div>
+        <TeamMembers members={members} grantStatus={grantStatus} />
       </section>
 
       <section className="card team-board">
@@ -158,35 +88,7 @@ export default async function TeamPage({
           XP from completed tasks (+10). A level every 250 XP.
         </p>
 
-        <ol className="leaderboard">
-          {leaderboard.map((member, index) => (
-            <li className="leader-row" key={member.id}>
-              <span className={`leader-rank${index < 3 ? ` is-top-${index + 1}` : ""}`}>
-                {index + 1}
-              </span>
-
-              <img
-                className="leader-avatar"
-                src={avatarUrl(member.avatar_url, member.name, member.id)}
-                alt=""
-              />
-
-              <span className="leader-name">
-                {member.name}
-                {member.is_owner ? <span className="chip chip--owner">Owner</span> : null}
-              </span>
-
-              <span className="leader-level">Lv {levelFor(member.xp)}</span>
-              <span className="leader-xp">{member.xp} XP</span>
-
-              {member.invited_at ? (
-                <span className="chip-pending" title="They have not signed in yet">
-                  Invite pending
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ol>
+        <TeamLeaderboard members={members} />
       </section>
 
       <nav className="filter-pills" aria-label="Filter team todos">

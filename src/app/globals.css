@@ -4362,3 +4362,70 @@ button.chip:disabled {
 :root[data-theme="dark"] img.brand-img--light {
     display: none;
 }
+
+/* Shared list tools: in-panel search + pagination (used across lists). */
+.list-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 0 10px;
+}
+.list-search {
+    flex: 1 1 220px;
+    max-width: 360px;
+    height: 34px;
+    padding: 0 12px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+.list-search:focus {
+    border-color: var(--purple-ink);
+}
+.list-search::placeholder {
+    color: var(--muted);
+}
+.list-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 12px 0 4px;
+}
+.pager-btn {
+    height: 32px;
+    padding: 0 14px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.pager-btn:hover:not(:disabled) {
+    border-color: var(--purple-ink);
+    color: var(--purple-ink);
+}
+.pager-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.pager-status {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 90px;
+    text-align: center;
+}
