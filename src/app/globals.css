@@ -162,9 +162,12 @@
    Base
    -------------------------------------------------------------------------- */
 
-/* Proportions render at 1:1 (standard). A previous whole-app zoom hack
-   (0.75 on the signed-in shell) was removed — keep sizes authored to a
-   normal 16px base so text and UI follow universal proportions. */
+/* Render scale: the whole app (auth included) renders 10% smaller.
+   Applied uniformly to <html> — no page is exempt, so proportions stay
+   consistent everywhere (the old hack's flaw was exempting the auth screens). */
+html {
+    zoom: 0.9;
+}
 
 *,
 *::before,
