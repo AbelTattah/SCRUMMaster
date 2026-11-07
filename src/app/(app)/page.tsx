@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
+import { StickyNotesButton } from "@/components/StickyNotes";
 import { TaskBoard } from "@/components/TaskBoard";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
@@ -64,7 +65,10 @@ export default async function HomePage({
           <p className="date-line">{todayLine()}</p>
         </div>
 
-        <AddTodoButton returnTo={returnTo} />
+        <div className="page-header-actions">
+          <StickyNotesButton />
+          <AddTodoButton returnTo={returnTo} />
+        </div>
       </header>
 
       <AddTodoFab returnTo={returnTo} />

@@ -14,6 +14,7 @@ export type IconName =
   | "plus"
   | "clock"
   | "kebab"
+  | "sticky"
   | "empty-bell";
 
 const paths: Record<IconName, ReactNode> = {
@@ -91,6 +92,12 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="10" />
       <path d="M12 6v6l4 2" />
+    </>
+  ),
+  sticky: (
+    <>
+      <path d="M4 4h16v10l-6 6H4z" />
+      <path d="M14 20v-6h6" />
     </>
   ),
   kebab: (
