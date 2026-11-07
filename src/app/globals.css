@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
 /* ==========================================================================
    Scrum Master — homepage styles
    Reference: ui-design/home-page.png (1512 x 982). Measurements, colors and
@@ -176,10 +179,10 @@ body {
 }
 
 body {
-    background: var(--page-bg);
-    color: var(--nav-ink);
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 16px;
+    font-size: 14px; /* shadcn base */
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -222,8 +225,8 @@ svg {
 }
 
 .logo {
-    margin: 36px 0 0 59px;
-    font-size: 42px;
+    margin: 24px 0 0 24px;
+    font-size: 30px;
     font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.5px;
@@ -234,7 +237,7 @@ svg {
 .logo img {
     display: block;
     width: auto;
-    height: 38px; /* -20% */
+    height: 26px;
 }
 
 .nav {
@@ -471,7 +474,7 @@ svg {
     border: 0;
     background: none;
     color: var(--muted);
-    font-size: 20px;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
     padding: 0 2px;
@@ -653,8 +656,8 @@ svg {
 
 .avatar {
     display: block;
-    width: 54px;
-    height: 54px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     overflow: hidden;
     background: var(--avatar-bg); /* peach backdrop behind the design's portrait */
@@ -689,7 +692,7 @@ svg {
 
 .greeting {
     margin: 0;
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 600;
     line-height: 1.35;
     color: var(--ink);
@@ -697,7 +700,7 @@ svg {
 
 .date-line {
     margin: 0;
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 400;
     line-height: 1.4;
     color: var(--muted);
@@ -713,7 +716,7 @@ svg {
     border-radius: var(--radius-sm);
     background: var(--purple);
     color: var(--on-accent);
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
@@ -773,7 +776,7 @@ svg {
 
 .empty {
     margin: 0;
-    padding: 56px 16px;
+    padding: 40px 16px;
     text-align: center;
     font-size: 16px;
     color: var(--muted);
@@ -785,7 +788,7 @@ svg {
 .todo-item {
     display: flex;
     align-items: center;
-    height: 86px;
+    height: 60px;
     margin-bottom: 6px;
     padding: 0 16px 0 15px;
     background: var(--surface);
@@ -845,7 +848,7 @@ svg {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -857,7 +860,7 @@ svg {
     flex: none;
     margin-right: 49px;
     color: var(--muted);
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 400;
 }
 
@@ -968,7 +971,7 @@ svg {
 
 .modal h2 {
     margin: 0 0 4px;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 600;
     color: var(--ink);
     text-align: center;
@@ -987,7 +990,7 @@ svg {
 }
 
 .modal--confirm h2 {
-    font-size: 21px;
+    font-size: 17px;
 }
 
 .modal--confirm .modal-sub {
@@ -1114,8 +1117,8 @@ svg {
 
 .avatar-picker img {
     display: block;
-    width: 88px;
-    height: 88px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     object-fit: cover;
     background: var(--avatar-bg);
@@ -1190,7 +1193,7 @@ svg {
 
     .logo {
         margin: 24px 0 0;
-        font-size: 22px;
+        font-size: 16px;
         text-align: center;
     }
 
@@ -1255,7 +1258,7 @@ svg {
     }
 
     .greeting {
-        font-size: 20px;
+        font-size: 15px;
     }
 }
 
@@ -1358,7 +1361,7 @@ svg {
         display: block;
         grid-row: 1;
         grid-column: 1;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 600;
         letter-spacing: -0.5px;
         line-height: 1;
@@ -1417,7 +1420,7 @@ svg {
     }
 
     .greeting {
-        font-size: 20px;
+        font-size: 15px;
     }
 
     .date-line {
@@ -1447,7 +1450,7 @@ svg {
     .todo-item {
         flex-wrap: wrap;
         height: auto;
-        min-height: 72px;
+        min-height: 56px;
         margin-bottom: 8px;
         padding: 12px;
         border-radius: 14px;
@@ -1579,7 +1582,7 @@ svg {
 }
 
 .auth-logo {
-    font-size: 27px;
+    font-size: 18px;
     font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.5px;
@@ -1670,7 +1673,7 @@ svg {
 .auth-brand-tagline {
     margin: 0;
     max-width: 24em;
-    font-size: 24px;
+    font-size: 18px;
     font-weight: 500;
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.92);
@@ -1718,7 +1721,7 @@ svg {
 }
 
 .auth-brand {
-    font-size: 34px;
+    font-size: 24px;
     font-weight: 500;
     line-height: 1.2;
     letter-spacing: -0.5px;
@@ -1727,7 +1730,7 @@ svg {
 
 .auth-title {
     margin: 10px 0 4px;
-    font-size: 24px;
+    font-size: 17px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -2031,7 +2034,7 @@ svg {
 }
 
 .auth-loading__mark {
-    height: 88px;
+    height: 64px;
     width: auto;
     animation: auth-loading-breathe 1.6s ease-in-out infinite;
 }
@@ -2259,7 +2262,7 @@ svg {
 
 .card-title {
     margin: 0 0 4px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -2300,8 +2303,8 @@ svg {
 }
 
 .profile-photo .avatar-picker img {
-    width: 76px;
-    height: 76px;
+    width: 56px;
+    height: 56px;
 }
 
 .profile-photo-text {
@@ -2548,7 +2551,7 @@ svg {
 
 .standup-title {
     margin: 0 0 14px;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -2954,7 +2957,7 @@ svg {
 
 .notification-group-title {
     margin: 0;
-    font-size: 17px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -3085,7 +3088,7 @@ svg {
 
 .empty-card h2 {
     margin: 14px 0 6px;
-    font-size: 20px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -3119,7 +3122,7 @@ svg {
     }
 
     .auth-brand {
-        font-size: 30px;
+        font-size: 22px;
     }
 
     .steps {
@@ -3384,7 +3387,7 @@ svg {
 }
 
 .stat-value {
-    font-size: 26px;
+    font-size: 18px;
     font-weight: 600;
     line-height: 1.15;
     letter-spacing: -0.5px;
@@ -3570,7 +3573,7 @@ svg {
     }
 
     .stat-value {
-        font-size: 22px;
+        font-size: 16px;
     }
 
     .todo-tags {
@@ -3629,7 +3632,7 @@ svg {
 
 .todo-item.is-expanded {
     height: auto;
-    min-height: 86px;
+    min-height: 64px;
     padding-top: 16px;
     padding-bottom: 16px;
 }
@@ -3654,7 +3657,7 @@ svg {
     box-shadow: 0 0 0 3px var(--purple-ring);
     outline: none;
     font-family: inherit;
-    font-size: 19px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--ink);
 }
@@ -3934,7 +3937,7 @@ button.chip:disabled {
     border: 0;
     background: none;
     color: var(--muted);
-    font-size: 20px;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
 }
@@ -4009,7 +4012,7 @@ button.chip:disabled {
     border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--nav-ink);
-    font-size: 20px;
+    font-size: 15px;
     line-height: 1;
     cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease;
@@ -4422,4 +4425,318 @@ button.chip:disabled {
     color: var(--muted);
     min-width: 90px;
     text-align: center;
+}
+
+/* ==========================================================================
+   shadcn / New York design layer
+   Re-skins the shared primitives through the token system from tokens.css
+   (neutral palette, radius 10px, 14px base, standard control heights).
+   Appended last so it wins over the legacy rules above it.
+   ========================================================================== */
+
+:root {
+    --radius-sm: 8px;
+    --radius-lg: 10px; /* shadcn standard 0.625rem */
+}
+
+/* --- surfaces ------------------------------------------------------------ */
+.card,
+.panel,
+.modal,
+.sticky-float {
+    background: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.panel {
+    background: hsl(var(--card));
+}
+
+.modal-backdrop {
+    background: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* --- buttons ------------------------------------------------------------- */
+.btn-primary,
+.btn-add,
+.btn-sticky,
+.btn-ghost,
+.btn-danger,
+.btn-small,
+.fab {
+    height: 36px;              /* shadcn h-9 */
+    padding: 0 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;           /* shadcn text-sm */
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid transparent;
+    transition: background-color 0.15s ease, color 0.15s ease,
+        border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-primary:hover {
+    background: hsl(var(--primary) / 0.9);
+    border-color: hsl(var(--primary) / 0.9);
+}
+
+.btn-ghost,
+.btn-danger {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn-ghost:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
+.btn-danger {
+    color: hsl(var(--destructive));
+    border-color: hsl(var(--destructive) / 0.4);
+}
+
+.btn-danger:hover {
+    background: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+    border-color: hsl(var(--destructive));
+}
+
+.btn-add {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    margin-top: 30px;
+}
+
+.btn-add:hover {
+    background: hsl(var(--primary) / 0.9);
+}
+
+.btn-sticky {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+}
+
+.btn-sticky:hover {
+    background: hsl(var(--accent));
+    border-color: hsl(var(--border));
+}
+
+.btn-sticky.is-active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+}
+
+/* --- fields -------------------------------------------------------------- */
+.input,
+.search,
+.list-search,
+.sticky-new,
+.sticky-edit {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--input));
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+}
+
+.input {
+    height: 36px;
+    padding: 0 12px;
+}
+
+.input:focus,
+.search:focus-within,
+.list-search:focus {
+    border-color: hsl(var(--ring));
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring) / 0.15);
+}
+
+.search {
+    background: hsl(var(--background));
+    border: 1px solid hsl(var(--input));
+    border-radius: var(--radius-sm);
+    height: 36px;
+    padding: 0 12px;
+}
+
+.search input {
+    font-size: 14px;
+    color: hsl(var(--foreground));
+}
+
+.search svg,
+.search .lucide {
+    color: hsl(var(--muted-foreground));
+}
+
+.list-search {
+    height: 36px;
+    padding: 0 12px;
+}
+
+.list-search::placeholder,
+.search input::placeholder,
+.input::placeholder {
+    color: hsl(var(--muted-foreground));
+}
+
+/* --- navigation ---------------------------------------------------------- */
+.sidebar {
+    background: hsl(var(--sidebar));
+    border-right: 1px solid hsl(var(--sidebar-border));
+    color: hsl(var(--sidebar-foreground));
+}
+
+.nav-item {
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--sidebar-foreground));
+    height: 36px;
+}
+
+.nav-item:hover:not(.is-active) {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-accent-foreground));
+}
+
+.nav-item.is-active {
+    background: hsl(var(--sidebar-accent));
+    color: hsl(var(--sidebar-foreground));
+    font-weight: 600;
+    box-shadow: inset 2px 0 0 0 hsl(var(--sidebar-primary));
+}
+
+.topbar {
+    background: hsl(var(--background));
+    border-bottom: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+}
+
+/* --- tabs / pills -------------------------------------------------------- */
+.page-tab {
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+}
+
+.page-tab.is-active {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.page-tabs {
+    background: hsl(var(--muted-surface));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-sm);
+    padding: 3px;
+}
+
+.pill {
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(var(--muted-foreground));
+    border: 1px solid transparent;
+}
+
+.pill:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
+.pill.is-active {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+/* --- badges / chips ------------------------------------------------------ */
+.badge,
+.chip,
+.net-pill,
+.notification-count {
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.badge--purple {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+.chip {
+    background: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    border: 1px solid hsl(var(--border));
+}
+
+/* --- text roles ---------------------------------------------------------- */
+.greeting {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: hsl(var(--foreground));
+}
+
+.date-line,
+.card-sub,
+.setting-hint,
+.notification-group-hint {
+    color: hsl(var(--muted-foreground));
+}
+
+.card-title,
+.standup-title {
+    color: hsl(var(--card-foreground));
+}
+
+/* --- misc ---------------------------------------------------------------- */
+.empty {
+    color: hsl(var(--muted-foreground));
+}
+
+.row-error {
+    background: hsl(var(--destructive) / 0.1);
+    color: hsl(var(--destructive));
+    border: 1px solid hsl(var(--destructive) / 0.25);
+    border-radius: var(--radius-sm);
+}
+
+.toast {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+    border-radius: var(--radius-sm);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.switch-track {
+    background: hsl(var(--input));
+    border-radius: 9999px;
+}
+
+.switch input:checked + .switch-track {
+    background: hsl(var(--primary));
 }
