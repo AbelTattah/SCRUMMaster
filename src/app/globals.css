@@ -414,15 +414,18 @@ svg {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    height: 46px;
-    padding: 0 18px;
+    /* Match .btn-add exactly so both sit on the same line as the greeting. */
+    height: 39px;
+    margin-top: 38px;
+    padding: 0 16px;
     border: 1.5px solid var(--line);
     border-radius: var(--radius-sm);
     background: var(--surface);
     color: var(--ink);
     font: inherit;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
@@ -439,8 +442,8 @@ svg {
 }
 
 .btn-sticky svg {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
 }
 
 /* Inline fallback when Picture-in-Picture and popups are unavailable. */
@@ -449,8 +452,8 @@ svg {
     right: 20px;
     bottom: 20px;
     z-index: 60;
-    width: min(370px, calc(100vw - 40px));
-    max-height: min(560px, calc(100vh - 40px));
+    width: min(300px, calc(100vw - 40px));
+    max-height: min(440px, calc(100vh - 40px));
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1424,6 +1427,11 @@ svg {
 
     .btn-add {
         display: none;
+    }
+
+    /* Shorter heading on phones — keep the notes button optically centred. */
+    .btn-sticky {
+        margin-top: 4px;
     }
 
     .fab {
