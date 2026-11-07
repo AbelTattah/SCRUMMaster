@@ -62,12 +62,12 @@ const STICKY_CSS = `
     gap: 6px; margin-bottom: 4px;
   }
   .sticky-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
     text-transform: uppercase; color: #6B5B1E;
   }
-  .sticky-count { font-size: 11px; font-weight: 600; color: #8A7A3E; }
+  .sticky-count { font-size: 12px; font-weight: 600; color: #8A7A3E; }
   .sticky-search {
-    width: 100%; font: inherit; font-size: 11.5px;
+    width: 100%; font: inherit; font-size: 12px;
     padding: 4px 7px; margin: 0 0 5px;
     border: 1px solid #D8CD9A; border-radius: 4px;
     background: #FFFDF3; color: #35321F; outline: none;
@@ -106,12 +106,12 @@ const STICKY_CSS = `
   }
   .sticky-edit-btn {
     flex: none; border: 0; background: transparent; padding: 0 1px;
-    font: inherit; font-size: 11px; line-height: 1.25; color: #8A7A3E;
+    font: inherit; font-size: 12px; line-height: 1.25; color: #8A7A3E;
     opacity: 0.55; cursor: pointer;
   }
   .sticky-edit-btn:hover { opacity: 1; }
   .sticky-time {
-    margin-top: 2px; font-size: 9.5px; font-weight: 700;
+    margin-top: 2px; font-size: 11px; font-weight: 700;
     color: #7C6C30; letter-spacing: 0.02em;
   }
   .sticky-edit {
@@ -122,13 +122,13 @@ const STICKY_CSS = `
   .sticky-edit:focus { border-color: #9C8526; }
   .sticky-times { display: flex; gap: 5px; margin-top: 4px; }
   .sticky-times input {
-    flex: 1 1 0; min-width: 0; font: inherit; font-size: 10.5px;
+    flex: 1 1 0; min-width: 0; font: inherit; font-size: 11px;
     padding: 1px 3px; border: 1px solid #D8CD9A; border-radius: 3px;
     background: #FFFDF3; color: #5C5224; outline: none;
   }
   .sticky-actions { display: flex; gap: 5px; margin-top: 5px; }
   .sticky-actions button {
-    flex: 1 1 0; font: inherit; font-size: 11px; font-weight: 700;
+    flex: 1 1 0; font: inherit; font-size: 12px; font-weight: 700;
     padding: 3px 0; border-radius: 3px; border: 1px solid transparent;
     cursor: pointer;
   }
@@ -137,7 +137,7 @@ const STICKY_CSS = `
   .sticky-cancel {
     background: transparent; border-color: #C9B970 !important; color: #7C6C30;
   }
-  .sticky-msg { margin-top: 4px; font-size: 10.5px; font-weight: 700; color: #B23A2E; }
+  .sticky-msg { margin-top: 4px; font-size: 11px; font-weight: 700; color: #B23A2E; }
   .sticky-msg[hidden] { display: none; }
   .sticky-composer {
     flex: none; display: flex; flex-direction: column; gap: 4px;
