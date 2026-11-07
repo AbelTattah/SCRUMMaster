@@ -56,7 +56,7 @@
 
     /* Layout standards: sidebar 240-280px, desktop header 64-72px. */
     --sidebar-w: 260px;
-    --topbar-h: 64px;
+    --topbar-h: 52px; /* -20% height */
     --radius-sm: 8px;   /* inputs/buttons 8-12px */
     --radius-lg: 12px;  /* cards 12-16px */
 
@@ -234,7 +234,7 @@ svg {
 .logo img {
     display: block;
     width: auto;
-    height: 46px;
+    height: 38px; /* -20% */
 }
 
 .nav {
@@ -405,9 +405,9 @@ svg {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    /* Standard button height 40-48px; aligned with .btn-add. */
-    height: 40px;
-    margin-top: 38px;
+    /* -20% height */
+    height: 34px;
+    margin-top: 30px;
     padding: 0 16px;
     border: 1.5px solid var(--line);
     border-radius: var(--radius-sm);
@@ -552,7 +552,7 @@ svg {
     align-items: center;
     gap: 10px;
     width: min(480px, 100%);
-    height: 40px; /* fits 64px header; inputs 40-48px */
+    height: 34px; /* fits header; -20% height */
     padding: 0 14px;
     background: var(--search-bg);
     border-radius: var(--radius-sm);
@@ -676,8 +676,8 @@ svg {
    Page header: greeting, date line and the Add Todo button
    -------------------------------------------------------------------------- */
 .content {
-    /* Main content padding 24-32px, max width 1440px (desktop dashboard). */
-    padding: 24px 32px 32px;
+    /* -20% vertical padding */
+    padding: 19px 32px 26px;
     max-width: 1440px;
 }
 
@@ -707,8 +707,8 @@ svg {
     display: inline-flex;
     align-items: center;
     gap: 14px;
-    height: 40px; /* 40-48px */
-    margin-top: 38px;
+    height: 34px; /* -20% height */
+    margin-top: 30px;
     padding: 0 20px;
     border-radius: var(--radius-sm);
     background: var(--purple);
@@ -765,8 +765,8 @@ svg {
    Task list panel
    -------------------------------------------------------------------------- */
 .panel {
-    margin: 16px 0 0;
-    padding: 24px; /* card/container padding 16-24px */
+    margin: 13px 0 0;
+    padding: 19px; /* -20% vertical rhythm */
     background: var(--panel-bg);
     border-radius: var(--radius-lg);
 }
@@ -960,7 +960,7 @@ svg {
     max-width: 560px; /* modal width 400-600px */
     max-height: calc(100vh - 48px);
     overflow-y: auto;
-    padding: 24px; /* modal padding 24-32px */
+    padding: 19px; /* -20% vertical rhythm */
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
@@ -997,7 +997,7 @@ svg {
 
 .modal-form .btn-primary {
     width: 100%;
-    height: 46px;
+    height: 38px; /* -20% */
     margin-top: 4px;
 }
 
@@ -1016,7 +1016,7 @@ svg {
 
 .input {
     width: 100%;
-    height: 46px;
+    height: 38px; /* -20% */
     padding: 0 14px;
     background: var(--surface);
     border: 1.5px solid var(--field-line);
@@ -1060,7 +1060,7 @@ svg {
 }
 
 .btn-primary {
-    height: 46px;
+    height: 38px; /* -20% */
     padding: 0 20px;
     border: 0;
     background: var(--purple);
@@ -1077,7 +1077,7 @@ svg {
 }
 
 .btn-ghost {
-    height: 46px;
+    height: 38px; /* -20% */
     background: var(--surface);
     border: 1.5px solid var(--field-line);
     border-radius: var(--radius-sm);
@@ -1745,7 +1745,7 @@ svg {
     justify-content: center;
     gap: 10px;
     width: 100%;
-    height: 46px;
+    height: 38px; /* -20% */
     border: 1.5px solid var(--field-line);
     border-radius: var(--radius-sm);
     background: var(--surface);
@@ -2251,7 +2251,7 @@ svg {
 }
 
 .card {
-    padding: 24px; /* 16-24px */
+    padding: 19px; /* -20% vertical rhythm */
     background: var(--surface);
     border-radius: var(--radius-lg);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
