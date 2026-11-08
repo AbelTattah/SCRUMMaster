@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
 import { StickyNotesButton } from "@/components/StickyNotes";
 import { TaskBoard } from "@/components/TaskBoard";
+import LandingPage from "@/components/LandingPage";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
 import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Home" };
+export async function generateMetadata(): Promise<Metadata> {
+  const current = await getCurrentUser();
+  if (!current) {
+    return {
+      title: "Scrum Master - tasks, teams and stand-up reports",
+      description:
+        "A fast, offline-first task manager for you and your team. Track today's work, assign to anyone, get reminded, and ship a stand-up report (PDF or Word) in one click. End-to-end encrypted.",
+    };
+  }
+  return { title: "Home" };
+}
 
-/**
- * The list itself renders client-side from the encrypted local mirror
- * (see TaskBoard): the server can no longer read task titles, so rows are
- * decrypted in the browser after the gate unlocks.
- */
 export default async function HomePage({
   searchParams,
 }: {
@@ -24,12 +29,11 @@ export default async function HomePage({
 }) {
   const current = await getCurrentUser();
 
-  // "/" is the app's front door: signed-out visitors go straight to the sign-in
-  // screen (silently — every other route below asks them to sign in with a
-  // notice of its own).
+  // Signed-out visitors see the marketing landing page at the root.
   if (!current) {
-    redirect("/login");
+    return <LandingPage />;
   }
+
 
   const user = await requireOnboardedUser();
   const params = await searchParams;
