@@ -1,4 +1,6 @@
+import { headers } from "next/headers";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
 import { StickyNotesButton } from "@/components/StickyNotes";
@@ -10,9 +12,17 @@ import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
+function isDesktop(userAgent: string | null): boolean {
+  return /Electron/i.test(userAgent ?? "");
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const current = await getCurrentUser();
   if (!current) {
+    const ua = (await headers()).get("user-agent");
+    if (isDesktop(ua)) {
+      return { title: "Sign in" };
+    }
     return {
       title: "Scrum Master - tasks, teams and stand-up reports",
       description:
@@ -28,12 +38,17 @@ export default async function HomePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const current = await getCurrentUser();
+  const ua = (await headers()).get("user-agent");
 
-  // Signed-out visitors see the marketing landing page at the root.
+  // Signed-out visitors see the marketing landing page at the root on web.
+  // The desktop app has no landing page - signed-out users go straight to
+  // sign-in, as before.
   if (!current) {
+    if (isDesktop(ua)) {
+      redirect("/login");
+    }
     return <LandingPage />;
   }
-
 
   const user = await requireOnboardedUser();
   const params = await searchParams;

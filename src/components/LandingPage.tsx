@@ -445,19 +445,49 @@ export default function LandingPage() {
 
       {/* ---------- Footer ---------- */}
       <footer className="mt-auto border-t border-neutral-200/80 dark:border-neutral-800/80">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <img src="/logo-wordmark.png" alt="Scrum Master" className="h-6 w-auto dark:hidden" />
-          <img src="/logo-wordmark-white.png" alt="Scrum Master" className="h-6 w-auto hidden dark:block" />
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            &copy; Scrum Master. Built for teams that ship.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
-            <Link href="/login" className="transition-colors hover:text-neutral-900 dark:hover:text-white">
-              Sign in
-            </Link>
-            <Link href="/register" className="transition-colors hover:text-neutral-900 dark:hover:text-white">
-              Sign up
-            </Link>
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <img src="/logo-wordmark.png" alt="Scrum Master" className="h-6 w-auto dark:hidden" />
+              <img src="/logo-wordmark-white.png" alt="Scrum Master" className="h-6 w-auto hidden dark:block" />
+              <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+                Record what gets done, stay accountable, and level up every day.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-900 dark:text-white">Product</h3>
+              <ul className="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+                <li><Link href="#features" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Features</Link></li>
+                <li><Link href="#how-it-works" className="transition-colors hover:text-neutral-900 dark:hover:text-white">How it works</Link></li>
+                <li><Link href="#reports" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Reports</Link></li>
+                <li><Link href="#security" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Security</Link></li>
+                <li><Link href="/login" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Sign in</Link></li>
+                <li><Link href="/register" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Sign up</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-900 dark:text-white">Resources</h3>
+              <ul className="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+                <li><Link href="#faq" className="transition-colors hover:text-neutral-900 dark:hover:text-white">FAQ</Link></li>
+                <li><Link href="/landing" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Landing</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-900 dark:text-white">Legal</h3>
+              <ul className="mt-3 space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
+                <li><Link href="/privacy" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Terms of Service</Link></li>
+                <li><Link href="/cookies" className="transition-colors hover:text-neutral-900 dark:hover:text-white">Cookie Policy</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-neutral-200/80 pt-6 sm:flex-row dark:border-neutral-800/80">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              &copy; Scrum Master. Built for teams that ship.
+            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              GDPR-compliant. End-to-end encrypted.
+            </p>
           </div>
         </div>
       </footer>

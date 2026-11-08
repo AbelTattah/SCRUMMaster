@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Script from "next/script";
 
 import { PwaRegister } from "@/components/PwaRegister";
+import { CookieConsent } from "@/components/CookieConsent";
 
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: THEME_INIT }}
         />
         {children}
+        <CookieConsent />
         <PwaRegister />
       </body>
     </html>
