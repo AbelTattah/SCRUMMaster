@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+/* Dark variant: follow both the system preference and the explicit choice
+   stored as data-theme on <html> (see the theme-init script in layout.tsx). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *), @media (prefers-color-scheme: dark));
+
 /* ==========================================================================
    Scrum Master — homepage styles
    Reference: ui-design/home-page.png (1512 x 982). Measurements, colors and
