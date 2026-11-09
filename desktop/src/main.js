@@ -16,6 +16,7 @@ const { app, BrowserWindow, Menu, session, shell } = require("electron");
 const path = require("node:path");
 const fs = require("node:fs");
 const http = require("node:http");
+const https = require("node:https");
 
 const PRODUCTION_URL = "https://scrum-master-two.vercel.app";
 const SMOKE_TEST = process.argv.includes("--smoke-test");
@@ -285,7 +286,8 @@ function sleep(ms) {
 
 function ping(url) {
   return new Promise((resolve) => {
-    const request = http.get(url, (response) => {
+    const mod = String(url).startsWith("https:") ? https : http;
+    const request = mod.get(url, (response) => {
       response.resume();
       resolve(response.statusCode && response.statusCode < 500);
     });
