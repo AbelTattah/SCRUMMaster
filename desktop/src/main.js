@@ -303,7 +303,7 @@ async function resolveUrl() {
 
 /* ----------------------------------------------------------------- window */
 
-function createWindow(url) {
+async function createWindow(url) {
   const window = new BrowserWindow({
     width: 1340,
     height: 900,
@@ -324,6 +324,22 @@ function createWindow(url) {
   window.once("ready-to-show", () => window.show());
 
   const origin = new URL(url).origin;
+
+  // Mark this session as the desktop app so the server can skip the
+  // marketing landing page for signed-out users (desktop has no landing).
+  try {
+    await session.defaultSession.cookies.set({
+      url: origin,
+      name: "scrum-platform",
+      value: "desktop",
+      path: "/",
+      secure: origin.startsWith("https:"),
+      httpOnly: false,
+      sameSite: "lax",
+    });
+  } catch (error) {
+    console.error("[desktop] cookie set failed:", error);
+  }
 
   // Anything that leaves our origin opens in the default browser (Google
   // sign-in, password-reset links, docs) instead of a new Electron window.
@@ -551,11 +567,11 @@ if (!gotLock) {
     const { url, mode } = await resolveUrl();
 
     console.log(`[desktop] loading ${url} (${mode})`);
-    createWindow(url);
+    await createWindow(url);
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow(url);
+        void createWindow(url);
       }
     });
   });
