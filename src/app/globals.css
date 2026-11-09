@@ -844,7 +844,7 @@ svg {
 }
 
 .todo-check:checked {
-    background: var(--purple);
+    background: var(--purple-ink);
     border-color: var(--purple-ink);
 }
 
@@ -2030,7 +2030,7 @@ svg {
     width: 16px;
     height: 16px;
     margin: 0;
-    accent-color: var(--purple);
+    accent-color: var(--purple-ink);
 }
 
 /* --------------------------------------------------------------------------
@@ -4790,4 +4790,14 @@ button.chip:disabled {
 
 .switch input:checked + .switch-track {
     background: hsl(var(--primary));
+}
+
+/* Dark-mode: keep checkbox borders visible on the dark surface. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .todo-check {
+    border-color: var(--border-strong);
+  }
+}
+:root[data-theme="dark"] .todo-check {
+  border-color: var(--border-strong);
 }
