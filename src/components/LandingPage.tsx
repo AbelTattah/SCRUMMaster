@@ -81,36 +81,37 @@ export default function LandingPage() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-24">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-neutral-950 dark:text-white sm:text-5xl lg:text-[3.4rem] lg:leading-[1.05]">
-              Things scattered. Nothing aligned.
+              Get things done. Stay accountable. Level up every day.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-lg">
-              Bring order to the chaos. Capture what matters, move it forward,
-              and let the rest take shape on its own. Your work, your way —
-              always within reach, always under your control.
+              Scrum Master is a fast, offline-first task manager for you and your team.
+              Track today&rsquo;s work, assign it to anyone (even before they sign up),
+              get reminded before tasks start, and ship a stand-up report &mdash; PDF or Word
+              &mdash; in one click. Your task titles are end-to-end encrypted; we can&rsquo;t read them.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/register"
                 className="inline-flex items-center gap-2 rounded-full bg-[#21005D] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] dark:bg-white dark:text-black dark:hover:bg-neutral-200"
               >
-                Begin
+                Start for free
                 <ArrowRight className="size-4" />
               </Link>
               <Link
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-6 py-3 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
               >
-                Discover more
+                See how it works
               </Link>
             </div>
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
             <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl shadow-neutral-900/10 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40">
-              <img src="/logo.png" alt="Scrum Master" className="h-auto w-full object-cover" />
+              <img src="/logo.png" alt="Scrum Master app" className="h-auto w-full object-cover" />
             </div>
             <p className="mt-3 text-center text-xs text-neutral-500 dark:text-neutral-500">
-              Quietly powerful. Always yours.
+              Your tasks, encrypted in the browser.
             </p>
           </div>
         </div>
@@ -120,11 +121,11 @@ export default function LandingPage() {
       <section className="border-b border-neutral-200/70 dark:border-neutral-900">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-6 sm:px-6">
           {[
-            { icon: Wifi, label: "Always within reach" },
-            { icon: Lock, label: "Yours alone" },
-            { icon: FileText, label: "Shareable moments" },
-            { icon: Zap, label: "Desktop companion" },
-            { icon: Shield, label: "No barriers to start" },
+            { icon: Wifi, label: "Works offline" },
+            { icon: Lock, label: "End-to-end encrypted" },
+            { icon: FileText, label: "PDF + Word reports" },
+            { icon: Zap, label: "Desktop app" },
+            { icon: Shield, label: "No credit card to start" },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 dark:text-neutral-400">
               <Icon className="size-4 text-[#21005D] dark:text-[#B9A6F5]" />
@@ -139,26 +140,26 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              Scattered. Untracked. Unspoken.
+              Tasks everywhere. Reports nowhere.
             </h2>
             <p className="mt-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              A single place where everything converges — quietly.
+              Scrum Master brings your work, your team and your stand-up into one place.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
               {
-                title: "A single view",
-                body: "Everything that matters, gathered into one calm space. No noise, no clutter.",
+                title: "One board for today",
+                body: "Everything you need to do today on a single screen. Inline editing, no modals, no friction.",
               },
               {
-                title: "Insights that surface themselves",
-                body: "What happened, what's next, what's in the way — revealed when you need them.",
+                title: "Reports that write themselves",
+                body: "Stand-up reports generated from real task data — PDF and Word, in one click.",
               },
               {
-                title: "People, connected",
-                body: "Bring others in without friction. They find their place when the time is right.",
+                title: "Teams without the friction",
+                body: "Add teammates by email and assign tasks immediately. They pick everything up when they first sign in.",
               },
             ].map(({ title, body }) => (
               <div
@@ -178,10 +179,10 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              What unfolds when everything connects
+              Everything a team needs to stay accountable
             </h2>
             <p className="mt-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              Quiet tools that stay out of your way.
+              Tasks, reminders, teams and reports — in one private, offline-capable app.
             </p>
           </div>
 
@@ -189,33 +190,33 @@ export default function LandingPage() {
             {[
               {
                 icon: LayoutGrid,
-                title: "Your space",
-                body: "A living surface for what needs attention. Interact naturally — everything responds.",
+                title: "Today's board",
+                body: "Inline editing, one-click checkboxes that stick, search and pagination. Sticky notes pop into a floating mini-window.",
               },
               {
                 icon: Bell,
-                title: "Never be caught off guard",
-                body: "Gentle nudges before moments arrive. Alerts when something needs you.",
+                title: "Never miss a thing",
+                body: "Reminders before tasks start, overdue/upcoming/blocker alerts, browser push and email digests.",
               },
               {
                 icon: User,
-                title: "Effortless collaboration",
-                body: "Invite others by presence alone. They arrive when ready.",
+                title: "Teams without friction",
+                body: "Invite by email, assign before they sign up, XP + levels, and a team leaderboard.",
               },
               {
                 icon: FileText,
-                title: "Moments captured",
-                body: "Any window of time, preserved and shared in familiar forms.",
+                title: "Stand-up reports",
+                body: "Daily, weekly or monthly windows. PDF and Word (.docx) export in one click.",
               },
               {
                 icon: Lock,
-                title: "Yours alone",
-                body: "What you write stays yours. We never see it.",
+                title: "Private by design",
+                body: "End-to-end encrypted task titles and blockers. Zero-knowledge — we can't read your tasks.",
               },
               {
                 icon: Wifi,
-                title: "Always with you",
-                body: "Carry everything, even in silence. It finds its way back when connected.",
+                title: "Works offline",
+                body: "Tasks live in an encrypted local mirror. Create, edit and complete with no connection; syncs when back.",
               },
             ].map(({ icon: Icon, title, body }) => (
               <div
@@ -238,15 +239,15 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              Three quiet steps
+              Get started in three steps
             </h2>
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { n: "1", title: "Arrive", body: "A key is born from your words. No rituals, no setup." },
-              { n: "2", title: "Capture", body: "Speak. Set. Assign. Everything finds its place instantly." },
-              { n: "3", title: "Reflect and share", body: "A window of time, distilled. Send it onward." },
+              { n: "1", title: "Sign up in seconds", body: "We generate an encryption key from your password and a 24-word recovery phrase. No setup wizard." },
+              { n: "2", title: "Add your tasks", body: "Type a title, press Enter. Set times, assign teammates — even ones without accounts yet." },
+              { n: "3", title: "Report and share", body: "Pick a period, generate a stand-up report, export to PDF or Word. Send it to your team." },
             ].map(({ n, title, body }) => (
               <div
                 key={n}
@@ -269,23 +270,24 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-                Moments, distilled
+                Stand-up reports, generated for you
               </h2>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-                Any window of time, gathered and shaped. Attendance, progress,
-                blockers, action items, summary &mdash; all emerging from what
-                actually happened.
+                Daily, weekly or monthly windows. Header block, attendance, per-member
+                progress, blockers, action items, meeting summary and a prepared-by
+                footer &mdash; all derived from your real task data.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-800 dark:border-neutral-700 dark:text-neutral-200">
                   <FileText className="size-4" /> PDF
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-800 dark:border-neutral-700 dark:text-neutral-200">
-                  <Download className="size-4" /> Word
+                  <Download className="size-4" /> Word (.docx)
                 </span>
               </div>
               <p className="mt-4 text-sm text-neutral-600 dark:text-neutral-400">
-                Those who lead can see it all. What is written stays unseen by us.
+                Owners can download org-wide reports. Titles and blockers stay
+                encrypted client-side.
               </p>
             </div>
 
@@ -309,21 +311,21 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              Quietly guarded
+              Private by design
             </h2>
             <p className="mt-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              What you write stays yours. We never see it.
+              Zero-knowledge end-to-end encryption. We store ciphertext; we can&rsquo;t read your tasks.
             </p>
           </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { title: "Sealed", body: "Your words are sealed before they leave your device." },
-              { title: "Born from you", body: "A secret born from your own words. No plaintext leaves." },
-              { title: "A way back", body: "A phrase that brings it all back. Lose one thing, keep everything." },
-              { title: "Shared, carefully", body: "Those who lead grant access. It is scoped, not open." },
-              { title: "Always with you", body: "Carry it all, even in silence. It finds its way back." },
-              { title: "No starting over", body: "What came before is woven in. Nothing to migrate." },
+              { title: "End-to-end encryption", body: "Task titles and blockers encrypted in your browser before they leave your device." },
+              { title: "Password-derived keys", body: "Your password secures your data. No plaintext keys on the server." },
+              { title: "Recovery phrase", body: "A recovery phrase brings everything back. Lose your password, keep your data." },
+              { title: "Team access", body: "Owners grant access; members receive it. Access is scoped, not open." },
+              { title: "Works offline", body: "Encrypted local mirror. Create, edit, complete with no connection." },
+              { title: "Seamless migration", body: "Older data auto-upgrades. No migration step required." },
             ].map(({ title, body }) => (
               <div
                 key={title}
@@ -345,14 +347,14 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              Whispers from those who use it
+              Loved by small teams
             </h2>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
-              { quote: "Finally something that doesn't make everyone create an account before I can hand them work.", name: "Ama", role: "team lead" },
-              { quote: "The reports save me half an hour every morning. Clean, ready, done.", name: "Kwame", role: "scrum master" },
-              { quote: "It follows me onto the train with no signal. That alone is worth it.", name: "Efua", role: "freelancer" },
+              { quote: "Finally a task app that doesn't make my team create accounts before I can assign them work.", name: "Ama", role: "team lead" },
+              { quote: "The stand-up report export saves me 30 minutes every morning. PDF and Word, both clean.", name: "Kwame", role: "scrum master" },
+              { quote: "Works on the train with no signal. That alone is worth it.", name: "Efua", role: "freelancer" },
             ].map(({ quote, name, role }) => (
               <figure
                 key={name}
@@ -376,34 +378,34 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-              Questions, answered
+              Frequently asked questions
             </h2>
           </div>
           <div className="mt-8 space-y-3">
             {[
               {
-                q: "Is it really private?",
-                a: "Yes. Your words are sealed before they leave your device. We hold only what we cannot read.",
+                q: "Is my data really private?",
+                a: "Yes. Task titles and blockers are encrypted in your browser before they leave your device. We store ciphertext only.",
               },
               {
-                q: "Does it work without a connection?",
-                a: "Yes. Everything lives with you. It finds its way back when connected.",
+                q: "Does it work offline?",
+                a: "Yes. Tasks live in an encrypted local mirror. Create, edit and complete with no connection; they sync when you're back.",
               },
               {
-                q: "Can I hand work to people without accounts?",
-                a: "Yes. Bring them in by name. They arrive when they are ready.",
+                q: "Can I assign tasks to people without accounts?",
+                a: "Yes. Add a teammate by email and assign tasks immediately. They pick everything up when they first sign in.",
               },
               {
-                q: "What can be shared?",
-                a: "Moments in time, in familiar forms. Those who lead can see it all.",
+                q: "What report formats are supported?",
+                a: "PDF and Word (.docx), in daily, weekly and monthly windows. Owners can download org-wide reports.",
               },
               {
-                q: "What if I forget my key?",
-                a: "A phrase brings it back. Those without a password receive a key they can carry.",
+                q: "What if I forget my password?",
+                a: "Use your 24-word recovery phrase to restore access. Password-less accounts get an auto-generated sign-in key you can copy.",
               },
               {
-                q: "Is there a phone app?",
-                a: "The web follows you anywhere. A native companion is on the horizon.",
+                q: "Is there a mobile app?",
+                a: "The web app is responsive and installable as a PWA on phones and tablets. A native mobile app is on the roadmap.",
               },
             ].map(({ q, a }) => (
               <details
@@ -424,17 +426,17 @@ export default function LandingPage() {
       <section className="border-b border-neutral-200/70 dark:border-neutral-900 bg-neutral-50/60 dark:bg-neutral-950">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-20">
           <h2 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white sm:text-4xl">
-            Begin when you are ready.
+            Your tasks, your team, your stand-up &mdash; today.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-            No barriers. No waiting. Your first step takes seconds.
+            Start free and get your first task on the board in seconds. No credit card.
           </p>
           <div className="mt-7">
             <Link
               href="/register"
               className="inline-flex items-center gap-2 rounded-full bg-[#21005D] px-7 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] dark:bg-white dark:text-black dark:hover:bg-neutral-200"
             >
-              Start
+              Start creating
               <ArrowRight className="size-4" />
             </Link>
           </div>
