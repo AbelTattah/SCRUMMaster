@@ -21,10 +21,6 @@ export function AuthScreenShell({ children }: { children: ReactNode }) {
           <p className="auth-brand-tagline">
             Record what gets done, stay accountable, and level up every day.
           </p>
-          <ul className="auth-brand-points">
-            <li>Plan tasks with times and get reminded before they start</li>
-            <li>Daily, weekly and monthly task reports, downloadable as PDF</li>
-          </ul>
         </div>
       </aside>
 
