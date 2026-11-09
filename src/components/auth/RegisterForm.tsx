@@ -166,7 +166,12 @@ export function RegisterForm({ notice, initialError }: { notice: string; initial
 
         <AuthLoading active={busy} />
 
-        <button className="btn-primary" type="submit" disabled={busy}>
+        <button
+          className="inline-flex w-full items-center justify-center rounded-full bg-[#21005D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] disabled:opacity-50"
+          style={{ height: "38px", marginTop: "4px" }}
+          type="submit"
+          disabled={busy}
+        >
           {busy ? "Creating…" : "Continue"}
         </button>
       </form>
