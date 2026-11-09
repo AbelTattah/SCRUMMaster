@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/profile";
 import { ChangePasswordForm, SetPasswordForm } from "@/components/account/PasswordForms";
 import { AvatarForm } from "@/components/AvatarForm";
+import { ExportDataButton } from "@/components/ExportDataButton";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Button } from "@/components/ui/button";
 import {
@@ -256,6 +257,19 @@ export default async function AccountPage({
                   </>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Data export</CardTitle>
+              <CardDescription>
+                Download all your tasks (titles and blockers decrypted locally) as
+                a JSON file. Your data, your copy.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ExportDataButton />
             </CardContent>
           </Card>
         </div>

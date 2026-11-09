@@ -165,28 +165,57 @@ export function Sidebar({ user, counts }: { user: CurrentUser; counts: Counts })
             <Icon name="settings" />
           </Link>
 
-          <ConfirmForm
-            action={async () => {
-              // Push what we can, then drop this device's copy of the keys
-              // and the encrypted mirror before the session goes away.
-              await drainBeforeSignOut().catch(() => undefined);
-              await wipeLocal().catch(() => undefined);
-              clearKeys();
-              await signOut();
-            }}
-            confirmMessage="You will need to sign in again to see your tasks."
-            confirmTitle="Sign out of Scrum Master?"
-            confirmLabel="Sign out"
-          >
-            <button
-              className="icon-btn icon-btn--danger"
-              type="submit"
-              aria-label="Sign out"
-              title="Sign out"
-            >
-              <Icon name="logout" />
-            </button>
-          </ConfirmForm>
+          {(() => {
+            const isGuest =
+              typeof document !== "undefined" &&
+              (document.cookie.includes("scrum-guest=1") ||
+                localStorage.getItem("scrum-guest") === "1");
+
+            if (isGuest) {
+              return (
+                <button
+                  className="icon-btn icon-btn--danger"
+                  type="button"
+                  aria-label="Exit guest mode"
+                  title="Exit guest mode"
+                  onClick={() => {
+                    try {
+                      document.cookie = "scrum-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+                      localStorage.removeItem("scrum-guest");
+                    } catch {
+                      // ignore
+                    }
+                    window.location.href = "/login";
+                  }}
+                >
+                  <Icon name="logout" />
+                </button>
+              );
+            }
+
+            return (
+              <ConfirmForm
+                action={async () => {
+                  await drainBeforeSignOut().catch(() => undefined);
+                  await wipeLocal().catch(() => undefined);
+                  clearKeys();
+                  await signOut();
+                }}
+                confirmMessage="You will need to sign in again to see your tasks."
+                confirmTitle="Sign out of Scrum Master?"
+                confirmLabel="Sign out"
+              >
+                <button
+                  className="icon-btn icon-btn--danger"
+                  type="submit"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <Icon name="logout" />
+                </button>
+              </ConfirmForm>
+            );
+          })()}
         </div>
       </div>
     </aside>

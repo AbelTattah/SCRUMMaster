@@ -28,6 +28,15 @@ export function LoginForm({
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
 
+  function continueAsGuest() {
+    try {
+      document.cookie = "scrum-guest=1; path=/; max-age=31536000; SameSite=Lax";
+      localStorage.setItem("scrum-guest", "1");
+    } catch {
+      // ignore
+    }
+    router.push("/");
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
 
@@ -140,6 +149,12 @@ export function LoginForm({
 
       <p className="auth-switch">
         New to Scrum Master? <Link href="/register">Create an account</Link>
+      </p>
+
+      <p className="auth-switch">
+        <button type="button" className="auth-link-button" onClick={continueAsGuest}>
+          Continue as guest
+        </button>
       </p>
     </div>
   );

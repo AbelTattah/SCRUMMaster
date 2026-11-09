@@ -128,6 +128,56 @@ function splashIconDataUri() {
   return "";
 }
 
+/** Wordmark as a data URI so the offline page keeps the logo with no network. */
+function logoLightDataUri() {
+  const candidates = [];
+  if (process.resourcesPath) candidates.push(path.join(process.resourcesPath, "web", "public", "logo-wordmark.png"));
+  candidates.push(path.join(__dirname, "..", "..", "public", "logo-wordmark.png"));
+  candidates.push(path.join(__dirname, "..", "..", "..", "public", "logo-wordmark.png"));
+  for (const file of candidates) {
+    try { if (fs.existsSync(file)) return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`; } catch {}
+  }
+  return "";
+}
+
+function logoDarkDataUri() {
+  const candidates = [];
+  if (process.resourcesPath) candidates.push(path.join(process.resourcesPath, "web", "public", "logo-wordmark-white.png"));
+  candidates.push(path.join(__dirname, "..", "..", "public", "logo-wordmark-white.png"));
+  candidates.push(path.join(__dirname, "..", "..", "..", "public", "logo-wordmark-white.png"));
+  for (const file of candidates) {
+    try { if (fs.existsSync(file)) return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`; } catch {}
+  }
+  return "";
+}
+
+const OFFLINE_URL = dataUrl(`<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Scrum Master - offline</title>
+<style>
+  body { display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:24px; background:#FAFAFA; color:#1A1A1A; font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; text-align:center; }
+  .card { max-width:440px; padding:40px 32px; background:#FFFFFF; border:1px solid #EBEBEB; border-radius:16px; box-shadow:0 18px 50px rgba(33,0,93,0.10); }
+  .logo { display:block; height:32px; width:auto; margin:0 auto 20px; }
+  .logo--dark { display:none; }
+  h1 { margin:0 0 8px; font-size:22px; }
+  p { margin:0 0 24px; color:#727272; font-size:15px; line-height:1.6; }
+  button { height:44px; padding:0 24px; border:0; border-radius:8px; background:#21005D; color:#FFFFFF; font:inherit; font-size:15px; font-weight:600; cursor:pointer; }
+  button:hover { background:#2E0480; }
+  @media (prefers-color-scheme: dark) {
+    body { background:#0E0E12; color:#E7E7EE; }
+    .card { background:#1A1A21; border-color:#2A2A34; box-shadow:none; }
+    p { color:#9C9CA8; }
+    .logo--light { display:none; }
+    .logo--dark { display:block; }
+  }
+</style></head>
+<body><div class="card">
+  <img class="logo logo--light" src="${logoLightDataUri()}" alt="Scrum Master">
+  <img class="logo logo--dark" src="${logoDarkDataUri()}" alt="Scrum Master">
+  <h1>You are offline</h1>
+  <p>Scrum Master could not reach the network. Your tasks are safe on this device - reconnect and pull to refresh.</p>
+  <button onclick="location.reload()">Try again</button>
+</div></body></html>`);
+
 const SPLASH_URL = dataUrl(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Scrum Master</title>
 <style>${SPLASH_CSS}</style></head>
@@ -296,6 +346,15 @@ async function resolveUrl() {
     } else {
       console.log("[desktop] no bundled configuration found");
     }
+  }
+
+  // No bundled server: prefer the production site when online, but never show a
+  // broken page (and lose the logo) when offline - fall back to the embedded
+  // offline page, which carries the logo as a data URI and needs no network.
+  const online = await ping(PRODUCTION_URL);
+  if (!online) {
+    console.log("[desktop] offline - using embedded offline page");
+    return { url: OFFLINE_URL, mode: "offline" };
   }
 
   return { url: PRODUCTION_URL, mode: "production" };

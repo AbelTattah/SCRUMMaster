@@ -35,6 +35,8 @@ interface TaskBoardProps {
   autoFocusAdd: boolean;
   /** Shown instead of the default empty-state line. */
   emptyHint?: ReactNode;
+  /** Guest mode: no account, local-only, no server sync. */
+  guestMode?: boolean;
 }
 
 const PAGE_SIZE = 20;
@@ -50,6 +52,7 @@ export function TaskBoard({
   canAssign,
   autoFocusAdd,
   emptyHint,
+  guestMode,
 }: TaskBoardProps) {
   const [rows, setRows] = useState<TeamTodo[]>([]);
   const [booted, setBooted] = useState(false);
@@ -59,6 +62,11 @@ export function TaskBoard({
 
   useEffect(() => {
     let alive = true;
+
+    // Guest mode: local-only, no server sync. Initialise a local viewer.
+    if (guestMode) {
+      initSync({ id: "guest", name: "Guest", isOwner: false, inOrg: false });
+    }
 
     async function reload() {
       const local = scope === "team" ? await visibleTeamRows() : await visibleHomeRows();
@@ -74,10 +82,12 @@ export function TaskBoard({
     });
 
     void (async () => {
-      if (scope === "team") {
-        await pullTeam();
-      } else {
-        await pullOwn();
+      if (!guestMode) {
+        if (scope === "team") {
+          await pullTeam();
+        } else {
+          await pullOwn();
+        }
       }
 
       await reload();
@@ -100,7 +110,7 @@ export function TaskBoard({
       unsubscribe();
       window.removeEventListener("Scrum Master:sync-error", onSyncError);
     };
-  }, [scope]);
+  }, [scope, guestMode]);
 
   const visible = useMemo(() => {
     const needles = [q, localQ]

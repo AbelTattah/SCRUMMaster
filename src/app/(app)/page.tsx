@@ -47,22 +47,48 @@ export default async function HomePage({
   // The desktop app has no landing page - signed-out users go straight to
   // sign-in, as before.
   if (!current) {
-    if (isDesktop(ua, cookieStore)) {
+    const isGuest = cookieStore.get("scrum-guest")?.value === "1";
+    if (isDesktop(ua, cookieStore) && !isGuest) {
       redirect("/login");
     }
-    return <LandingPage />;
+    if (!isGuest) {
+      return <LandingPage />;
+    }
+    // Guest mode: render the home board without an account.
   }
 
-  const user = await requireOnboardedUser();
+  const user = current
+    ? await requireOnboardedUser()
+    : {
+        id: "guest",
+        email: "",
+        profile: {
+          id: "guest",
+          name: "Guest",
+          email: "",
+          avatar_url: null,
+          organization_id: null,
+          notify_browser: false,
+          notify_email: false,
+          notify_lead_minutes: 0,
+          onboarding_complete: true,
+          xp: 0,
+          created_at: new Date().toISOString(),
+          invited_at: null,
+        },
+        organization: null,
+        isOwner: false,
+        hasPassword: false,
+      };
+
   const params = await searchParams;
+  const guestMode = !current && cookieStore.get("scrum-guest")?.value === "1";
 
   const rawPage = firstParam(params.page);
   const page: PageFilter =
     rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
   const q = firstParam(params.q).trim();
 
-  // "?edit=" centres that row and starts renaming it; "?add=" opens the
-  // inline composer (used by the header button and the phone FAB).
   const focusId = firstParam(params.edit);
   const openAdd = params.add !== undefined;
 
@@ -106,6 +132,7 @@ export default async function HomePage({
           currentUserId={user.id}
           canAssign={user.isOwner}
           autoFocusAdd={openAdd}
+          guestMode={guestMode}
         />
       </section>
     </>
