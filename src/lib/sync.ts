@@ -68,7 +68,41 @@ function emitSyncError(message: string): void {
   window.dispatchEvent(new CustomEvent("Scrum Master:sync-error", { detail: message }));
 }
 
+/**
+ * Guest mode renders the shell without the CryptoGate, so nothing seeds the
+ * sync viewer before list components mount. Seed a local-only viewer lazily
+ * on first use when the guest flag is present.
+ */
+function guestViewer(): boolean {
+  // A real viewer already seeded by CryptoGate always wins (e.g. a stale
+  // guest cookie must never downgrade a signed-in session).
+  if (viewer) {
+    return viewer.id === "guest";
+  }
+
+  if (
+    typeof document !== "undefined" &&
+    (document.cookie.includes("scrum-guest=1") ||
+      (() => {
+        try {
+          return localStorage.getItem("scrum-guest") === "1";
+        } catch {
+          return false;
+        }
+      })())
+  ) {
+    initSync({ id: "guest", name: "Guest", isOwner: false, inOrg: false });
+    return true;
+  }
+
+  return false;
+}
+
 async function viewerOrFail(): Promise<SyncViewer> {
+  if (!viewer) {
+    guestViewer();
+  }
+
   if (!viewer) {
     throw new Error("Sync is not initialised.");
   }
@@ -240,7 +274,7 @@ export async function createTodoLocal(draft: {
 
   const key = contentKey();
 
-  const isGuest = viewer?.id === "guest";
+  const isGuest = guestViewer();
 
   if (!key && !isGuest) {
     return { error: "The app is locked - unlock it to add tasks." };
@@ -291,7 +325,7 @@ export async function saveTodoLocal(
 
   const key = contentKey();
 
-  const isGuest = viewer?.id === "guest";
+  const isGuest = guestViewer();
 
   if (!key && !isGuest) {
     return { error: "The app is locked." };
@@ -342,7 +376,7 @@ export async function setBlockerLocal(id: string, blocker: string): Promise<Inli
   }
 
   const key = contentKey();
-  const isGuest = viewer?.id === "guest";
+  const isGuest = guestViewer();
 
   if (!key && note && !isGuest) {
     return { error: "The app is locked." };

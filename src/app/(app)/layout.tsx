@@ -55,7 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const shell = (
     <>
       <Suspense fallback={null}>
-        <Sidebar user={user} counts={counts} />
+        <Sidebar user={user} counts={counts} isGuest={isGuest && !current} />
       </Suspense>
 
       <div className="main">

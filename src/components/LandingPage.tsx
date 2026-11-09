@@ -100,6 +100,12 @@ export default function LandingPage() {
               >
                 See how it works
               </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              >
+                or continue as guest &rarr;
+              </Link>
             </div>
           </div>
 
