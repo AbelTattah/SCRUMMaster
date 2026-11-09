@@ -22,6 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   if (!current) {
     const ua = (await headers()).get("user-agent");
     const cookieStore = await cookies();
+    if (cookieStore.get("scrum-guest")?.value === "1") {
+      return { title: "Home" };
+    }
     if (isDesktop(ua, cookieStore)) {
       return { title: "Sign in" };
     }
