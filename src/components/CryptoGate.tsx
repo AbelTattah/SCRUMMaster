@@ -90,13 +90,7 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
   }
 
   if (state === "loading") {
-    return (
-      <div className="crypto-gate" role="status" aria-live="polite">
-        <div className="auth-card crypto-gate-card">
-          <p className="auth-sub">Preparing your keys…</p>
-        </div>
-      </div>
-    );
+    return <AuthLoading active />;
   }
 
   if (state === "waiting") {
