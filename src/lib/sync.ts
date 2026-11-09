@@ -240,17 +240,19 @@ export async function createTodoLocal(draft: {
 
   const key = contentKey();
 
-  if (!key) {
-    return { error: "The app is locked — unlock it to add tasks." };
+  const isGuest = viewer?.id === "guest";
+
+  if (!key && !isGuest) {
+    return { error: "The app is locked - unlock it to add tasks." };
   }
 
   const id = crypto.randomUUID();
-  const encrypted = await encryptField(key, title);
+  const storedTitle = isGuest ? title : await encryptField(key!, title);
 
   await applyUpsert(
     id,
     {
-      title: encrypted,
+      title: storedTitle,
       start_time: draft.start_time ?? null,
       end_time: draft.end_time ?? null,
       assignee_id: draft.assignee_id ?? null,
@@ -259,7 +261,12 @@ export async function createTodoLocal(draft: {
     },
     { assignee_name: null, assignee_avatar: null },
   );
-  await flush();
+
+  if (!isGuest) {
+    await flush();
+  } else {
+    notify();
+  }
 
   return { error: null, id };
 }
@@ -284,7 +291,9 @@ export async function saveTodoLocal(
 
   const key = contentKey();
 
-  if (!key) {
+  const isGuest = viewer?.id === "guest";
+
+  if (!key && !isGuest) {
     return { error: "The app is locked." };
   }
 
@@ -294,10 +303,12 @@ export async function saveTodoLocal(
     return { error: "That todo no longer exists." };
   }
 
+  const storedTitle = isGuest ? title : await encryptField(key!, title);
+
   await applyUpsert(
     id,
     {
-      title: await encryptField(key, title),
+      title: storedTitle,
       start_time: draft.start_time !== undefined ? draft.start_time : existing.start_time,
       end_time: draft.end_time !== undefined ? draft.end_time : existing.end_time,
       assignee_id: draft.assignee_id !== undefined ? draft.assignee_id : existing.assignee_id,
@@ -311,7 +322,12 @@ export async function saveTodoLocal(
         draft.assignee_avatar !== undefined ? draft.assignee_avatar : existing.assignee_avatar,
     },
   );
-  await flush();
+
+  if (!isGuest) {
+    await flush();
+  } else {
+    notify();
+  }
 
   return { error: null, id };
 }
@@ -326,20 +342,29 @@ export async function setBlockerLocal(id: string, blocker: string): Promise<Inli
   }
 
   const key = contentKey();
+  const isGuest = viewer?.id === "guest";
 
-  if (!key && note) {
+  if (!key && note && !isGuest) {
     return { error: "The app is locked." };
   }
 
+  const storedBlocker =
+    !note ? null : isGuest ? note : await encryptField(key!, note);
+
   await applyUpsert(id, {
     title: existing.title,
-    blocker: note ? await encryptField(key!, note) : null,
+    blocker: storedBlocker,
     completed: existing.completed,
     start_time: existing.start_time,
     end_time: existing.end_time,
     assignee_id: existing.assignee_id,
   });
-  await flush();
+
+  if (!isGuest) {
+    await flush();
+  } else {
+    notify();
+  }
 
   return { error: null };
 }
