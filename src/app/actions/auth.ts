@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { getCurrentUser, requireUser } from "@/lib/auth";
@@ -291,8 +292,28 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
 }
 
 export async function signOut(): Promise<void> {
-  const supabase = await createServerSupabaseClient();
-  await supabase.auth.signOut();
+  try {
+    const supabase = await createServerSupabaseClient();
+    await supabase.auth.signOut();
+  } catch {
+    // Offline: dropping the local session is enough; the server-side token
+    // will be invalidated on the next connected launch.
+  }
+
+  // Clear the offline-first local session and all Supabase auth cookies so a
+  // signed-out desktop app cannot keep rendering a stale user offline.
+  try {
+    const store = await cookies();
+    store.delete("scrum-offline-session");
+    store.delete("scrum-guest");
+    for (const cookie of store.getAll()) {
+      if (cookie.name.startsWith("sb-")) {
+        store.delete(cookie.name);
+      }
+    }
+  } catch {
+    // ignore
+  }
 
   redirect("/login?notice=You%20have%20been%20signed%20out.");
 }

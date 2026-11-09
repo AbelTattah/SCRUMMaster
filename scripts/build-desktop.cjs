@@ -32,6 +32,20 @@ fs.cpSync(path.join(root, ".next", "static"), path.join(standalone, ".next", "st
 });
 fs.cpSync(path.join(root, "public"), path.join(standalone, "public"), { recursive: true });
 
+// Ship the runtime config with the bundle. Without it the desktop shell
+// refuses to start the bundled server and falls back to the production site,
+// which requires a network connection and (worse) uses a different origin,
+// so the encrypted offline mirror in IndexedDB is lost on every switch.
+// The service-role key lives in this desktop-only copy, never in the web
+// deployment's public output.
+const envFile = path.join(root, ".env.local");
+if (fs.existsSync(envFile)) {
+  fs.copyFileSync(envFile, path.join(standalone, ".env.local"));
+  console.log("✓ bundled runtime config (.env.local)");
+} else {
+  console.log("! no .env.local found - bundled server will have no Supabase config");
+}
+
 // Turbopack traces external packages as relative symlinks (e.g. nodemailer).
 // electron-builder copies links verbatim and 7-Zip then fails on them, so
 // every link inside the bundle is replaced with a real copy of its target.

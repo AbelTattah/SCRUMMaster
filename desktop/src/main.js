@@ -306,6 +306,9 @@ async function startLocalServer(standaloneRoot) {
 
   process.env.PORT = port;
   process.env.HOSTNAME = "127.0.0.1";
+  // Tells the server it is the desktop shell: enables the offline session
+  // cache in lib/auth.ts. The web deployment never sets this.
+  process.env.SCRUM_DESKTOP = "1";
 
   require(path.join(standaloneRoot, "server.js"));
 
@@ -402,6 +405,14 @@ async function createWindow(url) {
     console.error("[desktop] cookie set failed:", error);
   }
 
+  // A blank child window is the sticky-notes mini window: keep it floating
+  // above the desktop and other apps (the options alone are not enough on
+  // every Windows build).
+  window.webContents.on("did-create-window", (child) => {
+    child.setAlwaysOnTop(true, "floating");
+    child.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  });
+
   // Anything that leaves our origin opens in the default browser (Google
   // sign-in, password-reset links, docs) instead of a new Electron window.
   window.webContents.setWindowOpenHandler(({ url: target }) => {
@@ -422,7 +433,10 @@ async function createWindow(url) {
           minHeight: 220,
           autoHideMenuBar: true,
           resizable: true,
-          title: "Today — Scrum Master",
+          // The notes are a mini window: they must stay above other apps and
+          // the desktop, not drop behind them when the user clicks away.
+          alwaysOnTop: true,
+          title: "Today - Scrum Master",
         },
       };
     }
