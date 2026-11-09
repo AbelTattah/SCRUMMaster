@@ -68,7 +68,19 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
         }
       }
 
-      const material = await fetchMaterial();
+      let material;
+
+      try {
+        material = await fetchMaterial();
+      } catch {
+        // Offline with no device keys: never hang on the loading veil. The
+        // unlock screen explains that one connected launch is needed.
+        setError(
+          "Could not reach the server and no saved keys were found on this device. Connect once to unlock, or continue as guest.",
+        );
+        setState("locked");
+        return;
+      }
 
       if (material.material?.salt) {
         setState("locked");

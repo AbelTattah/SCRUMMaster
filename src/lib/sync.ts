@@ -735,6 +735,9 @@ export async function flush(): Promise<void> {
         break;
       }
     }
+  } catch {
+    // Offline (or a rejected server action): the queued writes stay on this
+    // device and go out on the next connected sync. Never reject into callers.
   } finally {
     flushing = false;
   }

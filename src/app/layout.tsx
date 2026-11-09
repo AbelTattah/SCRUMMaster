@@ -4,6 +4,7 @@ import Script from "next/script";
 
 import { PwaRegister } from "@/components/PwaRegister";
 import { CookieConsent } from "@/components/CookieConsent";
+import { OfflineHintSync } from "@/components/OfflineSessionSync";
 
 import "./globals.css";
 
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: THEME_INIT }}
         />
         {children}
+        <OfflineHintSync />
         <CookieConsent />
         <PwaRegister />
       </body>

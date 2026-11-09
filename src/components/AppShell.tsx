@@ -8,6 +8,7 @@ import { signOut } from "@/app/actions/auth";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { NotificationBell } from "@/components/NotificationBell";
+import { clearOfflineSession } from "@/lib/offlineSession";
 import { clearKeys } from "@/lib/keys";
 import { wipeLocal } from "@/lib/localdb";
 import { drainBeforeSignOut } from "@/lib/sync";
@@ -181,6 +182,7 @@ export function Sidebar({
               title="Exit guest mode"
               onClick={() => {
                 try {
+                  clearOfflineSession();
                   document.cookie = "scrum-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
                   localStorage.removeItem("scrum-guest");
                 } catch {
@@ -194,6 +196,8 @@ export function Sidebar({
           ) : (
             <ConfirmForm
               action={async () => {
+                const { clearOfflineSession } = await import("@/lib/offlineSession");
+                clearOfflineSession();
                 await drainBeforeSignOut().catch(() => undefined);
                 await wipeLocal().catch(() => undefined);
                 clearKeys();
