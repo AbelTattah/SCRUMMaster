@@ -54,13 +54,13 @@ export default function LandingPage() {
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 px-4 py-2 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
             >
               Sign in
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#21005D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-neutral-700 dark:bg-white dark:text-black dark:hover:bg-neutral-200"
             >
               Get started
             </Link>
@@ -84,10 +84,7 @@ export default function LandingPage() {
               Get things done. Stay accountable. Level up every day.
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 sm:text-lg">
-              Scrum Master is a fast, offline-first task manager for you and your team.
-              Track today&rsquo;s work, assign it to anyone (even before they sign up),
-              get reminded before tasks start, and ship a stand-up report &mdash; PDF or Word
-              &mdash; in one click. Your task titles are end-to-end encrypted; we can&rsquo;t read them.
+              Fast, Works Offline. Made for Agile Teams
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
@@ -107,12 +104,7 @@ export default function LandingPage() {
           </div>
 
           <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-            <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-2xl shadow-neutral-900/10 dark:border-neutral-800 dark:bg-neutral-900 dark:shadow-black/40">
-              <img src="/logo.png" alt="Scrum Master app" className="h-auto w-full object-cover" />
-            </div>
-            <p className="mt-3 text-center text-xs text-neutral-500 dark:text-neutral-500">
-              Your tasks, encrypted in the browser.
-            </p>
+              <img src="/hero.png" alt="Scrum Master app" className="h-auto w-full object-cover" />
           </div>
         </div>
       </section>
@@ -155,7 +147,7 @@ export default function LandingPage() {
               },
               {
                 title: "Reports that write themselves",
-                body: "Stand-up reports generated from real task data — PDF and Word, in one click.",
+                body: "Stand-up reports generated from real task data",
               },
               {
                 title: "Teams without the friction",
@@ -182,7 +174,7 @@ export default function LandingPage() {
               Everything a team needs to stay accountable
             </h2>
             <p className="mt-3 text-base leading-relaxed text-neutral-600 dark:text-neutral-400">
-              Tasks, reminders, teams and reports — in one private, offline-capable app.
+              Tasks, reminders, teams and reports
             </p>
           </div>
 
