@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -12,15 +12,17 @@ import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
-function isDesktop(userAgent: string | null): boolean {
-  return /Electron/i.test(userAgent ?? "");
+function isDesktop(userAgent: string | null, cookieStore: { get: (n: string) => { value: string } | undefined }): boolean {
+  if (/Electron/i.test(userAgent ?? "")) return true;
+  return cookieStore.get("scrum-platform")?.value === "desktop";
 }
 
 export async function generateMetadata(): Promise<Metadata> {
   const current = await getCurrentUser();
   if (!current) {
     const ua = (await headers()).get("user-agent");
-    if (isDesktop(ua)) {
+    const cookieStore = await cookies();
+    if (isDesktop(ua, cookieStore)) {
       return { title: "Sign in" };
     }
     return {
@@ -39,12 +41,13 @@ export default async function HomePage({
 }) {
   const current = await getCurrentUser();
   const ua = (await headers()).get("user-agent");
+  const cookieStore = await cookies();
 
   // Signed-out visitors see the marketing landing page at the root on web.
   // The desktop app has no landing page - signed-out users go straight to
   // sign-in, as before.
   if (!current) {
-    if (isDesktop(ua)) {
+    if (isDesktop(ua, cookieStore)) {
       redirect("/login");
     }
     return <LandingPage />;
