@@ -46,6 +46,9 @@ export default function LandingPage() {
             <Link href="#reports" className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">
               Reports
             </Link>
+            <Link href="/downloads" className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">
+              Download
+            </Link>
             <Link href="#faq" className="text-sm text-neutral-600 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white">
               FAQ
             </Link>
