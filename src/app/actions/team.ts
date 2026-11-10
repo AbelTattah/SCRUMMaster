@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireOnboardedUser } from "@/lib/auth";
 import { addMemberToOrganization, removeMemberFromOrganization } from "@/lib/members";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/utils";
 
 function field(formData: FormData, name: string): string {
@@ -22,7 +23,7 @@ async function memberInOrganization(
   memberId: string,
   organizationId: string,
 ): Promise<{ name: string } | null> {
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("profiles")
     .select("name")
     .eq("id", memberId)

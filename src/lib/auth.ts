@@ -54,7 +54,8 @@ export async function getAuthUser() {
 }
 
 export async function getProfile(id: string): Promise<Profile | null> {
-  const { data } = await createAdminClient()
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", id)
@@ -68,7 +69,8 @@ export async function getOrganization(id: string | null): Promise<Organization |
     return null;
   }
 
-  const { data } = await createAdminClient()
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
     .from("organizations")
     .select("*")
     .eq("id", id)

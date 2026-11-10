@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type {
   Assignee,
   Counts,
@@ -26,7 +26,7 @@ export async function listTodos(
   page: PageFilter = "home",
   query = "",
 ): Promise<Todo[]> {
-  let request = createAdminClient()
+  let request = (await createServerSupabaseClient())
     .from("todos")
     .select("*")
     .or(visibleTo(userId));
@@ -48,7 +48,7 @@ export async function listTodos(
 }
 
 export const countTodos = cache(async (userId: string): Promise<Counts> => {
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("todos")
     .select("completed")
     .or(visibleTo(userId));
@@ -88,7 +88,7 @@ export async function findManagedTodo(
   id: string,
   current: Pick<CurrentUser, "id" | "isOwner" | "organization">,
 ): Promise<ManagedTodo | null> {
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("todos")
     .select("*")
     .eq("id", id)
@@ -107,7 +107,7 @@ export async function findManagedTodo(
   }
 
   if (current.isOwner && current.organization) {
-    const { data: member } = await createAdminClient()
+    const { data: member } = await (await createServerSupabaseClient())
       .from("profiles")
       .select("id")
       .eq("id", data.user_id)
@@ -125,7 +125,7 @@ export async function findManagedTodo(
 
 /** How many todos this user *created* since a point in time (nudge logic). */
 export async function countTodosCreatedSince(userId: string, since: Date): Promise<number> {
-  const { count } = await createAdminClient()
+  const { count } = await (await createServerSupabaseClient())
     .from("todos")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
@@ -142,7 +142,7 @@ export async function countTodosCreatedSince(userId: string, since: Date): Promi
 
 
 export async function deleteTodo(id: string): Promise<void> {
-  await createAdminClient().from("todos").delete().eq("id", id);
+  (await createServerSupabaseClient()).from("todos").delete().eq("id", id);
 }
 
 /** Record (or clear, with null) what is blocking a task. */
@@ -151,7 +151,7 @@ export async function listTeamTodos(
   organizationId: string,
   page: PageFilter = "home",
   query = "",
-): Promise<{ members: Assignee[]; todos: TeamTodo[] }> {  const admin = createAdminClient();
+): Promise<{ members: Assignee[]; todos: TeamTodo[] }> {  const admin = await createServerSupabaseClient();
 
   const { data: profiles } = await admin
     .from("profiles")
@@ -226,7 +226,7 @@ export async function insertTodoWithId(
   id: string,
   state: TodoState,
 ): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient()
+  const { error } = await (await createServerSupabaseClient())
     .from("todos")
     .insert({
       id,
@@ -247,7 +247,7 @@ export async function updateTodoState(
   id: string,
   state: TodoState,
 ): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient()
+  const { error } = await (await createServerSupabaseClient())
     .from("todos")
     .update({
       title: state.title,
@@ -284,7 +284,7 @@ export async function listTodosWithNames(userId: string): Promise<TeamTodo[]> {
     return [];
   }
 
-  const { data: profiles } = await createAdminClient()
+  const { data: profiles } = await (await createServerSupabaseClient())
     .from("profiles")
     .select("id,name,avatar_url")
     .in("id", [...ids]);

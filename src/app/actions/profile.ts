@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { requireOnboardedUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   findProfileByEmail,
   setOrganization,
@@ -238,7 +239,7 @@ export async function removeMember(formData: FormData): Promise<void> {
     back("/account?tab=organization", "error", "You cannot remove your own account.");
   }
 
-  const { data: profile } = await createAdminClient()
+  const { data: profile } = await (await createServerSupabaseClient())
     .from("profiles")
     .select("id,name,organization_id")
     .eq("id", memberId)

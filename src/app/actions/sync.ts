@@ -24,7 +24,7 @@ import {
 import { isEncrypted } from "@/lib/crypto";
 import { XP_TASK_COMPLETE } from "@/lib/gamification";
 import { sanitizeTime } from "@/lib/time";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/utils";
 import type { CurrentUser } from "@/lib/types";
 
@@ -61,14 +61,18 @@ async function resolveAssignee(
     return null;
   }
 
-  const { data } = await createAdminClient()
-    .from("profiles")
-    .select("id")
-    .eq("id", raw)
-    .eq("organization_id", current.organization.id)
-    .maybeSingle<{ id: string }>();
+  try {
+    const { data } = await (await createServerSupabaseClient())
+      .from("profiles")
+      .select("id")
+      .eq("id", raw)
+      .eq("organization_id", current.organization.id)
+      .maybeSingle<{ id: string }>();
 
-  return data?.id ?? null;
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function validateState(op: PushOp): string | null {
