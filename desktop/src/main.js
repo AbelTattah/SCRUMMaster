@@ -370,7 +370,7 @@ async function createWindow(url) {
     backgroundColor: "#FAFAFA", // never a raw colour while loading
     title: "Scrum Master",
     icon: path.join(__dirname, "..", "assets", "icon.png"),
-    show: false,
+    show: false, // never a raw colour while loading
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -379,9 +379,8 @@ async function createWindow(url) {
     },
   });
 
-  window.once("ready-to-show", () => window.show());
 
-  const origin = new URL(url).origin;
+  window.once("ready-to-show", () => window.show());
 
   // Mark this session as the desktop app so the server can skip the
   // marketing landing page for signed-out users (desktop has no landing).
@@ -601,7 +600,68 @@ function buildMenu() {
 
 /* ------------------------------------------------------------------- main */
 
-const gotLock = app.requestSingleInstanceLock();
+// Single-instance guard using a PID file instead of a kernel mutex: if the
+// previous process was killed (e.g. by Windows Application Control) the
+// mutex could be left orphaned and block every future launch. A PID file is
+// released on process death by the OS reclaiming the file handle, and any
+// stale file is detected (dead PID) and removed on the next launch.
+function acquireInstanceLock() {
+  const lockFile = path.join(app.getPath("userData"), "single-instance.lock");
+
+  try {
+    if (fs.existsSync(lockFile)) {
+      const oldPid = Number(fs.readFileSync(lockFile, "utf8").trim());
+
+      if (oldPid && oldPid !== process.pid) {
+        let alive = false;
+
+        try {
+          process.kill(oldPid, 0);
+          alive = true;
+        } catch {
+          alive = false;
+        }
+
+        if (alive) {
+          return false; // another live instance owns it
+        }
+
+        // Stale lock from a dead process - clear it.
+        try {
+          fs.unlinkSync(lockFile);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    fs.writeFileSync(lockFile, String(process.pid));
+
+    const cleanup = () => {
+      try {
+        fs.unlinkSync(lockFile);
+      } catch {
+        // ignore
+      }
+    };
+
+    process.on("exit", cleanup);
+    process.on("SIGINT", () => {
+      cleanup();
+      process.exit(0);
+    });
+    process.on("SIGTERM", () => {
+      cleanup();
+      process.exit(0);
+    });
+
+    return true;
+  } catch {
+    return true; // fail open rather than block the app
+  }
+}
+
+const gotLock = acquireInstanceLock();
 
 if (!gotLock) {
   app.quit();
@@ -633,16 +693,21 @@ if (!gotLock) {
       (_webContents, permission) => permission === "notifications",
     );
 
-    const { url, mode } = await resolveUrl();
+    try {
+      const { url, mode } = await resolveUrl();
 
-    console.log(`[desktop] loading ${url} (${mode})`);
-    await createWindow(url);
+      console.log(`[desktop] loading ${url} (${mode})`);
+      await createWindow(url);
 
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        void createWindow(url);
-      }
-    });
+      app.on("activate", () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+          void createWindow(url);
+        }
+      });
+    } catch (error) {
+      console.error("[desktop] fatal:", error);
+      app.exit(1);
+    }
   });
 
   app.on("window-all-closed", () => {
