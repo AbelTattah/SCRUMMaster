@@ -88,21 +88,6 @@ public/           # static assets, service worker, PWA manifest
 docs/             # encryption architecture, landing page brief
 ```
 
-## Monetization
-
-Scrum Master is open source (MIT) and free to self-host. Revenue comes from:
-
-1. **Hosted SaaS** (https://scrum-master-two.vercel.app) — managed hosting,
-   automatic updates, backups, and support. Free tier available.
-2. **Premium features** (roadmap) — advanced reporting, SSO, audit logs,
-   priority support for teams and organizations.
-3. **Sponsorships** — GitHub Sponsors and Open Collective.
-4. **Support & consulting** — paid setup, customization and training for
-   organizations.
-
-The core task manager, encryption, offline sync and stand-up reports will
-always remain open source and free to self-host.
-
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Issues and PRs are welcome.
