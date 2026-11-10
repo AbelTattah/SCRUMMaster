@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { buildNotifications, notificationLeadMinutes } from "@/lib/notifications";
 import { listTodos } from "@/lib/data/todos";
 import type { NotificationItem, Profile } from "@/lib/types";
@@ -18,7 +18,7 @@ async function withState(
 
   const keys = [...new Set(items.map((item) => item.key))];
 
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("notification_state")
     .select("notification_key,read_at,emailed_at")
     .eq("user_id", userId)
@@ -74,14 +74,14 @@ export async function markNotificationRead(
     return false;
   }
 
-  const { data: existing } = await createAdminClient()
+  const { data: existing } = await (await createServerSupabaseClient())
     .from("notification_state")
     .select("read_at")
     .eq("user_id", user.id)
     .eq("notification_key", key)
     .maybeSingle<{ read_at: string | null }>();
 
-  const { error } = await createAdminClient()
+  const { error } = await (await createServerSupabaseClient())
     .from("notification_state")
     .upsert(
       {
@@ -107,7 +107,7 @@ export async function markAllNotificationsRead(
 
   const now = new Date().toISOString();
 
-  const { error } = await createAdminClient()
+  const { error } = await (await createServerSupabaseClient())
     .from("notification_state")
     .upsert(
       unread.map((item) => ({
@@ -128,7 +128,7 @@ export async function markNotificationsEmailed(userId: string, keys: string[]): 
     return;
   }
 
-  const admin = createAdminClient();
+  const admin = await createServerSupabaseClient();
 
   const { data: alreadySent } = await admin
     .from("notification_state")

@@ -1,8 +1,8 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Member, Profile } from "@/lib/types";
 
 export async function findProfileByEmail(email: string): Promise<Profile | null> {
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("profiles")
     .select("*")
     .ilike("email", email.trim().toLowerCase())
@@ -15,7 +15,7 @@ export async function updateProfile(
   id: string,
   values: Partial<Pick<Profile, "name" | "email" | "avatar_url" | "organization_id" | "onboarding_complete">>,
 ): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient().from("profiles").update(values).eq("id", id);
+  const { error } = await (await createServerSupabaseClient()).from("profiles").update(values).eq("id", id);
 
   return { error: error?.message ?? null };
 }
@@ -24,7 +24,7 @@ export async function updateNotificationPreferences(
   id: string,
   values: Pick<Profile, "notify_browser" | "notify_email" | "notify_lead_minutes">,
 ): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient().from("profiles").update(values).eq("id", id);
+  const { error } = await (await createServerSupabaseClient()).from("profiles").update(values).eq("id", id);
 
   return { error: error?.message ?? null };
 }
@@ -33,7 +33,7 @@ export async function setOrganization(
   id: string,
   organizationId: string | null,
 ): Promise<{ error: string | null }> {
-  const { error } = await createAdminClient()
+  const { error } = await (await createServerSupabaseClient())
     .from("profiles")
     .update({ organization_id: organizationId })
     .eq("id", id);
@@ -42,7 +42,7 @@ export async function setOrganization(
 }
 
 export async function listMembers(organizationId: string, ownerId: string): Promise<Member[]> {
-  const admin = createAdminClient();
+  const admin = await createServerSupabaseClient();
 
   const { data: profiles } = await admin
     .from("profiles")
@@ -94,7 +94,7 @@ export async function listMembers(organizationId: string, ownerId: string): Prom
 }
 
 export async function notificationRecipients(): Promise<Profile[]> {
-  const { data } = await createAdminClient()
+  const { data } = await (await createServerSupabaseClient())
     .from("profiles")
     .select("*")
     .eq("notify_email", true)

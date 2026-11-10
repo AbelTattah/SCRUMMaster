@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 export interface MemberGrantStatus {
   /** The member's raw ECDH public key (plain — safe to send to the owner). */
   pub: string | null;
@@ -18,8 +18,8 @@ export async function memberGrantStatus(
   organizationId: string,
   excludeId: string,
 ): Promise<Record<string, MemberGrantStatus>> {
-  const admin = createAdminClient();
-  const { data: profiles } = await admin
+  const supabase = await createServerSupabaseClient();
+  const { data: profiles } = await supabase
     .from("profiles")
     .select("id")
     .eq("organization_id", organizationId)
@@ -28,7 +28,7 @@ export async function memberGrantStatus(
   const status: Record<string, MemberGrantStatus> = {};
 
   for (const profile of profiles ?? []) {
-    const { data } = await admin.auth.admin.getUserById(profile.id);
+    const { data } = await createAdminClient().auth.admin.getUserById(profile.id);
     const meta = (data.user?.user_metadata ?? {}) as Record<string, unknown>;
     const pub = typeof meta.crypto_pub === "string" && meta.crypto_pub ? meta.crypto_pub : null;
 

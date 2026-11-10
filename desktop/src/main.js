@@ -302,17 +302,18 @@ function ping(url) {
 
 /** Start the bundled Next.js server inside this process. */
 async function startLocalServer(standaloneRoot) {
-  const port = String(4300 + (process.pid % 500));
+  // A stable port is essential: IndexedDB is per-origin, so a random port
+  // each launch would wipe the offline task mirror on every restart.
+  const port = 4556;
+  const url = `http://127.0.0.1:${port}`;
 
-  process.env.PORT = port;
+  process.env.PORT = String(port);
   process.env.HOSTNAME = "127.0.0.1";
   // Tells the server it is the desktop shell: enables the offline session
   // cache in lib/auth.ts. The web deployment never sets this.
   process.env.SCRUM_DESKTOP = "1";
 
   require(path.join(standaloneRoot, "server.js"));
-
-  const url = `http://127.0.0.1:${port}`;
 
   for (let attempt = 0; attempt < 80; attempt += 1) {
     if (await ping(`${url}/`)) {
@@ -335,28 +336,21 @@ async function resolveUrl() {
   if (standaloneRoot) {
     loadWebEnv();
 
-    // The bundled server reads its configuration at runtime. Without it every
-    // page would 500, so a build with no shipped config falls back to the
-    // production site instead (ship a resources/web/.env.local to go local).
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      try {
-        const url = await startLocalServer(standaloneRoot);
+    try {
+      const url = await startLocalServer(standaloneRoot);
 
-        if (url) {
-          return { url, mode: "local" };
-        }
-      } catch (error) {
-        console.error("[desktop] local server failed, falling back:", error);
+      if (url) {
+        return { url, mode: "local" };
       }
-    } else {
-      console.log("[desktop] no bundled configuration found");
+    } catch (error) {
+      console.error("[desktop] local server failed, falling back:", error);
     }
   }
 
-  // No bundled server: prefer the production site when online, but never show a
-  // broken page (and lose the logo) when offline - fall back to the embedded
-  // offline page, which carries the logo as a data URI and needs no network.
+  // Last resort only: a configured-but-broken local server, or a dev
+  // checkout with no bundle. Prefer the production site when reachable.
   const online = await ping(PRODUCTION_URL);
+
   if (!online) {
     console.log("[desktop] offline - using embedded offline page");
     return { url: OFFLINE_URL, mode: "offline" };
