@@ -15,13 +15,15 @@ import { drainBeforeSignOut } from "@/lib/sync";
 import type { Counts, CurrentUser, NotificationItem, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
-type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports";
+type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports" | "today" | "backlog";
 
 function hrefs(page: PageFilter, q: string) {
   const search = q ? `&q=${encodeURIComponent(q)}` : "";
 
   return {
     home: q ? `/?q=${encodeURIComponent(q)}` : "/",
+    today: `/?page=today${search}`,
+    backlog: `/?page=backlog${search}`,
     completed: `/?page=completed${search}`,
     inProgress: `/?page=in-progress${search}`,
     team: "/team",
@@ -34,6 +36,8 @@ function hrefs(page: PageFilter, q: string) {
 function activeState(view: AppView, page: PageFilter) {
   return {
     home: view === "home" && page === "home",
+    today: view === "home" && page === "today",
+    backlog: view === "home" && page === "backlog",
     completed: view === "home" && page === "completed",
     inProgress: view === "home" && page === "in-progress",
     team: view === "team",
@@ -48,7 +52,9 @@ function useLocation() {
   const searchParams = useSearchParams();
   const rawPage = searchParams.get("page");
   const page: PageFilter =
-    rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
+    rawPage === "completed" || rawPage === "in-progress" || rawPage === "today" || rawPage === "backlog"
+      ? rawPage
+      : "home";
   const q = searchParams.get("q") ?? "";
 
   const view: AppView =
@@ -96,6 +102,24 @@ export function Sidebar({
         >
           <Icon name="home" />
           <span className="nav-label">Home</span>
+        </Link>
+
+        <Link
+          className={`nav-item${active.today ? " is-active" : ""}`}
+          href={links.today}
+          aria-current={active.today ? "page" : undefined}
+        >
+          <Icon name="today" />
+          <span className="nav-label">Today</span>
+        </Link>
+
+        <Link
+          className={`nav-item${active.backlog ? " is-active" : ""}`}
+          href={links.backlog}
+          aria-current={active.backlog ? "page" : undefined}
+        >
+          <Icon name="backlog" />
+          <span className="nav-label">Backlogs</span>
         </Link>
 
         <Link
@@ -239,6 +263,28 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
           <Icon name="home" />
         </span>
         <span className="tab-label">Home</span>
+      </Link>
+
+      <Link
+        className={`tab${active.today ? " is-active" : ""}`}
+        href={links.today}
+        aria-current={active.today ? "page" : undefined}
+      >
+        <span className="tab-icon">
+          <Icon name="today" />
+        </span>
+        <span className="tab-label">Today</span>
+      </Link>
+
+      <Link
+        className={`tab${active.backlog ? " is-active" : ""}`}
+        href={links.backlog}
+        aria-current={active.backlog ? "page" : undefined}
+      >
+        <span className="tab-icon">
+          <Icon name="backlog" />
+        </span>
+        <span className="tab-label">Backlog</span>
       </Link>
 
       <Link

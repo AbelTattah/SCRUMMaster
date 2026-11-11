@@ -41,6 +41,16 @@ interface TaskBoardProps {
 
 const PAGE_SIZE = 20;
 
+function isCreatedToday(createdAt: string): boolean {
+  const created = new Date(createdAt);
+  const now = new Date();
+  return (
+    created.getFullYear() === now.getFullYear() &&
+    created.getMonth() === now.getMonth() &&
+    created.getDate() === now.getDate()
+  );
+}
+
 export function TaskBoard({
   scope,
   page,
@@ -125,6 +135,20 @@ export function TaskBoard({
 
         if (page === "in-progress" && row.completed) {
           return false;
+        }
+
+        if (page === "today") {
+          const createdToday = isCreatedToday(row.created_at);
+          if (!createdToday && row.completed) {
+            return false;
+          }
+        }
+
+        if (page === "backlog") {
+          const createdToday = isCreatedToday(row.created_at);
+          if (createdToday || !row.completed) {
+            return false;
+          }
         }
 
         if (needles.some((needle) => !row.title.toLowerCase().includes(needle))) {
