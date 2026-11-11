@@ -11,7 +11,7 @@
  */
 // Bumped when the shell assets change — the install step re-caches them
 // (offline.html carries the "boot into the cached app" redirect).
-const CACHE = "scrum-master-v4";
+const CACHE = "scrum-master-v5";
 const SHELL = [
   "/offline.html",
   "/manifest.webmanifest",
