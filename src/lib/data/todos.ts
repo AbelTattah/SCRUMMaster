@@ -50,14 +50,16 @@ export async function listTodos(
 export const countTodos = cache(async (userId: string): Promise<Counts> => {
   const { data } = await (await createServerSupabaseClient())
     .from("todos")
-    .select("completed")
+    .select("completed,start_time,end_time")
     .or(visibleTo(userId));
 
   return (data ?? []).reduce<Counts>(
     (counts, todo) => {
       if (todo.completed) {
         counts.completed += 1;
-      } else {
+      } else if (todo.start_time || todo.end_time) {
+        // "In progress" = scheduled work that is not finished; unscheduled
+        // captures are backlog drafts and are not counted here.
         counts.in_progress += 1;
       }
 
