@@ -140,7 +140,7 @@ export function Sidebar({
           aria-current={active.inProgress ? "page" : undefined}
         >
           <Icon name="in-progress" />
-          <span className="nav-label">In Progress</span>
+          <span className="nav-label">Now</span>
           {counts.in_progress > 0 ? (
             <span className="badge badge--amber">{counts.in_progress}</span>
           ) : null}
@@ -312,7 +312,7 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
             <span className="badge badge--amber">{counts.in_progress}</span>
           ) : null}
         </span>
-        <span className="tab-label">In Progress</span>
+        <span className="tab-label">Now</span>
       </Link>
 
       <Link
