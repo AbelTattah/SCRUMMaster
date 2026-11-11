@@ -9,7 +9,6 @@
  * (the server can no longer search ciphertext).
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { AddTaskRow } from "@/components/AddTask";
 import { TaskRow } from "@/components/TaskRow";
@@ -54,7 +53,7 @@ function isCreatedToday(createdAt: string): boolean {
 
 export function TaskBoard({
   scope,
-  page: pageProp,
+  page,
   q,
   focusId,
   returnTo,
@@ -65,13 +64,6 @@ export function TaskBoard({
   emptyHint,
   guestMode,
 }: TaskBoardProps) {
-  const searchParams = useSearchParams();
-  const urlPage = searchParams.get("page");
-  const page: PageFilter =
-    urlPage === "completed" || urlPage === "in-progress" || urlPage === "today" || urlPage === "backlog"
-      ? urlPage
-      : (pageProp ?? "home");
-
   const [rows, setRows] = useState<TeamTodo[]>([]);
   const [booted, setBooted] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
