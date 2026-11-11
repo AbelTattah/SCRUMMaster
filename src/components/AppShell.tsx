@@ -277,31 +277,6 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
       </Link>
 
       <Link
-        className={`tab${active.backlog ? " is-active" : ""}`}
-        href={links.backlog}
-        aria-current={active.backlog ? "page" : undefined}
-      >
-        <span className="tab-icon">
-          <Icon name="backlog" />
-        </span>
-        <span className="tab-label">Backlog</span>
-      </Link>
-
-      <Link
-        className={`tab${active.completed ? " is-active" : ""}`}
-        href={links.completed}
-        aria-current={active.completed ? "page" : undefined}
-      >
-        <span className="tab-icon">
-          <Icon name="completed" />
-          {counts.completed > 0 ? (
-            <span className="badge badge--purple">{counts.completed}</span>
-          ) : null}
-        </span>
-        <span className="tab-label">Completed</span>
-      </Link>
-
-      <Link
         className={`tab${active.inProgress ? " is-active" : ""}`}
         href={links.inProgress}
         aria-current={active.inProgress ? "page" : undefined}
@@ -325,19 +300,6 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
         </span>
         <span className="tab-label">Reports</span>
       </Link>
-
-      {user.isOwner ? (
-        <Link
-          className={`tab${active.team ? " is-active" : ""}`}
-          href={links.team}
-          aria-current={active.team ? "page" : undefined}
-        >
-          <span className="tab-icon">
-            <Icon name="team" />
-          </span>
-          <span className="tab-label">Team</span>
-        </Link>
-      ) : null}
 
       <Link
         className={`tab${active.profile ? " is-active" : ""}`}

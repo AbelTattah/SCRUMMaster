@@ -1,5 +1,6 @@
 import { cookies, headers } from "next/headers";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
@@ -15,6 +16,20 @@ import { firstParam } from "@/lib/utils";
 function isDesktop(userAgent: string | null, cookieStore: { get: (n: string) => { value: string } | undefined }): boolean {
   if (/Electron/i.test(userAgent ?? "")) return true;
   return cookieStore.get("scrum-platform")?.value === "desktop";
+}
+
+function filterHref(page: PageFilter, q: string): string {
+  const params = new URLSearchParams();
+  if (page !== "home") {
+    params.set("page", page);
+  }
+  if (q) {
+    params.set("q", q);
+  }
+
+  const query = params.toString();
+
+  return query ? `/?${query}` : "/";
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -136,6 +151,24 @@ export default async function HomePage({
       </header>
 
       <AddTodoFab returnTo={returnTo} />
+
+      <nav className="filter-pills" aria-label="Filter todos">
+        <Link className={`pill${page === "home" ? " is-active" : ""}`} href={filterHref("home", q)}>
+          All
+        </Link>
+        <Link className={`pill${page === "today" ? " is-active" : ""}`} href={filterHref("today", q)}>
+          Today
+        </Link>
+        <Link className={`pill${page === "backlog" ? " is-active" : ""}`} href={filterHref("backlog", q)}>
+          Backlog
+        </Link>
+        <Link className={`pill${page === "in-progress" ? " is-active" : ""}`} href={filterHref("in-progress", q)}>
+          Now
+        </Link>
+        <Link className={`pill${page === "completed" ? " is-active" : ""}`} href={filterHref("completed", q)}>
+          Completed
+        </Link>
+      </nav>
 
       <section className="panel" aria-label="Todos">
         <TaskBoard
