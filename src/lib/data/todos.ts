@@ -218,6 +218,7 @@ export interface TodoState {
   blocker: string | null;
   completed: boolean;
   sprint_id: string | null;
+  story_points: number | null;
 }
 
 /**
@@ -241,6 +242,7 @@ export async function insertTodoWithId(
       blocker: state.blocker,
       completed: state.completed,
       sprint_id: state.sprint_id,
+      story_points: state.story_points,
     });
   return { error: error?.message ?? null };
 }
@@ -260,6 +262,7 @@ export async function updateTodoState(
       blocker: state.blocker,
       completed: state.completed,
       sprint_id: state.sprint_id,
+      story_points: state.story_points,
     })
     .eq("id", id);
 

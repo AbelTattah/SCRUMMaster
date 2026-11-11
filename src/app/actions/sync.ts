@@ -38,6 +38,7 @@ export interface PushOp {
   blocker?: string | null;
   completed?: boolean;
   sprint_id?: string | null;
+  story_points?: number | null;
 }
 
 export interface PushResult {
@@ -153,6 +154,7 @@ async function applyOp(current: CurrentUser, op: PushOp): Promise<PushResult> {
       blocker,
       completed,
       sprint_id: op.sprint_id !== undefined ? op.sprint_id : managed.todo.sprint_id,
+      story_points: op.story_points !== undefined ? op.story_points : managed.todo.story_points,
     });
 
     if (error) {
@@ -176,6 +178,7 @@ async function applyOp(current: CurrentUser, op: PushOp): Promise<PushResult> {
     blocker: op.completed ? null : (op.blocker ?? null),
     completed: op.completed ?? false,
     sprint_id: op.sprint_id ?? null,
+    story_points: op.story_points ?? null,
   };
 
   const { error } = await insertTodoWithId(current.id, op.id, state);

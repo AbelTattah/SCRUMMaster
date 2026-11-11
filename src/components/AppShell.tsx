@@ -15,7 +15,7 @@ import { drainBeforeSignOut } from "@/lib/sync";
 import type { Counts, CurrentUser, NotificationItem, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
-type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports" | "today" | "backlog";
+type AppView = "home" | "team" | "account" | "settings" | "notifications" | "reports" | "today" | "backlog" | "sprints";
 
 function hrefs(page: PageFilter, q: string) {
   const search = q ? `&q=${encodeURIComponent(q)}` : "";
@@ -42,6 +42,7 @@ function activeState(view: AppView, page: PageFilter) {
     inProgress: view === "home" && page === "in-progress",
     team: view === "team",
     reports: view === "reports",
+    sprints: view === "sprints",
     profile: view === "account",
     settings: view === "settings",
   };
@@ -68,7 +69,9 @@ function useLocation() {
             ? "notifications"
             : pathname === "/reports"
               ? "reports"
-              : "home";
+              : pathname === "/sprints"
+                ? "sprints"
+                : "home";
 
   return { view, page, q };
 }
@@ -153,6 +156,15 @@ export function Sidebar({
         >
           <Icon name="report" />
           <span className="nav-label">Reports</span>
+        </Link>
+
+        <Link
+          className={`nav-item${active.sprints ? " is-active" : ""}`}
+          href="/sprints"
+          aria-current={active.sprints ? "page" : undefined}
+        >
+          <Icon name="sprint" />
+          <span className="nav-label">Sprints</span>
         </Link>
       </nav>
 

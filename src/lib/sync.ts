@@ -160,6 +160,7 @@ export async function decryptRows(rows: LocalTodo[]): Promise<TeamTodo[]> {  con
       end_time: row.end_time,
       assignee_id: row.assignee_id,
       sprint_id: row.sprint_id ?? null,
+      story_points: row.story_points ?? null,
       blocker: row.blocker ? await decryptText(row.blocker) : null,
       legacy_id: row.legacy_id,
       created_at: row.created_at,
@@ -204,6 +205,7 @@ async function applyUpsert(
     blocker?: string | null;
     completed?: boolean;
     sprint_id?: string | null;
+    story_points?: number | null;
   },
   display?: { assignee_name?: string | null; assignee_avatar?: string | null },
 ): Promise<LocalTodo> {
@@ -220,6 +222,7 @@ async function applyUpsert(
     end_time: state.end_time !== undefined ? state.end_time : (existing?.end_time ?? null),
     assignee_id: state.assignee_id !== undefined ? state.assignee_id : (existing?.assignee_id ?? null),
     sprint_id: state.sprint_id !== undefined ? state.sprint_id : (existing?.sprint_id ?? null),
+    story_points: state.story_points !== undefined ? state.story_points : (existing?.story_points ?? null),
     legacy_id: existing?.legacy_id ?? null,
     created_at: existing?.created_at ?? nowIso(),
     owner_name: existing?.owner_name ?? me.name,
@@ -261,6 +264,7 @@ function pushOpFor(row: LocalTodo): PushOp {
     blocker: row.blocker,
     completed: row.completed,
     sprint_id: row.sprint_id,
+    story_points: row.story_points,
   };
 }
 
@@ -464,6 +468,7 @@ function toLocal(
     end_time: incoming.end_time,
     assignee_id: incoming.assignee_id,
     sprint_id: incoming.sprint_id ?? null,
+    story_points: incoming.story_points ?? null,
     legacy_id: incoming.legacy_id ?? null,
     created_at: incoming.created_at,
     owner_name: incoming.owner_name,
