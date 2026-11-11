@@ -376,13 +376,20 @@ function NetworkPill() {
   const [online, setOnline] = useState(true);
 
   useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-
+    let cancelled = false;
+    const update = async () => {
+      const { checkOnline } = await import("@/lib/connectivity");
+      const result = await checkOnline();
+      if (!cancelled) setOnline(result);
+    };
     update();
+    const interval = setInterval(update, 15000);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
 
     return () => {
+      cancelled = true;
+      clearInterval(interval);
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
     };

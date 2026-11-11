@@ -73,7 +73,7 @@ export function clearOfflineSession(): void {
 /** Client: tell the server whether the browser has connectivity right now. */
 export function setOfflineHint(offline: boolean): void {
   try {
-    document.cookie = `${OFFLINE_HINT_COOKIE}=${offline ? "1" : "0"}; path=/; max-age=86400; SameSite=Lax`;
+    document.cookie = `${OFFLINE_HINT_COOKIE}=${offline ? "1" : "0"}; path=/; max-age=31536000; SameSite=Lax`;
   } catch {
     // ignore
   }
