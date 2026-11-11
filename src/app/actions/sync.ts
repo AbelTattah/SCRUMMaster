@@ -37,6 +37,7 @@ export interface PushOp {
   assignee_id?: string | null;
   blocker?: string | null;
   completed?: boolean;
+  sprint_id?: string | null;
 }
 
 export interface PushResult {
@@ -151,6 +152,7 @@ async function applyOp(current: CurrentUser, op: PushOp): Promise<PushResult> {
       assignee_id: assignee,
       blocker,
       completed,
+      sprint_id: op.sprint_id !== undefined ? op.sprint_id : managed.todo.sprint_id,
     });
 
     if (error) {
@@ -173,6 +175,7 @@ async function applyOp(current: CurrentUser, op: PushOp): Promise<PushResult> {
     assignee_id: await resolveAssignee(current, op.assignee_id),
     blocker: op.completed ? null : (op.blocker ?? null),
     completed: op.completed ?? false,
+    sprint_id: op.sprint_id ?? null,
   };
 
   const { error } = await insertTodoWithId(current.id, op.id, state);

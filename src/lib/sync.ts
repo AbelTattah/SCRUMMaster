@@ -10,6 +10,7 @@
  * store itself keeps ciphertext at rest.
  */
 import { loadTeamTodosSync, loadTodosSync, pushTodos, type PushOp } from "@/app/actions/sync";
+import { loadSprintsSync, createSprintAction, updateSprintStatusAction, assignTodoToSprintAction } from "@/app/actions/sprints";
 import { decryptField, encryptField, isEncrypted, UNREADABLE } from "@/lib/crypto";
 import {
   allTodos,
@@ -25,7 +26,7 @@ import {
   type LocalTodo,
 } from "@/lib/localdb";
 import { contentKey, grantPendingMembers, keys } from "@/lib/keys";
-import type { TeamTodo } from "@/lib/types";
+import type { TeamTodo, Sprint } from "@/lib/types";
 
 export interface InlineResult {
   error: string | null;
@@ -158,6 +159,7 @@ export async function decryptRows(rows: LocalTodo[]): Promise<TeamTodo[]> {  con
       start_time: row.start_time,
       end_time: row.end_time,
       assignee_id: row.assignee_id,
+      sprint_id: row.sprint_id ?? null,
       blocker: row.blocker ? await decryptText(row.blocker) : null,
       legacy_id: row.legacy_id,
       created_at: row.created_at,
@@ -201,6 +203,7 @@ async function applyUpsert(
     assignee_id?: string | null;
     blocker?: string | null;
     completed?: boolean;
+    sprint_id?: string | null;
   },
   display?: { assignee_name?: string | null; assignee_avatar?: string | null },
 ): Promise<LocalTodo> {
@@ -216,6 +219,7 @@ async function applyUpsert(
     start_time: state.start_time !== undefined ? state.start_time : (existing?.start_time ?? null),
     end_time: state.end_time !== undefined ? state.end_time : (existing?.end_time ?? null),
     assignee_id: state.assignee_id !== undefined ? state.assignee_id : (existing?.assignee_id ?? null),
+    sprint_id: state.sprint_id !== undefined ? state.sprint_id : (existing?.sprint_id ?? null),
     legacy_id: existing?.legacy_id ?? null,
     created_at: existing?.created_at ?? nowIso(),
     owner_name: existing?.owner_name ?? me.name,
@@ -256,6 +260,7 @@ function pushOpFor(row: LocalTodo): PushOp {
     assignee_id: row.assignee_id,
     blocker: row.blocker,
     completed: row.completed,
+    sprint_id: row.sprint_id,
   };
 }
 
@@ -292,6 +297,7 @@ export async function createTodoLocal(draft: {
       assignee_id: draft.assignee_id ?? null,
       blocker: null,
       completed: false,
+      sprint_id: null,
     },
     { assignee_name: null, assignee_avatar: null },
   );
@@ -457,6 +463,7 @@ function toLocal(
     start_time: incoming.start_time,
     end_time: incoming.end_time,
     assignee_id: incoming.assignee_id,
+    sprint_id: incoming.sprint_id ?? null,
     legacy_id: incoming.legacy_id ?? null,
     created_at: incoming.created_at,
     owner_name: incoming.owner_name,
@@ -543,6 +550,52 @@ export async function pullOwn(): Promise<void> {
     void migrateLegacyRows();
   } catch {
     // offline (or signed out) — the mirror keeps serving the last sync
+  }
+}
+
+/** Pull sprints from the server into the local mirror. */
+export async function pullSprints(): Promise<void> {
+  try {
+    const rows = await loadSprintsSync();
+    if (rows.length === 0) {
+      return;
+    }
+    await localdb.sprints.bulkPut(rows as any);
+    notify();
+  } catch {
+    // offline
+  }
+}
+
+/** Create a sprint locally and on the server. */
+export async function createSprintLocal(name: string, goal: string | null, startDate: string, endDate: string): Promise<Sprint | null> {
+  const sprint = await createSprintAction(name, goal, startDate, endDate);
+  if (sprint) {
+    await localdb.sprints.put(sprint as any);
+    notify();
+  }
+  return sprint;
+}
+
+/** Update a sprint's status locally and on the server. */
+export async function updateSprintStatusLocal(sprintId: string, status: "planned" | "active" | "completed"): Promise<void> {
+  await updateSprintStatusAction(sprintId, status);
+  const sprint = await localdb.sprints.get(sprintId);
+  if (sprint) {
+    await localdb.sprints.update(sprintId, { status });
+    notify();
+  }
+}
+
+/** Assign a task to a sprint (or remove from sprint). */
+export async function assignTodoToSprintLocal(todoId: string, sprintId: string | null): Promise<void> {
+  await assignTodoToSprintAction(todoId, sprintId);
+  const todo = await localdb.todos.get(todoId);
+  if (todo) {
+    await localdb.todos.update(todoId, { sprint_id: sprintId, dirty: 1, local_updated: Date.now() });
+    await enqueueOp({ kind: "upsert", todo_id: todoId, created_at: Date.now() });
+    notify();
+    void flush();
   }
 }
 

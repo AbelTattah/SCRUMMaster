@@ -7,6 +7,7 @@
  * server's version back down.
  */
 import Dexie, { type Table } from "dexie";
+import type { Sprint } from "@/lib/types";
 
 /** One mirrored todo row. `title`/`blocker` hold ciphertext (or legacy plaintext). */
 export interface LocalTodo {
@@ -18,6 +19,7 @@ export interface LocalTodo {
   start_time: string | null;
   end_time: string | null;
   assignee_id: string | null;
+  sprint_id: string | null;
   legacy_id: number | null;
   created_at: string;
   owner_name: string;
@@ -54,6 +56,7 @@ export interface MetaRow {
 
 class ScrumMasterDB extends Dexie {
   todos!: Table<LocalTodo, string>;
+  sprints!: Table<Sprint, string>;
   ops!: Table<LocalOp, number>;
   meta!: Table<MetaRow, string>;
 
@@ -62,6 +65,13 @@ class ScrumMasterDB extends Dexie {
 
     this.version(1).stores({
       todos: "id, scope, dirty, tombstone, created_at",
+      ops: "++id, todo_id, created_at",
+      meta: "k",
+    });
+
+    this.version(2).stores({
+      todos: "id, scope, dirty, tombstone, created_at, sprint_id",
+      sprints: "id, user_id, status, created_at",
       ops: "++id, todo_id, created_at",
       meta: "k",
     });

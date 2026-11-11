@@ -217,6 +217,7 @@ export interface TodoState {
   assignee_id: string | null;
   blocker: string | null;
   completed: boolean;
+  sprint_id: string | null;
 }
 
 /**
@@ -239,8 +240,8 @@ export async function insertTodoWithId(
       assignee_id: state.assignee_id,
       blocker: state.blocker,
       completed: state.completed,
+      sprint_id: state.sprint_id,
     });
-
   return { error: error?.message ?? null };
 }
 
@@ -258,6 +259,7 @@ export async function updateTodoState(
       assignee_id: state.assignee_id,
       blocker: state.blocker,
       completed: state.completed,
+      sprint_id: state.sprint_id,
     })
     .eq("id", id);
 
