@@ -125,13 +125,13 @@ export default async function HomePage({
   }
   const emptyHint =
     page === "today"
-      ? "Nothing on your plate today - add a task to get started."
+      ? "Nothing for today — add a task or schedule one from your backlog."
       : page === "backlog"
-        ? "No backlog items - everything is up to date."
+        ? "No drafts — everything is scheduled or done."
         : page === "completed"
           ? "No completed tasks yet."
           : page === "in-progress"
-            ? "Nothing on your plate right now."
+            ? "Nothing in progress — schedule a task to start working on it."
             : undefined;
 
   const returnTo = search.toString() ? `/?${search.toString()}` : "/";

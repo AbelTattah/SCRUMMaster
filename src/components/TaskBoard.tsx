@@ -130,25 +130,31 @@ export function TaskBoard({
     return rows
       .filter((row) => {
         const isCompleted = Boolean(row.completed);
+        // A task is "scheduled" (committed to a time) when it carries a start
+        // or end time. Unscheduled captures are drafts that live in the
+        // backlog until they are planned.
+        const scheduled = Boolean(row.start_time || row.end_time);
 
         if (page === "completed" && !isCompleted) {
           return false;
         }
 
-        if (page === "in-progress" && isCompleted) {
+        // Now: scheduled work that has not been finished yet.
+        if (page === "in-progress" && (isCompleted || !scheduled)) {
           return false;
         }
 
-        if (page === "today") {
-          const createdToday = isCreatedToday(row.created_at);
-          if (!createdToday && isCompleted) {
-            return false;
-          }
+        // Backlog: drafts - captured but never scheduled, and not done.
+        if (page === "backlog" && (isCompleted || scheduled)) {
+          return false;
         }
 
-        if (page === "backlog") {
+        // Today: today's captures (any state) plus outstanding scheduled work.
+        if (page === "today") {
           const createdToday = isCreatedToday(row.created_at);
-          if (createdToday || !isCompleted) {
+          const underway = !isCompleted && scheduled;
+
+          if (!createdToday && !underway) {
             return false;
           }
         }
