@@ -7,16 +7,22 @@ import {
   setOfflineHint,
   writeOfflineSession,
 } from "@/lib/offlineSession";
+import { checkOnline } from "@/lib/connectivity";
 
 /** Tracks connectivity on every page (root layout). */
 export function OfflineHintSync() {
   useEffect(() => {
-    const update = () => setOfflineHint(!navigator.onLine);
+    const update = async () => {
+      const online = await checkOnline();
+      setOfflineHint(!online);
+    };
     update();
+    const interval = setInterval(update, 15000);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
     };
