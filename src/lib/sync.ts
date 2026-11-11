@@ -502,16 +502,20 @@ async function mergeIncoming(
   await putTodos(keep);
 
   // Rows this pull is responsible for that the server no longer serves are
-  // deleted locally — but only when the device has nothing pending and no
+  // deleted locally - but only when the device has nothing pending and no
   // fresh local write. Rows from the other scope (home vs team) are left alone.
-  const gone = [...existing.values()].filter(
-    (row) =>
-      wasMember(row) &&
-      !incomingIds.has(row.id) &&
-      !row.dirty &&
-      !row.tombstone &&
-      !(row.local_updated > pullStartedAt),
-  );
+  // Safety: never wipe the whole local mirror from a single empty pull (could
+  // be a transient auth/RLS/network hiccup) - preserve local data instead.
+  const gone = incoming.length === 0
+    ? []
+    : [...existing.values()].filter(
+        (row) =>
+          wasMember(row) &&
+          !incomingIds.has(row.id) &&
+          !row.dirty &&
+          !row.tombstone &&
+          !(row.local_updated > pullStartedAt),
+      );
 
   if (gone.length > 0) {
     await localdb.todos.bulkDelete(gone.map((row) => row.id));
