@@ -81,6 +81,12 @@ export async function signIn(formData: FormData): Promise<SignInResult> {
     isOwner = organization?.owner_id === data.user.id;
   }
 
+  // A successful sign-in always leaves guest mode: drop the guest cookie so
+  // the client-side sync viewer adopts the real account (a stale guest cookie
+  // otherwise keeps the viewer as "guest" and hides the user's tasks).
+  const cookieStore = await cookies();
+  cookieStore.delete("scrum-guest");
+
   return {
     error: null,
     next,

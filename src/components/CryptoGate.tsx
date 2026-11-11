@@ -49,6 +49,17 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
 
     startedRef.current = true;
 
+    // A real (non-guest) session always wins: drop any stale guest cookie so
+    // the sync viewer can never fall back to "guest" for a signed-in user.
+    if (user.id !== "guest") {
+      try {
+        document.cookie = "scrum-guest=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        localStorage.removeItem("scrum-guest");
+      } catch {
+        // ignore
+      }
+    }
+
     initSync({ id: user.id, name: user.name, isOwner: user.isOwner, inOrg: user.inOrg });
     startSync();
 
