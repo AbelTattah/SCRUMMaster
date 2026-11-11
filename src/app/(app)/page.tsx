@@ -89,7 +89,9 @@ export default async function HomePage({
 
   const rawPage = firstParam(params.page);
   const page: PageFilter =
-    rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
+    rawPage === "completed" || rawPage === "in-progress" || rawPage === "today" || rawPage === "backlog"
+      ? rawPage
+      : "home";
   const q = firstParam(params.q).trim();
 
   const focusId = firstParam(params.edit);
@@ -106,6 +108,17 @@ export default async function HomePage({
   if (q) {
     search.set("q", q);
   }
+  const emptyHint =
+    page === "today"
+      ? "Nothing on your plate today - add a task to get started."
+      : page === "backlog"
+        ? "No backlog items - everything is up to date."
+        : page === "completed"
+          ? "No completed tasks yet."
+          : page === "in-progress"
+            ? "No tasks in progress."
+            : undefined;
+
   const returnTo = search.toString() ? `/?${search.toString()}` : "/";
 
   return (
@@ -135,6 +148,7 @@ export default async function HomePage({
           currentUserId={user.id}
           canAssign={user.isOwner}
           autoFocusAdd={openAdd}
+          emptyHint={emptyHint}
           guestMode={guestMode}
         />
       </section>

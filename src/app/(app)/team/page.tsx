@@ -46,7 +46,9 @@ export default async function TeamPage({
   const params = await searchParams;
   const rawPage = firstParam(params.page);
   const page: PageFilter =
-    rawPage === "completed" || rawPage === "in-progress" ? rawPage : "home";
+    rawPage === "completed" || rawPage === "in-progress" || rawPage === "today" || rawPage === "backlog"
+      ? rawPage
+      : "home";
   const q = firstParam(params.q).trim();
 
   // Team todos arrive through the offline mirror (TaskBoard pulls them);
@@ -97,6 +99,18 @@ export default async function TeamPage({
           href={filterHref("home", q)}
         >
           All
+        </Link>
+        <Link
+          className={`pill${page === "today" ? " is-active" : ""}`}
+          href={filterHref("today", q)}
+        >
+          Today
+        </Link>
+        <Link
+          className={`pill${page === "backlog" ? " is-active" : ""}`}
+          href={filterHref("backlog", q)}
+        >
+          Backlog
         </Link>
         <Link
           className={`pill${page === "in-progress" ? " is-active" : ""}`}

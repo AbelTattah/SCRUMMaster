@@ -1,4 +1,4 @@
-export type PageFilter = "home" | "completed" | "in-progress";
+export type PageFilter = "home" | "completed" | "in-progress" | "today" | "backlog";
 
 export type NotificationKind =
   | "overdue"

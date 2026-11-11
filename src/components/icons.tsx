@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 export type IconName =
   | "home"
+  | "today"
+  | "backlog"
   | "completed"
   | "in-progress"
   | "team"
@@ -22,6 +24,21 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
       <path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </>
+  ),
+  today: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" x2="16" y1="2" y2="6" />
+      <line x1="8" x2="8" y1="2" y2="6" />
+      <line x1="3" x2="21" y1="10" y2="10" />
+    </>
+  ),
+  backlog: (
+    <>
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <path d="M9 12h6M9 16h6" />
     </>
   ),
   completed: (
