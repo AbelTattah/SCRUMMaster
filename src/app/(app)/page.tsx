@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { AddTodoButton, AddTodoFab } from "@/components/AddTask";
 import { StickyNotesButton } from "@/components/StickyNotes";
+import { SprintBoard } from "@/components/SprintBoard";
 import { TaskBoard } from "@/components/TaskBoard";
 import LandingPage from "@/components/LandingPage";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
@@ -171,8 +172,7 @@ export default async function HomePage({
       </nav>
 
       <section className="panel" aria-label="Todos">
-        <TaskBoard
-          key={page}
+        <SprintBoard
           scope="home"
           page={page}
           q={q}

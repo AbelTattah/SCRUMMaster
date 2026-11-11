@@ -22,7 +22,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "rea
 import { AuthScreenShell } from "@/components/AuthScreenShell";
 import { AuthLoading } from "@/components/AuthLoading";
 import { fetchMaterial, provisionAndUnlock, restoreFromDevice, retryGrant, unlockWithPassword } from "@/lib/keys";
-import { initSync, startSync, syncNow } from "@/lib/sync";
+import { initSync, pullSprints, startSync, syncNow } from "@/lib/sync";
 import { signOut } from "@/app/actions/auth";
 
 interface GateUser {
@@ -62,6 +62,7 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
 
     initSync({ id: user.id, name: user.name, isOwner: user.isOwner, inOrg: user.inOrg });
     startSync();
+    void pullSprints();
 
     void (async () => {
       try {

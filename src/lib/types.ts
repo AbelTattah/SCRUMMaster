@@ -1,5 +1,16 @@
 export type PageFilter = "home" | "completed" | "in-progress" | "today" | "backlog";
 
+export interface Sprint {
+  id: string;
+  user_id: string;
+  name: string;
+  goal: string | null;
+  start_date: string;
+  end_date: string;
+  status: "planned" | "active" | "completed";
+  created_at: string;
+}
+
 export type NotificationKind =
   | "overdue"
   | "blocker"
@@ -39,6 +50,7 @@ export interface Todo {
   start_time: string | null;
   end_time: string | null;
   assignee_id: string | null;
+  sprint_id: string | null;
   blocker: string | null;
   legacy_id: number | null;
   created_at: string;

@@ -37,6 +37,8 @@ interface TaskBoardProps {
   emptyHint?: ReactNode;
   /** Guest mode: no account, local-only, no server sync. */
   guestMode?: boolean;
+  /** Filter to a specific sprint (null = product backlog / all). */
+  sprintId?: string | null;
 }
 
 const PAGE_SIZE = 20;
@@ -63,6 +65,7 @@ export function TaskBoard({
   autoFocusAdd,
   emptyHint,
   guestMode,
+  sprintId,
 }: TaskBoardProps) {
   const [rows, setRows] = useState<TeamTodo[]>([]);
   const [booted, setBooted] = useState(false);
@@ -163,10 +166,17 @@ export function TaskBoard({
           return false;
         }
 
+        // Sprint filter: when a sprint is selected, only show tasks in that sprint.
+        if (sprintId && row.sprint_id !== sprintId) {
+          return false;
+        }
+
+        // Product Backlog view: when no sprint selected, show tasks with no sprint.
+        // (Only applies on the home page when explicitly filtering.)
         return true;
       })
       .sort((a, b) => a.created_at.localeCompare(b.created_at));
-  }, [rows, page, q, localQ]);
+  }, [rows, page, q, localQ, sprintId]);
 
   // Filters changed -> back to the first page.
   useEffect(() => {
