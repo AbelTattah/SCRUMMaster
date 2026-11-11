@@ -116,7 +116,7 @@ export default async function HomePage({
         : page === "completed"
           ? "No completed tasks yet."
           : page === "in-progress"
-            ? "No tasks in progress."
+            ? "Nothing on your plate right now."
             : undefined;
 
   const returnTo = search.toString() ? `/?${search.toString()}` : "/";

@@ -116,7 +116,7 @@ export default async function TeamPage({
           className={`pill${page === "in-progress" ? " is-active" : ""}`}
           href={filterHref("in-progress", q)}
         >
-          In Progress
+          Now
         </Link>
         <Link
           className={`pill${page === "completed" ? " is-active" : ""}`}
