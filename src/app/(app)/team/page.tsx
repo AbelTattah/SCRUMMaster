@@ -128,6 +128,7 @@ export default async function TeamPage({
 
       <section className="panel" aria-label="Team todos">
         <TaskBoard
+          key={page}
           scope="team"
           page={page}
           q={q}

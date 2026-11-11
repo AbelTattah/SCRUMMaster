@@ -139,6 +139,7 @@ export default async function HomePage({
 
       <section className="panel" aria-label="Todos">
         <TaskBoard
+          key={page}
           scope="home"
           page={page}
           q={q}
