@@ -20,6 +20,7 @@ export interface LocalTodo {
   end_time: string | null;
   assignee_id: string | null;
   sprint_id: string | null;
+  story_points: number | null;
   legacy_id: number | null;
   created_at: string;
   owner_name: string;

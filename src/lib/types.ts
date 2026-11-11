@@ -11,6 +11,28 @@ export interface Sprint {
   created_at: string;
 }
 
+export interface SprintReview {
+  id: string;
+  sprint_id: string;
+  user_id: string;
+  went_well: string | null;
+  to_improve: string | null;
+  action_items: string | null;
+  created_at: string;
+}
+
+export interface DailyScrumEntry {
+  id: string;
+  sprint_id: string;
+  user_id: string;
+  yesterday: string | null;
+  today: string | null;
+  blockers: string | null;
+  created_at: string;
+}
+
+export type ScrumRole = "product_owner" | "scrum_master" | "developer";
+
 export type NotificationKind =
   | "overdue"
   | "blocker"
@@ -51,6 +73,7 @@ export interface Todo {
   end_time: string | null;
   assignee_id: string | null;
   sprint_id: string | null;
+  story_points: number | null;
   blocker: string | null;
   legacy_id: number | null;
   created_at: string;
