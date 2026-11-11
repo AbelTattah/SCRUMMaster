@@ -2293,7 +2293,7 @@ svg {
 }
 
 .card-section {
-    margin-top: 26px;
+    margin-top: 0;
     padding-top: 24px;
     border-top: 1px solid var(--line);
 }
@@ -2313,7 +2313,7 @@ svg {
     display: flex;
     align-items: center;
     gap: 18px;
-    margin-bottom: 22px;
+    margin-bottom: 0;
 }
 
 .profile-photo .avatar-picker {
@@ -2409,7 +2409,7 @@ svg {
 }
 
 .member-list {
-    margin: 0 0 20px;
+    margin: 0;
     padding: 0;
     list-style: none;
 }

@@ -80,7 +80,7 @@ export default async function AccountPage({
               ) : null}
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="space-y-6">
               {organization ? (
                 <>
                   <ul className="member-list">
@@ -120,7 +120,7 @@ export default async function AccountPage({
                   </ul>
 
                   {user.isOwner ? (
-                    <>
+                    <div className="space-y-4">
                       <Button asChild variant="outline" size="sm" className="w-full">
                         <Link href="/team">
                           View team todos
@@ -142,7 +142,7 @@ export default async function AccountPage({
                           Add member
                         </Button>
                       </form>
-                    </>
+                    </div>
                   ) : (
                     <ConfirmForm
                       action={leaveOrganization}
