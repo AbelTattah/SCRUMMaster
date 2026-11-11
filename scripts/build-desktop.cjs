@@ -12,7 +12,7 @@ const root = path.join(__dirname, "..");
 
 console.log("next build (DESKTOP_BUILD=1, output: standalone)");
 
-const build = spawnSync("npx", ["next", "build"], {
+const build = spawnSync("npx", ["next", "build", "--webpack"], {
   cwd: root,
   stdio: "inherit",
   shell: true,
