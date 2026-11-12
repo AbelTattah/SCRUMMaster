@@ -18,9 +18,28 @@ titles are end-to-end encrypted; we can't read them.
 - **Teams without friction** — invite by email, assign before they sign up, XP + levels, leaderboard
 - **Stand-up reports** — daily/weekly/monthly, PDF + Word (.docx) export, org-wide for owners
 - **Private by design** — zero-knowledge end-to-end encryption (AES-256-GCM)
-- **Works offline** — encrypted local mirror, syncs when reconnected
-- **Guest mode** — use the app without an account
-- **Data export** — download all your tasks as JSON
+- **Works offline** - encrypted local mirror, syncs when reconnected
+- **True offline-first desktop** - the app boots from a bundled local server on a fixed port, serves the cached session and the encrypted mirror with no network at all (~15 ms cold start), and syncs when you reconnect
+- **Guest mode** - use the app without an account
+- **Data export** - download all your tasks as JSON
+
+### Scrum features
+
+Built against the [Scrum Guide 2020](https://www.scrum.org/resources/scrum-guide):
+
+| Feature | What it does |
+|---|---|
+| **Sprints** | Time-boxed iterations with a name, goal, dates and a planned → active → completed lifecycle |
+| **Product Backlog vs Sprint Backlog** | Tasks with no sprint stay in the backlog; selecting a sprint filters the board |
+| **Sprint Goal** | One objective per sprint, shown with the sprint |
+| **Story points** | Relative effort per task (0–100), synced end to end |
+| **Velocity & burndown** | Average velocity across completed sprints, live sprint progress bar |
+| **Sprint Review & Retrospective** | Went well / to improve / action items, kept per sprint |
+| **Daily Scrum** | Yesterday / today / blockers entries per team member |
+| **Definition of Done** | A shared checklist per organization |
+| **Scrum roles** | Product Owner, Scrum Master, Developer assigned per member |
+| **Evidence-Based Management** | Current value, unrealized value, ability to innovate, time to market |
+| **Nexus** | Integration, Architecture & Quality and Governance streams for teams scaling beyond one |
 
 ## Tech stack
 
