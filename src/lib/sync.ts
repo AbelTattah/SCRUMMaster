@@ -801,6 +801,11 @@ async function flushOnce(): Promise<boolean> {
 
 /** Drain the outbox (keeps going while progress is made). */
 export async function flush(): Promise<void> {
+  // Guest mode is local-only: never call server actions that would redirect.
+  if (guestViewer()) {
+    return;
+  }
+
   if (flushing) {
     return;
   }
@@ -825,6 +830,10 @@ export async function flush(): Promise<void> {
 
 /** Flush + refresh in one go (online event, focus, app start). */
 export async function syncNow(): Promise<void> {
+  if (guestViewer()) {
+    return;
+  }
+
   await flush();
   await pullOwn();
 }
