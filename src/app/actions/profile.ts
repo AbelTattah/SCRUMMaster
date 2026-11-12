@@ -287,3 +287,68 @@ export async function leaveOrganization(): Promise<void> {
   revalidatePath("/", "layout");
   back("/account?tab=organization", "notice", `You left ${current.organization.name}.`);
 }
+
+/**
+ * Definition of Done: the shared checklist the team agrees on. One line per
+ * item, so it stays readable in the editor and in the exported reports.
+ */
+export async function updateDefinitionOfDone(formData: FormData): Promise<void> {
+  const current = await requireOnboardedUser();
+
+  if (!current.organization || !current.isOwner) {
+    back("/account?tab=organization", "error", "Only the organization account can change the Definition of Done.");
+  }
+
+  const raw = field(formData, "definition_of_done");
+  const lines = raw
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 30);
+
+  const { error } = await createAdminClient()
+    .from("organizations")
+    .update({ definition_of_done: lines.join("\n") })
+    .eq("id", current.organization.id);
+
+  if (error) {
+    back("/account?tab=organization", "error", error.message ?? "Could not save the checklist.");
+  }
+
+  revalidatePath("/", "layout");
+  back("/account?tab=organization", "notice", "Definition of Done updated.");
+}
+
+/** Assign a Scrum accountability to a member. */
+export async function updateScrumRole(formData: FormData): Promise<void> {
+  const current = await requireOnboardedUser();
+
+  if (!current.organization || !current.isOwner) {
+    back("/account?tab=organization", "error", "Only the organization account can assign roles.");
+  }
+
+  const memberId = field(formData, "user_id");
+  const role = field(formData, "scrum_role");
+
+  if (!isUuid(memberId)) {
+    back("/account?tab=organization", "error", "That account is not a member of your organization.");
+  }
+
+  const value =
+    role === "product_owner" || role === "scrum_master" || role === "developer"
+      ? role
+      : null;
+
+  const { error } = await createAdminClient()
+    .from("profiles")
+    .update({ scrum_role: value })
+    .eq("id", memberId)
+    .eq("organization_id", current.organization.id);
+
+  if (error) {
+    back("/account?tab=organization", "error", error.message ?? "Could not update the role.");
+  }
+
+  revalidatePath("/", "layout");
+  back("/account?tab=organization", "notice", "Role updated.");
+}

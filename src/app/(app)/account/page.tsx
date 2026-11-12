@@ -6,7 +6,9 @@ import {
   createOrganizationAction,
   leaveOrganization,
   removeMember,
+  updateDefinitionOfDone,
   updateProfileAction,
+  updateScrumRole,
 } from "@/app/actions/profile";
 import { ChangePasswordForm, SetPasswordForm } from "@/components/account/PasswordForms";
 import { AvatarForm } from "@/components/AvatarForm";
@@ -96,24 +98,53 @@ export default async function AccountPage({
                             <span className="member-name">{member.name}</span>
                             {member.is_owner ? (
                               <span className="chip chip--owner">Owner</span>
+                            ) : member.scrum_role ? (
+                              <span className="chip chip--role">
+                                {member.scrum_role === "product_owner"
+                                  ? "Product Owner"
+                                  : member.scrum_role === "scrum_master"
+                                    ? "Scrum Master"
+                                    : "Developer"}
+                              </span>
                             ) : null}
                           </span>
                           <span className="member-mail">{member.email}</span>
                         </span>
 
-                        {user.isOwner && !member.is_owner ? (
-                          <ConfirmForm
-                            action={removeMember}
-                            className="member-remove"
-                            confirmTitle="Remove member?"
-                            confirmMessage={`Remove ${member.name} from ${organization.name}?`}
-                            confirmLabel="Remove"
-                          >
-                            <input type="hidden" name="user_id" value={member.id} />
-                            <Button type="submit" variant="destructive" size="sm">
-                              Remove
-                            </Button>
-                          </ConfirmForm>
+                        {user.isOwner ? (
+                          <div className="member-actions">
+                            <form action={updateScrumRole} className="member-role">
+                              <input type="hidden" name="user_id" value={member.id} />
+                              <select
+                                name="scrum_role"
+                                defaultValue={member.scrum_role ?? ""}
+                                aria-label={`Scrum role for ${member.name}`}
+                              >
+                                <option value="">No role</option>
+                                <option value="product_owner">Product Owner</option>
+                                <option value="scrum_master">Scrum Master</option>
+                                <option value="developer">Developer</option>
+                              </select>
+                              <Button type="submit" variant="outline" size="sm">
+                                Set
+                              </Button>
+                            </form>
+
+                            {!member.is_owner ? (
+                              <ConfirmForm
+                                action={removeMember}
+                                className="member-remove"
+                                confirmTitle="Remove member?"
+                                confirmMessage={`Remove ${member.name} from ${organization.name}?`}
+                                confirmLabel="Remove"
+                              >
+                                <input type="hidden" name="user_id" value={member.id} />
+                                <Button type="submit" variant="destructive" size="sm">
+                                  Remove
+                                </Button>
+                              </ConfirmForm>
+                            ) : null}
+                          </div>
                         ) : null}
                       </li>
                     ))}
@@ -182,6 +213,38 @@ export default async function AccountPage({
               )}
             </CardContent>
           </Card>
+
+          {organization && user.isOwner ? (
+            <Card className="dod-card">
+              <CardHeader>
+                <CardTitle>Definition of Done</CardTitle>
+                <CardDescription>
+                  The shared checklist that says what &ldquo;done&rdquo; means for
+                  this team. One item per line.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form action={updateDefinitionOfDone} className="stack-form">
+                  <Label className="field w-full">
+                    <span>Checklist</span>
+                    <textarea
+                      className="input"
+                      name="definition_of_done"
+                      rows={6}
+                      defaultValue={organization.definition_of_done ?? ""}
+                      placeholder={
+                        "Tests pass\nReviewed by a teammate\nDocs updated\nDeployed to production"
+                      }
+                    />
+                  </Label>
+
+                  <Button type="submit" size="sm">
+                    Save checklist
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       ) : (
         <div className="profile-grid profile-grid--single">

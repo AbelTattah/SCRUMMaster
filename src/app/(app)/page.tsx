@@ -88,6 +88,7 @@ export default async function HomePage({
           email: "",
           avatar_url: null,
           organization_id: null,
+          scrum_role: null,
           notify_browser: false,
           notify_email: false,
           notify_lead_minutes: 0,
