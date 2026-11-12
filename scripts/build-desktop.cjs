@@ -114,5 +114,19 @@ if (!fs.existsSync(path.join(standalone, "server.js"))) {
   process.exit(1);
 }
 
+// Assemble the folder electron-builder ships as resources/web.
+//
+// electron-builder refuses to copy a copy-source's ROOT node_modules
+// (app-builder-lib's filter drops "node_modules" outright), and the Next.js
+// standalone server cannot boot without its traced dependencies. So the
+// bundle is staged one level down, in resources/web/app, where the
+// node_modules folder is nested and therefore copied.
+const staged = path.join(root, "desktop", "resources", "web", "app");
+
+fs.rmSync(path.join(root, "desktop", "resources", "web"), { recursive: true, force: true });
+fs.mkdirSync(staged, { recursive: true });
+fs.cpSync(standalone, staged, { recursive: true, dereference: true });
+
+console.log("desktop bundle staged at " + path.relative(root, staged));
 console.log("standalone bundle ready at " + path.relative(root, standalone));
 console.log("  next: cd desktop && npm start");

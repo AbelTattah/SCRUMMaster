@@ -30,3 +30,4 @@ desktop/dist/
 
 # Legacy PHP app (contains personal data, not for public repo)
 legacy/
+desktop/resources/
