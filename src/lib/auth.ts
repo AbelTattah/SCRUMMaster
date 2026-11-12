@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 
 import {
   OFFLINE_HINT_COOKIE,
@@ -57,13 +58,58 @@ export async function isOfflineHint(): Promise<boolean> {
   }
 }
 
-export async function getAuthUser() {
+/** Server: the visitor explicitly chose guest mode. */
+async function isGuestCookie(): Promise<boolean> {
+  try {
+    const store = await cookies();
+    return store.get("scrum-guest")?.value === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The signed-in user from the server, plus the reason there is none.
+ *
+ * "No session" and "could not reach the server" look the same to the caller,
+ * so they are told apart here: only a genuine server answer (no network
+ * error) means the user is really signed out.
+ */
+export async function getAuthUser(): Promise<{
+  user: User | null;
+  offline: boolean;
+}> {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
 
-  return user;
+  if (user) {
+    return { user, offline: false };
+  }
+
+  return { user: null, offline: isNetworkError(error) };
+}
+
+/** True when a Supabase error was a connectivity problem, not an auth one. */
+function isNetworkError(error: { message?: string } | null): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const message = (error.message ?? "").toLowerCase();
+
+  return (
+    message.includes("fetch failed") ||
+    message.includes("network") ||
+    message.includes("econnrefused") ||
+    message.includes("etimedout") ||
+    message.includes("econnreset") ||
+    message.includes("getaddrinfo") ||
+    message.includes("enotfound") ||
+    message.includes("failed to fetch")
+  );
 }
 
 export async function getProfile(id: string): Promise<Profile | null> {
@@ -104,6 +150,12 @@ export async function getOrganization(id: string | null): Promise<Organization |
  * need the same session.
  */
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // Guest mode is an explicit choice: it always wins over a cached session
+  // (on the desktop app the cached session would otherwise shadow it).
+  if (await isGuestCookie()) {
+    return null;
+  }
+
   // Desktop, reported offline by the renderer: serve the cached session
   // directly. No network call is attempted, so the shell opens instantly.
   if (isDesktopServer() && (await isOfflineHint())) {
@@ -114,18 +166,27 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   }
 
   let authUser;
+  let authOffline = false;
+
   try {
-    authUser = await getAuthUser();
+    const result = await getAuthUser();
+    authUser = result.user;
+    authOffline = result.offline;
   } catch {
+    // The auth call itself blew up - treat it as a connectivity problem.
     return isDesktopServer() ? await cachedSession() : null;
   }
 
   if (!authUser || !authUser.email) {
-    // No session from the server. On the desktop app that usually means we
-    // are offline (or the refresh token expired): fall back to the cached
-    // local session so the shell still opens with the user's tasks.
-    if (isDesktopServer()) {
-      return await cachedSession();
+    // No session from the server. When the server could not be reached we
+    // keep the desktop app working from the cached local session. A genuine
+    // answer means the user really is signed out, so they get the auth page.
+    if (isDesktopServer() && (authOffline || isServerOffline())) {
+      const cached = await cachedSession();
+
+      if (cached) {
+        return cached;
+      }
     }
 
     return null;

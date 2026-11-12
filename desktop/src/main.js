@@ -19,8 +19,31 @@ const http = require("node:http");
 const https = require("node:https");
 
 const PRODUCTION_URL = "https://scrum-master-two.vercel.app";
+
+/**
+ * The bundled server always listens on the same port. A fixed origin is what
+ * keeps the encrypted task mirror (IndexedDB is per-origin) alive between
+ * launches, so this value must never change.
+ */
+const LOCAL_PORT = 4556;
 const SMOKE_TEST = process.argv.includes("--smoke-test");
 const NOTIFY_TEST = process.argv.includes("--notify-test");
+
+/**
+ * The bundled Next.js server calls process.exit(1) when it cannot bind its
+ * port. That must never take the app down with it - another instance is
+ * usually the reason, and the app can simply reuse that server.
+ */
+process.on("uncaughtException", (error) => {
+  const code = error && error.code;
+
+  if (code === "EADDRINUSE" || code === "EACCES") {
+    console.error(`[desktop] local port unavailable (${code}) - reusing or retrying`);
+    return;
+  }
+
+  console.error("[desktop] uncaught error:", error);
+});
 
 // Windows toast identity — matches the NSIS appId so notifications and the
 // taskbar entry group under one name. Must be set before any notification.
@@ -152,8 +175,14 @@ function logoDarkDataUri() {
   return "";
 }
 
+/**
+ * Shown only while the app is booting and the local server has not answered
+ * yet. It is deliberately not an error screen: the shell keeps retrying in the
+ * background and swaps the window over the moment the server is up, so the
+ * user never lands on a dead end.
+ */
 const OFFLINE_URL = dataUrl(`<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>Scrum Master - offline</title>
+<html lang="en"><head><meta charset="utf-8"><title>Scrum Master</title>
 <style>
   body { display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; padding:24px; background:#FAFAFA; color:#1A1A1A; font-family:Poppins,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; text-align:center; }
   .card { max-width:440px; padding:40px 32px; background:#FFFFFF; border:1px solid #EBEBEB; border-radius:16px; box-shadow:0 18px 50px rgba(33,0,93,0.10); }
@@ -161,22 +190,25 @@ const OFFLINE_URL = dataUrl(`<!DOCTYPE html>
   .logo--dark { display:none; }
   h1 { margin:0 0 8px; font-size:22px; }
   p { margin:0 0 24px; color:#727272; font-size:15px; line-height:1.6; }
-  button { height:44px; padding:0 24px; border:0; border-radius:8px; background:#21005D; color:#FFFFFF; font:inherit; font-size:15px; font-weight:600; cursor:pointer; }
-  button:hover { background:#2E0480; }
+  .bar { height:6px; border-radius:3px; background:#EBEBEB; overflow:hidden; }
+  .bar span { display:block; height:100%; width:40%; border-radius:3px; background:#21005D; animation:slide 1.4s ease-in-out infinite; }
+  @keyframes slide { 0% { transform:translateX(-100%); } 100% { transform:translateX(250%); } }
   @media (prefers-color-scheme: dark) {
     body { background:#0E0E12; color:#E7E7EE; }
     .card { background:#1A1A21; border-color:#2A2A34; box-shadow:none; }
     p { color:#9C9CA8; }
     .logo--light { display:none; }
     .logo--dark { display:block; }
+    .bar { background:#2A2A34; }
+    .bar span { background:#B9A6F5; }
   }
 </style></head>
 <body><div class="card">
   <img class="logo logo--light" src="${logoLightDataUri()}" alt="Scrum Master">
   <img class="logo logo--dark" src="${logoDarkDataUri()}" alt="Scrum Master">
-  <h1>You are offline</h1>
-  <p>Scrum Master could not reach the network. Your tasks are safe on this device - reconnect and pull to refresh.</p>
-  <button onclick="location.reload()">Try again</button>
+  <h1>Starting Scrum Master</h1>
+  <p>Opening your local workspace. Your tasks load from this device, so this works with or without a connection.</p>
+  <div class="bar"><span></span></div>
 </div></body></html>`);
 
 const SPLASH_URL = dataUrl(`<!DOCTYPE html>
@@ -334,8 +366,16 @@ async function probeSupabase(env) {
 async function startLocalServer(standaloneRoot) {
   // A stable port is essential: IndexedDB is per-origin, so a random port
   // each launch would wipe the offline task mirror on every restart.
-  const port = 4556;
+  const port = LOCAL_PORT;
   const url = `http://127.0.0.1:${port}`;
+
+  // Something already answers on this port (a previous instance that has not
+  // exited yet). Reuse it - requiring the server again would hit EADDRINUSE,
+  // and Next's standalone server exits the whole process on that.
+  if (await ping(`${url}/`)) {
+    console.log("[desktop] local server already running - reusing it");
+    return url;
+  }
 
   process.env.PORT = String(port);
   process.env.HOSTNAME = "127.0.0.1";
@@ -386,18 +426,78 @@ async function resolveUrl() {
     } catch (error) {
       console.error("[desktop] local server failed, falling back:", error);
     }
+
+    // A previous instance may still be holding the port. If something is
+    // already serving the app there, use it instead of giving up.
+    const reused = await reuseRunningServer();
+
+    if (reused) {
+      return { url: reused, mode: "local" };
+    }
   }
 
-  // Last resort only: a configured-but-broken local server, or a dev
-  // checkout with no bundle. Prefer the production site when reachable.
+  // Last resort only: a dev checkout with no bundle. Prefer the production
+  // site when reachable.
   const online = await ping(PRODUCTION_URL);
 
   if (!online) {
-    console.log("[desktop] offline - using embedded offline page");
+    console.log("[desktop] offline - using the self-healing boot screen");
     return { url: OFFLINE_URL, mode: "offline" };
   }
 
   return { url: PRODUCTION_URL, mode: "production" };
+}
+
+/**
+ * True when something already answers on the local port - a previous
+ * instance of the app that has not exited yet. Reusing it is always better
+ * than showing an error screen.
+ */
+async function reuseRunningServer() {
+  const url = `http://127.0.0.1:${LOCAL_PORT}`;
+
+  if (await ping(`${url}/`)) {
+    console.log("[desktop] reusing the local server already on this port");
+    return url;
+  }
+
+  return null;
+}
+
+/**
+ * Keeps trying to bring the local server up and swaps the window over the
+ * moment it answers. The app is offline-first, so "the server is not up yet"
+ * is a transient state, never a dead end.
+ */
+function watchForLocalServer(window, standaloneRoot) {
+  let running = true;
+
+  void (async () => {
+    while (running) {
+      await sleep(2000);
+
+      if (!running || !window || window.isDestroyed()) {
+        return;
+      }
+
+      let url = await reuseRunningServer();
+
+      if (!url && standaloneRoot) {
+        try {
+          url = await startLocalServer(standaloneRoot);
+        } catch (error) {
+          console.error("[desktop] retry failed:", error);
+        }
+      }
+
+      if (url && !window.isDestroyed()) {
+        console.log("[desktop] local server is up - switching over");
+        running = false;
+        window.loadURL(url);
+        return;
+      }
+    }
+  })();
 }
 
 /* ----------------------------------------------------------------- window */
@@ -500,7 +600,8 @@ async function createWindow(url) {
     }
   });
 
-  // A failed load gets a branded retry page — never a blank window.
+  // A failed load gets the boot screen and a retry - never a dead end. If the
+  // local server is the thing that failed, we bring it back up and reload.
   window.webContents.on(
     "did-fail-load",
     (_event, code, description, isMainFrame, failedUrl) => {
@@ -513,6 +614,17 @@ async function createWindow(url) {
       }
 
       console.error(`[desktop] load failed: ${code} ${description} (${failedUrl})`);
+
+      const isLocal = (failedUrl || "").startsWith(`http://127.0.0.1:${LOCAL_PORT}`);
+
+      if (isLocal) {
+        // The local server went away (a stale instance, a port conflict).
+        // Show the boot screen and keep trying to bring it back.
+        window.loadURL(OFFLINE_URL);
+        watchForLocalServer(window, findStandaloneRoot());
+        return;
+      }
+
       window.loadURL(errorPage(url, code, description));
     },
   );
@@ -738,7 +850,14 @@ if (!gotLock) {
       const { url, mode } = await resolveUrl();
 
       console.log(`[desktop] loading ${url} (${mode})`);
-      await createWindow(url);
+      const window = await createWindow(url);
+
+      // If the local server was not up yet, keep trying in the background and
+      // swap the window over as soon as it answers. The user never sees a
+      // dead end - only the boot screen, which resolves itself.
+      if (mode === "offline") {
+        watchForLocalServer(window, findStandaloneRoot());
+      }
 
       app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) {
