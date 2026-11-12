@@ -538,6 +538,12 @@ async function mergeIncoming(
 
 /** Refresh the home mirror from the server. No-op while offline. */
 export async function pullOwn(): Promise<void> {
+  // Guest mode is local-only: a server call here would redirect the guest
+  // straight to the sign-in screen.
+  if (guestViewer()) {
+    return;
+  }
+
   // Captured before the fetch: any local write that starts while the pull is
   // in flight is newer than the server snapshot we are about to receive.
   const startedAt = Date.now();
@@ -560,6 +566,12 @@ export async function pullOwn(): Promise<void> {
 
 /** Pull sprints from the server into the local mirror. */
 export async function pullSprints(): Promise<void> {
+  // Guest mode is local-only: a server call here would redirect the guest
+  // straight to the sign-in screen.
+  if (guestViewer()) {
+    return;
+  }
+
   try {
     const rows = await loadSprintsSync();
     if (rows.length === 0) {
@@ -606,6 +618,12 @@ export async function assignTodoToSprintLocal(todoId: string, sprintId: string |
 
 /** Refresh the owner's team mirror. */
 export async function pullTeam(): Promise<void> {
+  // Guest mode is local-only: a server call here would redirect the guest
+  // straight to the sign-in screen.
+  if (guestViewer()) {
+    return;
+  }
+
   const startedAt = Date.now();
 
   try {

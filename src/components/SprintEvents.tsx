@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import {
   loadDailyScrumEntries,
@@ -40,9 +40,9 @@ export function SprintEvents({ sprintId }: Props) {
     setDaily(d);
   }
 
-  useState(() => {
+  useEffect(() => {
     void load();
-  });
+  }, [sprintId]);
 
   function saveReview() {
     startTransition(async () => {
