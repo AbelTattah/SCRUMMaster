@@ -17,6 +17,24 @@ knows how to run it as a native window.
 External links (Google sign-in, password-reset mails, docs) open in the
 default browser; everything on the app's own origin stays in the window.
 
+## Offline-first
+
+The desktop app is not a wrapper around the website - it *is* the app:
+
+- The bundled Next.js server always starts first, on a **fixed port 4556**.
+  A fixed origin matters: the encrypted task mirror lives in IndexedDB, which
+  is per-origin, so a changing port would wipe it on every launch.
+- On boot the shell **probes Supabase** (2.5 s timeout). If the network is
+  there it sets `SCRUM_OFFLINE=0` and the server syncs as usual. If it is
+  not, it sets `SCRUM_OFFLINE=1` and the server skips every remote call:
+  the cached session cookie serves the shell and the encrypted local mirror
+  serves the tasks.
+- Cold start with no network is ~15 ms. The header shows an **Offline**
+  banner so it is obvious that the app is running from the device and that
+  writes will sync by themselves later.
+- Writes are queued in an outbox (Dexie) and pushed when the connection
+  returns, so nothing is lost while offline.
+
 ## Development
 
 ```bash
