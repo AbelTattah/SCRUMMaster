@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { Member, Profile } from "@/lib/types";
+import type { Member, Profile, ScrumRole } from "@/lib/types";
 
 export async function findProfileByEmail(email: string): Promise<Profile | null> {
   const { data } = await (await createServerSupabaseClient())
@@ -46,7 +46,7 @@ export async function listMembers(organizationId: string, ownerId: string): Prom
 
   const { data: profiles } = await admin
     .from("profiles")
-    .select("id,name,email,avatar_url,xp,invited_at")
+    .select("id,name,email,avatar_url,xp,invited_at,scrum_role")
     .eq("organization_id", organizationId)
     .order("name", { ascending: true });
 
@@ -84,6 +84,7 @@ export async function listMembers(organizationId: string, ownerId: string): Prom
         email: profile.email as string,
         avatar_url: (profile.avatar_url as string | null) ?? null,
         is_owner: profile.id === ownerId,
+        scrum_role: (profile.scrum_role as ScrumRole | null) ?? null,
         todo_count: entry.total,
         completed_count: entry.completed,
         xp: Number(profile.xp ?? 0),

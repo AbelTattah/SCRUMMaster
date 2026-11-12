@@ -47,6 +47,8 @@ export interface Profile {
   email: string;
   avatar_url: string | null;
   organization_id: string | null;
+  /** Scrum accountability (Scrum Guide 2020): PO, SM or Developer. */
+  scrum_role: ScrumRole | null;
   notify_browser: boolean;
   notify_email: boolean;
   notify_lead_minutes: number;
@@ -61,6 +63,8 @@ export interface Organization {
   id: string;
   name: string;
   owner_id: string;
+  /** Definition of Done checklist (one item per line). */
+  definition_of_done: string | null;
   created_at: string;
 }
 
@@ -92,6 +96,7 @@ export interface Member {
   email: string;
   avatar_url: string | null;
   is_owner: boolean;
+  scrum_role: ScrumRole | null;
   todo_count: number;
   completed_count: number;
   xp: number;

@@ -5080,3 +5080,38 @@ textarea.input {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.35; }
 }
+
+/* --------------------------------------------------- scrum roles + DoD */
+.member-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+.member-role {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.member-role select {
+    height: 34px;
+    padding: 0 8px;
+    background: var(--surface);
+    border: 1.5px solid var(--field-line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.chip--role {
+    background: var(--purple-soft, rgba(33, 0, 93, 0.12));
+    color: var(--purple-ink, var(--purple));
+}
+
+.dod-card {
+    margin-top: 22px;
+}
