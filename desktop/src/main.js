@@ -527,6 +527,8 @@ async function createWindow(url) {
 
   window.once("ready-to-show", () => window.show());
 
+  const origin = new URL(url).origin;
+
   // Mark this session as the desktop app so the server can skip the
   // marketing landing page for signed-out users (desktop has no landing).
   try {
