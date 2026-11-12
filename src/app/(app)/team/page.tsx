@@ -3,11 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { TaskBoard } from "@/components/TaskBoard";
+import { NexusBoard } from "@/components/NexusBoard";
 import { TeamLeaderboard } from "@/components/TeamLeaderboard";
 import { TeamMembers } from "@/components/TeamMembers";
 import { requireOnboardedUser } from "@/lib/auth";
 import { memberGrantStatus } from "@/lib/data/grants";
+import { listNexusStreams } from "@/lib/data/nexus";
 import { listMembers } from "@/lib/data/profiles";
+import { listTodosWithNames } from "@/lib/data/todos";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 
@@ -55,9 +58,11 @@ export default async function TeamPage({
   // the members list still comes from the server for the chips + assignee
   // picker. Grant status drives the per-member Activate button (who still
   // needs the organization key to open tasks).
-  const [members, grantStatus] = await Promise.all([
+  const [members, grantStatus, nexusStreams, teamTodos] = await Promise.all([
     listMembers(organization.id, organization.owner_id),
     memberGrantStatus(organization.id, user.id),
+    listNexusStreams(organization.id),
+    listTodosWithNames(user.id),
   ]);
 
   const returnTo = filterHref(page, q);
@@ -92,6 +97,12 @@ export default async function TeamPage({
 
         <TeamLeaderboard members={members} />
       </section>
+
+      <NexusBoard
+        organizationId={organization.id}
+        streams={nexusStreams}
+        tasks={teamTodos.map((todo) => ({ id: todo.id, title: todo.title }))}
+      />
 
       <nav className="filter-pills" aria-label="Filter team todos">
         <Link
