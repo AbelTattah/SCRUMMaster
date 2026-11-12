@@ -143,9 +143,9 @@ export function LoginForm({
       </p>
 
       <p className="auth-switch">
-        <Link href="/guest" className="auth-link-button">
+        <a href="/guest" className="auth-link-button">
           Continue as guest
-        </Link>
+        </a>
       </p>
     </div>
   );
