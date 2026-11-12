@@ -8,15 +8,33 @@ import { StickyNotesButton } from "@/components/StickyNotes";
 import { SprintBoard } from "@/components/SprintBoard";
 import { TaskBoard } from "@/components/TaskBoard";
 import LandingPage from "@/components/LandingPage";
-import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
+import { getCurrentUser, isDesktopServer, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
 import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
 import { safeServer } from "@/lib/netSafe";
 
-function isDesktop(userAgent: string | null, cookieStore: { get: (n: string) => { value: string } | undefined }): boolean {
-  if (/Electron/i.test(userAgent ?? "")) return true;
+/**
+ * Desktop detection.
+ *
+ * The bundled server sets SCRUM_DESKTOP=1, so the server knows for certain
+ * that this is the desktop shell - no cookie or user-agent sniffing needed.
+ * The cookie and the Electron UA are kept as fallbacks for a hosted build
+ * that is opened inside Electron.
+ */
+function isDesktop(
+  userAgent: string | null,
+  cookieStore: { get: (n: string) => { value: string } | undefined },
+): boolean {
+  if (isDesktopServer()) {
+    return true;
+  }
+
+  if (/Electron/i.test(userAgent ?? "")) {
+    return true;
+  }
+
   return cookieStore.get("scrum-platform")?.value === "desktop";
 }
 
