@@ -30,7 +30,10 @@
                   "extraResources":  [
                                          {
                                              "from":  "../.next/standalone",
-                                             "to":  "web"
+                                             "to":  "web",
+                                             "filter":  [
+                                                            "**/*"
+                                                        ]
                                          }
                                      ],
                   "icon":  "assets/icon.png",

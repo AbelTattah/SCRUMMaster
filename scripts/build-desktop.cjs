@@ -100,5 +100,19 @@ function dereferenceLinks(dir) {
 const links = dereferenceLinks(standalone);
 console.log("dereferenced " + links + " symlink(s) in the bundle");
 
+// Guard: the standalone server cannot boot without its traced dependencies.
+// electron-builder filters node_modules out of extraResources unless the
+// entry carries an explicit "filter", and a bundle without them fails at
+// runtime with MODULE_NOT_FOUND - which shows up as a dead desktop app.
+if (!fs.existsSync(path.join(standalone, "node_modules"))) {
+  console.error("! the standalone bundle has no node_modules - the desktop server cannot boot");
+  process.exit(1);
+}
+
+if (!fs.existsSync(path.join(standalone, "server.js"))) {
+  console.error("! the standalone bundle has no server.js");
+  process.exit(1);
+}
+
 console.log("standalone bundle ready at " + path.relative(root, standalone));
 console.log("  next: cd desktop && npm start");
