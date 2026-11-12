@@ -13,6 +13,7 @@ import { listMembers } from "@/lib/data/profiles";
 import { greetingFor, todayLine } from "@/lib/time";
 import type { PageFilter } from "@/lib/types";
 import { firstParam } from "@/lib/utils";
+import { safeServer } from "@/lib/netSafe";
 
 function isDesktop(userAgent: string | null, cookieStore: { get: (n: string) => { value: string } | undefined }): boolean {
   if (/Electron/i.test(userAgent ?? "")) return true;
@@ -113,8 +114,12 @@ export default async function HomePage({
   const focusId = firstParam(params.edit);
   const openAdd = params.add !== undefined;
 
-  const members = user.organization
-    ? await listMembers(user.organization.id, user.organization.owner_id)
+  const org = user.organization;
+  const members = org
+    ? await safeServer(
+        () => listMembers(org.id, org.owner_id),
+        [],
+      )
     : [];
 
   const search = new URLSearchParams();

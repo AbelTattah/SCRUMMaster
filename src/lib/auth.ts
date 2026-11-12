@@ -20,6 +20,15 @@ export function isDesktopServer(): boolean {
   return process.env.SCRUM_DESKTOP === "1";
 }
 
+/**
+ * True when the desktop shell already knows there is no network (the boot
+ * probe in main.js failed). The server then skips every network call instead
+ * of waiting for a timeout on each request.
+ */
+export function isServerOffline(): boolean {
+  return process.env.SCRUM_OFFLINE === "1";
+}
+
 /** Server: the cached session left by the client for offline boots. */
 async function cachedSession(): Promise<CurrentUser | null> {
   if (!isDesktopServer()) {
@@ -36,6 +45,10 @@ async function cachedSession(): Promise<CurrentUser | null> {
 
 /** Server: the renderer told us it has no connectivity. */
 export async function isOfflineHint(): Promise<boolean> {
+  if (isServerOffline()) {
+    return true;
+  }
+
   try {
     const store = await cookies();
     return store.get(OFFLINE_HINT_COOKIE)?.value === "1";
@@ -108,6 +121,13 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   }
 
   if (!authUser || !authUser.email) {
+    // No session from the server. On the desktop app that usually means we
+    // are offline (or the refresh token expired): fall back to the cached
+    // local session so the shell still opens with the user's tasks.
+    if (isDesktopServer()) {
+      return await cachedSession();
+    }
+
     return null;
   }
 

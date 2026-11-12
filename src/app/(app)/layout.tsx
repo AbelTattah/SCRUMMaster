@@ -6,6 +6,7 @@ import { BrowserNotifications } from "@/components/BrowserNotifications";
 import { CryptoGate } from "@/components/CryptoGate";
 import { FlashToast } from "@/components/FlashToast";
 import { OfflineSessionSync } from "@/components/OfflineSessionSync";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import type { Counts, NotificationItem } from "@/lib/types";
 import { countTodos } from "@/lib/data/todos";
@@ -68,6 +69,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <Suspense fallback={null}>
           <Topbar user={user} unread={unread} notifications={notifications} />
         </Suspense>
+
+        <OfflineBanner />
 
         <main className="content">{children}</main>
       </div>
