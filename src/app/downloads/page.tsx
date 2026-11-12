@@ -7,10 +7,16 @@ export const metadata: Metadata = {
     "Download the Scrum Master desktop app for Windows, or use the web app and PWA. Free and open source.",
 };
 
-const RELEASE_TAG = "v2.0.0";
+const RELEASE_TAG = "v2.1.0";
 const EXE_NAME = "Scrum.Master.Setup.0.1.0.exe";
 const EXE_DISPLAY = "Scrum Master Setup 0.1.0.exe";
 const EXE_URL = `https://github.com/AbelTattah/SCRUMMaster/releases/download/${RELEASE_TAG}/${EXE_NAME}`;
+const APPIMAGE_NAME = "Scrum.Master-0.1.0.AppImage";
+const APPIMAGE_DISPLAY = "Scrum Master-0.1.0.AppImage";
+const APPIMAGE_URL = `https://github.com/AbelTattah/SCRUMMaster/releases/download/${RELEASE_TAG}/${APPIMAGE_NAME}`;
+const SNAP_NAME = "scrum-master-desktop_0.1.0_amd64.snap";
+const SNAP_DISPLAY = "scrum-master-desktop_0.1.0_amd64.snap";
+const SNAP_URL = `https://github.com/AbelTattah/SCRUMMaster/releases/download/${RELEASE_TAG}/${SNAP_NAME}`;
 
 export default function DownloadsPage() {
   return (
@@ -47,7 +53,7 @@ export default function DownloadsPage() {
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-3">
+        <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {/* Desktop */}
           <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/60">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#21005D]/10 text-[#21005D] dark:bg-[#B9A6F5]/15 dark:text-[#B9A6F5]">
@@ -67,6 +73,34 @@ export default function DownloadsPage() {
             <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
               Windows 10/11, 64-bit. Unsigned build &mdash; Smart App Control may
               prompt; use &ldquo;More info &rarr; Run anyway&rdquo; or turn SAC off.
+            </p>
+          </div>
+
+          {/* Linux */}
+          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900/60">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[#21005D]/10 text-[#21005D] dark:bg-[#B9A6F5]/15 dark:text-[#B9A6F5]">
+              <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 12h.01M15 12h.01M9 16h.01M15 16h.01" /></svg>
+            </div>
+            <h2 className="mt-4 text-lg font-semibold text-neutral-900 dark:text-white">Linux desktop</h2>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+              Same offline-first native app for Linux. Portable AppImage or a Snap
+              package.
+            </p>
+            <a
+              href={APPIMAGE_URL}
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#21005D] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] dark:bg-white dark:text-black dark:hover:bg-neutral-200"
+            >
+              Download AppImage
+            </a>
+            <a
+              href={SNAP_URL}
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-2.5 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-900"
+            >
+              Download .snap
+            </a>
+            <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+              <code className="text-xs">{APPIMAGE_DISPLAY}</code> &middot;{" "}
+              <code className="text-xs">{SNAP_DISPLAY}</code>
             </p>
           </div>
 
