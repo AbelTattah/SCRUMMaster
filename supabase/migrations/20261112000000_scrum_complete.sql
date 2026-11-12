@@ -60,3 +60,44 @@ create policy "daily_scrum belongs to its author"
 
 -- Sprint reviews/readable by org members (sprint owner's org)
 -- (simplified: owner-only for now, matching existing pattern)
+
+-- ---------------------------------------------------------------------------
+-- Nexus (scaling Scrum): several teams deliver one product. The Nexus
+-- Integration Team owns three backlogs - integration, architecture & quality,
+-- and governance - and this table holds those streams.
+-- ---------------------------------------------------------------------------
+create table if not exists public.nexus_streams (
+    id uuid primary key default gen_random_uuid(),
+    organization_id uuid not null references public.organizations (id) on delete cascade,
+    name text not null check (char_length(name) between 1 and 80),
+    purpose text not null default 'integration'
+        check (purpose in ('integration', 'architecture_quality', 'governance')),
+    created_at timestamptz not null default now()
+);
+
+create index if not exists nexus_streams_organization_id on public.nexus_streams (organization_id);
+
+alter table public.todos
+    add column if not exists nexus_stream_id uuid references public.nexus_streams (id) on delete set null;
+
+create index if not exists todos_nexus_stream_id on public.todos (nexus_stream_id);
+
+alter table public.nexus_streams enable row level security;
+
+drop policy if exists "nexus_streams belong to their organization" on public.nexus_streams;
+create policy "nexus_streams belong to their organization"
+    on public.nexus_streams for all
+    using (
+        exists (
+            select 1 from public.profiles
+            where profiles.organization_id = nexus_streams.organization_id
+              and profiles.id = auth.uid()
+        )
+    )
+    with check (
+        exists (
+            select 1 from public.profiles
+            where profiles.organization_id = nexus_streams.organization_id
+              and profiles.id = auth.uid()
+        )
+    );
