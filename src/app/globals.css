@@ -4819,6 +4819,13 @@ button.chip:disabled {
     flex-wrap: wrap;
 }
 
+.sprint-selector-row .btn-add {
+    margin-top: 0;
+    gap: 6px;
+    height: 38px;
+    flex: 0 0 auto;
+}
+
 .sprint-select {
     flex: 1;
     min-width: 180px;
@@ -4855,6 +4862,11 @@ button.chip:disabled {
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid var(--line);
+}
+
+.sprint-create-form .btn-add {
+    margin-top: 0;
+    align-self: flex-start;
 }
 
 .sprint-list {
