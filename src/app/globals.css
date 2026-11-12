@@ -4875,9 +4875,20 @@ button.chip:disabled {
     border-top: 1px solid var(--line);
 }
 
+[data-slot="dialog-content"] .sprint-create-form {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
 .sprint-create-form .btn-add {
     margin-top: 0;
     align-self: flex-start;
+}
+
+[data-slot="dialog-content"] .btn-add,
+[data-slot="dialog-footer"] .btn-add {
+    margin-top: 0;
 }
 
 .sprint-list {
