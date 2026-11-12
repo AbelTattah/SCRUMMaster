@@ -300,6 +300,36 @@ function ping(url) {
   });
 }
 
+/**
+ * Probe the Supabase endpoint so the server knows, before the first request,
+ * whether there is a network. Without it every server component would wait
+ * for a socket timeout before falling back to the local session.
+ */
+async function probeSupabase(env) {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!url) {
+    return false;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2500);
+
+  try {
+    const response = await fetch(`${url.replace(/\/+$/, "")}/auth/v1/health`, {
+      method: "GET",
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Start the bundled Next.js server inside this process. */
 async function startLocalServer(standaloneRoot) {
   // A stable port is essential: IndexedDB is per-origin, so a random port
@@ -312,6 +342,17 @@ async function startLocalServer(standaloneRoot) {
   // Tells the server it is the desktop shell: enables the offline session
   // cache in lib/auth.ts. The web deployment never sets this.
   process.env.SCRUM_DESKTOP = "1";
+
+  // Offline-first: decide up front whether the network is there. When it is
+  // not, the server skips every remote call and serves the local mirror.
+  const online = await probeSupabase(process.env);
+  process.env.SCRUM_OFFLINE = online ? "0" : "1";
+
+  console.log(
+    online
+      ? "[desktop] network available - local server + cloud sync"
+      : "[desktop] no network - local server + offline mirror only",
+  );
 
   require(path.join(standaloneRoot, "server.js"));
 

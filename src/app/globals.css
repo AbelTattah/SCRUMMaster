@@ -5048,3 +5048,35 @@ textarea.input {
     font-size: 13px;
     color: var(--success-text, #107c41);
 }
+
+/* ------------------------------------------------------- offline banner */
+.offline-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 10px 22px;
+    background: var(--amber-soft);
+    color: var(--amber-text);
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.offline-banner strong {
+    font-weight: 700;
+}
+
+.offline-banner-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: offline-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes offline-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}

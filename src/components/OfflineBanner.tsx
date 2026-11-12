@@ -1,0 +1,59 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+import { checkOnline, isDesktopClient } from "@/lib/connectivity";
+
+/**
+ * Makes the offline-first behaviour visible.
+ *
+ * On the desktop app the shell always runs from a local server and the
+ * encrypted task mirror lives on this device, so "offline" is a normal state,
+ * not an error. The banner says so plainly and tells the user their work is
+ * safe and will sync on its own.
+ */
+export function OfflineBanner() {
+  const [online, setOnline] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const update = async () => {
+      const result = await checkOnline();
+      if (!cancelled) {
+        setOnline(result);
+        setMounted(true);
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 10000);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  // Never flash the banner on the first paint of an online session.
+  if (!mounted || online) {
+    return null;
+  }
+
+  return (
+    <div className="offline-banner" role="status">
+      <span className="offline-banner-dot" aria-hidden="true" />
+      <span>
+        <strong>Offline</strong>{" "}
+        {isDesktopClient()
+          ? "— running on this device. Your tasks are stored here and sync automatically when you reconnect."
+          : "— your tasks are stored on this device and sync when you reconnect."}
+      </span>
+    </div>
+  );
+}
