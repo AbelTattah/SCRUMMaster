@@ -227,7 +227,7 @@ function buildPdf(input: {
   const status = summaryStatus(input.summary);
 
   // --- header --------------------------------------------------------------
-  para(`${PERIOD_TITLE[input.period]} STAND-UP MEETING REPORT`, {
+  para("REPORT", {
     size: 17,
     style: "bold",
     color: PURPLE,
@@ -453,7 +453,7 @@ async function buildDocx(input: {
 
   // --- header --------------------------------------------------------------
   children.push(
-    wordPara(`${PERIOD_TITLE[input.period]} STAND-UP MEETING REPORT`, {
+    wordPara("REPORT", {
       size: 34,
       bold: true,
       color: PURPLE,
@@ -596,8 +596,8 @@ async function buildDocx(input: {
 
   const doc = new Document({
     creator: "Scrum Master",
-    title: `${PERIOD_TITLE[input.period]} stand-up meeting report`,
-    description: `Stand-up report for ${input.periodRange}`,
+    title: "Report",
+    description: `Report for ${input.periodRange}`,
     sections: [{ children }],
   });
 
@@ -730,9 +730,7 @@ export function ReportClient(props: Props) {
 
       <article className="standup-doc">
         <header className="standup-head">
-          <h2 className="standup-title">
-            {PERIOD_TITLE[props.period]} stand-up meeting report
-          </h2>
+          <h2 className="standup-title">Report</h2>
           <dl className="standup-meta">
             <div>
               <dt>Organization</dt>
