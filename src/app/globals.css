@@ -4801,3 +4801,250 @@ button.chip:disabled {
 :root[data-theme="dark"] .todo-check {
   border-color: var(--border-strong);
 }
+
+/* ------------------------------------------------------------------ sprints */
+.sprint-selector {
+    margin-top: 14px;
+    margin-bottom: 4px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+}
+
+.sprint-selector-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sprint-select {
+    flex: 1;
+    min-width: 180px;
+    height: 38px;
+    padding: 0 10px;
+    background: var(--surface);
+    border: 1.5px solid var(--field-line);
+    border-radius: var(--radius-sm);
+    color: var(--ink);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.sprint-goal {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.sprint-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.sprint-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+
+.sprint-list {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.sprint-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+}
+
+.sprint-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.sprint-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 15px;
+}
+
+.sprint-dates {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.sprint-goal-text {
+    margin: 6px 0 0;
+    font-size: 15px;
+    color: var(--ink);
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: var(--ink);
+}
+
+.chip--planned {
+    background: var(--panel-bg);
+}
+
+.chip--active {
+    background: var(--purple-soft, rgba(33, 0, 93, 0.12));
+    color: var(--purple-ink, var(--purple));
+}
+
+.chip--completed {
+    background: var(--success-soft, rgba(16, 124, 65, 0.12));
+    color: var(--success-text, #107c41);
+}
+
+.metric-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin-top: 12px;
+}
+
+.burndown {
+    grid-column: 1 / -1;
+}
+
+.burndown-bar {
+    height: 12px;
+    border-radius: 6px;
+    background: var(--panel-bg);
+    overflow: hidden;
+}
+
+.burndown-done {
+    height: 100%;
+    background: var(--purple);
+}
+
+.burndown-caption {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.velocity-list {
+    grid-column: 1 / -1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.velocity-row {
+    display: grid;
+    grid-template-columns: minmax(80px, 1fr) 2fr auto;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.velocity-bar {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--panel-bg);
+    overflow: hidden;
+}
+
+.velocity-fill {
+    display: block;
+    height: 100%;
+    background: var(--purple);
+}
+
+.velocity-name {
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.velocity-value {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.retro-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 14px;
+}
+
+.retro-grid .field {
+    margin-bottom: 0;
+}
+
+textarea.input {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.event-list {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.event-item {
+    font-size: 14px;
+    color: var(--muted);
+}
+
+.event-item p {
+    margin: 0 0 4px;
+}
+
+.event-item strong {
+    color: var(--ink);
+}
+
+.blocker-line strong {
+    color: var(--danger-text, #b42318);
+}
+
+.flash-ok {
+    margin: 12px 0 0;
+    font-size: 13px;
+    color: var(--success-text, #107c41);
+}

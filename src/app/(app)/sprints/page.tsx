@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireOnboardedUser } from "@/lib/auth";
@@ -26,14 +27,16 @@ export default async function SprintsPage() {
         <ul className="sprint-list">
           {sprints.map((sprint) => (
             <li key={sprint.id} className="sprint-card">
-              <div className="sprint-card-header">
-                <strong>{sprint.name}</strong>
-                <span className={`chip chip--${sprint.status}`}>{sprint.status}</span>
-              </div>
-              {sprint.goal ? <p className="sprint-goal">{sprint.goal}</p> : null}
-              <p className="sprint-dates">
-                {sprint.start_date} → {sprint.end_date}
-              </p>
+              <Link href={`/sprints/${sprint.id}`} className="sprint-card-link">
+                <div className="sprint-card-header">
+                  <strong>{sprint.name}</strong>
+                  <span className={`chip chip--${sprint.status}`}>{sprint.status}</span>
+                </div>
+                {sprint.goal ? <p className="sprint-goal">{sprint.goal}</p> : null}
+                <p className="sprint-dates">
+                  {sprint.start_date} → {sprint.end_date}
+                </p>
+              </Link>
             </li>
           ))}
         </ul>
