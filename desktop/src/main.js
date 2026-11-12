@@ -247,8 +247,12 @@ function webRootCandidates() {
   const candidates = [];
 
   if (process.resourcesPath) {
+    candidates.push(path.join(process.resourcesPath, "web", "app"));
     candidates.push(path.join(process.resourcesPath, "web"));
   }
+
+  // Staged bundle inside the desktop project (dev + unpacked runs).
+  candidates.push(path.join(__dirname, "..", "resources", "web", "app"));
 
   candidates.push(path.join(__dirname, "..", ".."));
 
