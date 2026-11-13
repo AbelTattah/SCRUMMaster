@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { checkOnline, isDesktopClient } from "@/lib/connectivity";
 
@@ -15,16 +15,24 @@ import { checkOnline, isDesktopClient } from "@/lib/connectivity";
 export function OfflineBanner() {
   const [online, setOnline] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const wasOnline = useRef<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     const update = async () => {
       const result = await checkOnline();
-      if (!cancelled) {
-        setOnline(result);
-        setMounted(true);
+      if (cancelled) return;
+
+      // When connectivity returns, kick a sync so queued changes go out and
+      // fresh data comes in without waiting for a manual refresh.
+      if (wasOnline.current === false && result === true) {
+        void import("@/lib/sync").then((m) => m.syncNow()).catch(() => {});
       }
+
+      wasOnline.current = result;
+      setOnline(result);
+      setMounted(true);
     };
 
     update();
