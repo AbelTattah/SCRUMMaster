@@ -18,14 +18,17 @@ export function isDesktopClient(): boolean {
 export async function checkOnline(): Promise<boolean> {
   if (typeof navigator === "undefined") return true;
 
-  // Web: trust navigator.onLine.
+  // Web: trust navigator.onLine as a quick signal, but don't trust a false
+  // positive in restricted environments — fall through to no hard probe here.
   if (!isDesktopClient()) {
     return navigator.onLine;
   }
 
-  // Desktop: navigator.onLine is always true (localhost), so probe Supabase.
-  if (!navigator.onLine) return false;
-  if (!SUPABASE_URL) return true;
+  // Desktop: navigator.onLine reflects the local/adapter state but localhost
+  // can mask internet loss; probe the actual backend for a reliable answer.
+  if (!SUPABASE_URL) {
+    return navigator.onLine;
+  }
 
   try {
     const controller = new AbortController();
@@ -36,7 +39,8 @@ export async function checkOnline(): Promise<boolean> {
       cache: "no-store",
     });
     clearTimeout(timeout);
-    return res.ok;
+    // Any HTTP response means the backend is reachable (even 401/4xx) => online.
+    return res.status > 0;
   } catch {
     return false;
   }
