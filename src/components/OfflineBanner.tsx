@@ -28,15 +28,19 @@ export function OfflineBanner() {
     };
 
     update();
-    const interval = setInterval(update, 10000);
+    const interval = setInterval(update, 5000);
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
+    window.addEventListener("focus", update);
+    document.addEventListener("visibilitychange", update);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
+      window.removeEventListener("focus", update);
+      document.removeEventListener("visibilitychange", update);
     };
   }, []);
 

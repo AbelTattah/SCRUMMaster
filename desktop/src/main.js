@@ -398,6 +398,28 @@ async function startLocalServer(standaloneRoot) {
       : "[desktop] no network - local server + offline mirror only",
   );
 
+  // Keep server-side offline state in sync with reality so a false negative at
+  // boot (or a later reconnect) doesn't stick for the whole session.
+  if (!global.__scrumOfflineProbeStarted) {
+    global.__scrumOfflineProbeStarted = true;
+    setInterval(async () => {
+      try {
+        const up = await probeSupabase(process.env);
+        const next = up ? "0" : "1";
+        if (process.env.SCRUM_OFFLINE !== next) {
+          process.env.SCRUM_OFFLINE = next;
+          console.log(
+            up
+              ? "[desktop] connectivity restored - cloud sync enabled"
+              : "[desktop] connectivity lost - local mirror only",
+          );
+        }
+      } catch {
+        // ignore probe errors
+      }
+    }, 10000);
+  }
+
   require(path.join(standaloneRoot, "server.js"));
 
   for (let attempt = 0; attempt < 80; attempt += 1) {
