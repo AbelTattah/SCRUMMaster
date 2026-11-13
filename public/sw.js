@@ -11,12 +11,20 @@
  */
 // Bumped when the shell assets change — the install step re-caches them
 // (offline.html carries the "boot into the cached app" redirect).
-const CACHE = "scrum-master-v5";
+const CACHE = "scrum-master-v6";
 const SHELL = [
   "/offline.html",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png",
+  "/icons/maskable-512.png",
+  "/logo.png",
+  "/logowhite.png",
+  "/logo-wordmark.png",
+  "/logo-wordmark-white.png",
+  "/favicon.png",
+  "/notification.mp3",
 ];
 
 self.addEventListener("install", (event) => {
@@ -53,32 +61,57 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Hashed build output and static files never change: cache-first.
-  // The dev server serves stable chunk URLs that change content in place, so
-  // localhost always goes to the network — a cached chunk would freeze HMR.
   const devHost = self.location.hostname === "localhost" || self.location.hostname === "127.0.0.1";
 
-  if (
-    !devHost &&
-    (url.pathname.startsWith("/_next/static/") ||
-      url.pathname.startsWith("/icons/") ||
-      url.pathname.startsWith("/assets/"))
-  ) {
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname.startsWith("/assets/") ||
+    url.pathname === "/logo.png" ||
+    url.pathname === "/logowhite.png" ||
+    url.pathname === "/logo-wordmark.png" ||
+    url.pathname === "/logo-wordmark-white.png" ||
+    url.pathname === "/favicon.png" ||
+    url.pathname === "/manifest.webmanifest" ||
+    url.pathname === "/offline.html" ||
+    url.pathname === "/notification.mp3";
+
+  // Hashed build output and stable static assets: cache-first when cached,
+  // with network fallback that populates the cache. On localhost/127.0.0.1
+  // (dev and the desktop shell's bundled local server) the live server is
+  // authoritative for build chunks, but cached logos/assets must still be
+  // available if a fetch fails so the app stays usable offline.
+  if (isStaticAsset) {
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
         const cached = await cache.match(request);
+
+        // On the dev server, prefer fresh build chunks so HMR sees changes.
+        if (devHost && url.pathname.startsWith("/_next/static/")) {
+          try {
+            const response = await fetch(request);
+            if (response.ok) {
+              cache.put(request, response.clone()).catch(() => undefined);
+            }
+            return response;
+          } catch {
+            return cached || Response.error();
+          }
+        }
 
         if (cached) {
           return cached;
         }
 
-        const response = await fetch(request);
-
-        if (response.ok) {
-          cache.put(request, response.clone()).catch(() => undefined);
+        try {
+          const response = await fetch(request);
+          if (response.ok) {
+            cache.put(request, response.clone()).catch(() => undefined);
+          }
+          return response;
+        } catch {
+          return cached || Response.error();
         }
-
-        return response;
       }),
     );
 

@@ -32,12 +32,16 @@ export function SprintEvents({ sprintId }: Props) {
   const [pending, startTransition] = useTransition();
 
   async function load() {
-    const [r, d] = await Promise.all([
-      loadSprintReviews(sprintId),
-      loadDailyScrumEntries(sprintId),
-    ]);
-    setReviews(r);
-    setDaily(d);
+    try {
+      const [r, d] = await Promise.all([
+        loadSprintReviews(sprintId),
+        loadDailyScrumEntries(sprintId),
+      ]);
+      setReviews(r);
+      setDaily(d);
+    } catch {
+      // Offline or unavailable: keep local/empty state without crashing.
+    }
   }
 
   useEffect(() => {
@@ -46,22 +50,30 @@ export function SprintEvents({ sprintId }: Props) {
 
   function saveReview() {
     startTransition(async () => {
-      await saveSprintReviewAction(sprintId, wentWell, toImprove, actionItems);
-      await load();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      try {
+        await saveSprintReviewAction(sprintId, wentWell, toImprove, actionItems);
+        await load();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } catch {
+        // Offline or unavailable.
+      }
     });
   }
 
   function saveScrum() {
     startTransition(async () => {
-      await saveDailyScrumAction(sprintId, yesterday, today, blockers);
-      setYesterday("");
-      setToday("");
-      setBlockers("");
-      await load();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      try {
+        await saveDailyScrumAction(sprintId, yesterday, today, blockers);
+        setYesterday("");
+        setToday("");
+        setBlockers("");
+        await load();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } catch {
+        // Offline or unavailable.
+      }
     });
   }
 
