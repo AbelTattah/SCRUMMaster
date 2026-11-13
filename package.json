@@ -7,6 +7,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:desktop": "node scripts/build-desktop.cjs",
     "dist:desktop": "node scripts/package-desktop.cjs",
     "generate:icons": "node scripts/generate-icons.cjs",
@@ -51,6 +53,8 @@
     "@types/web-push": "^3.6.4",
     "sharp": "^0.35.5",
     "tsx": "4.23.15",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^5.1.0"
   }
 }
