@@ -584,35 +584,81 @@ export async function pullSprints(): Promise<void> {
   }
 }
 
-/** Create a sprint locally and on the server. */
+/** Create a sprint locally first so it works offline, then sync when possible. */
 export async function createSprintLocal(name: string, goal: string | null, startDate: string, endDate: string): Promise<Sprint | null> {
-  const sprint = await createSprintAction(name, goal, startDate, endDate);
-  if (sprint) {
-    await localdb.sprints.put(sprint as any);
-    notify();
+  // Always create locally so sprints work offline (e.g. guest mode on desktop).
+  const local: Sprint = {
+    id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `sprint-${Date.now()}`,
+    user_id: viewer?.id ?? "guest",
+    name,
+    goal,
+    start_date: startDate,
+    end_date: endDate,
+    status: "planned",
+    created_at: new Date().toISOString(),
+  };
+
+  await localdb.sprints.put(local as any);
+  notify();
+
+  // Best-effort server sync for signed-in online sessions.
+  if (!guestViewer()) {
+    void (async () => {
+      try {
+        const remote = await createSprintAction(name, goal, startDate, endDate);
+        if (remote && remote.id && remote.id !== local.id) {
+          // Reconcile to the server-assigned id when it differs.
+          await localdb.sprints.delete(local.id);
+          await localdb.sprints.put(remote as any);
+          notify();
+        } else if (remote) {
+          await localdb.sprints.put(remote as any);
+          notify();
+        }
+      } catch {
+        // Offline or unavailable: the local sprint remains usable on this device.
+      }
+    })();
   }
-  return sprint;
+
+  return local;
 }
 
-/** Update a sprint's status locally and on the server. */
+/** Update a sprint's status locally first, then sync when possible. */
 export async function updateSprintStatusLocal(sprintId: string, status: "planned" | "active" | "completed"): Promise<void> {
-  await updateSprintStatusAction(sprintId, status);
-  const sprint = await localdb.sprints.get(sprintId);
-  if (sprint) {
-    await localdb.sprints.update(sprintId, { status });
-    notify();
+  await localdb.sprints.update(sprintId, { status });
+  notify();
+
+  if (!guestViewer()) {
+    void (async () => {
+      try {
+        await updateSprintStatusAction(sprintId, status);
+      } catch {
+        // Offline or unavailable: local state is already updated.
+      }
+    })();
   }
 }
 
-/** Assign a task to a sprint (or remove from sprint). */
+/** Assign a task to a sprint locally first, then sync via the normal todo outbox. */
 export async function assignTodoToSprintLocal(todoId: string, sprintId: string | null): Promise<void> {
-  await assignTodoToSprintAction(todoId, sprintId);
-  const todo = await localdb.todos.get(todoId);
+  const todo = await getTodo(todoId);
   if (todo) {
     await localdb.todos.update(todoId, { sprint_id: sprintId, dirty: 1, local_updated: Date.now() });
     await enqueueOp({ kind: "upsert", todo_id: todoId, created_at: Date.now() });
     notify();
     void flush();
+  }
+
+  // Best-effort direct sync; the todo outbox also carries sprint_id.
+  if (!guestViewer()) {
+    void (async () => {
+      try {
+        await assignTodoToSprintAction(todoId, sprintId);
+      } catch {
+        // Offline or unavailable: queued todo sync will propagate sprint_id.
+      }
+    })();
   }
 }
 
