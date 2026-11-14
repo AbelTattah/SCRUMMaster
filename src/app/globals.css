@@ -5213,3 +5213,45 @@ textarea.input {
     font-size: 13px;
     font-family: inherit;
 }
+/* Backup codes (GitHub-style) */
+.backup-codes-block .field-hint { margin-bottom: 12px; }
+.backup-codes-grid {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 20px;
+  border: 1px solid var(--border, #e5e5e5);
+  border-radius: 12px;
+  background: var(--surface, #fafafa);
+}
+.backup-code-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.backup-code-index {
+  color: var(--text-muted, #6b7280);
+  font-size: 12px;
+  min-width: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.backup-code-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text, #111);
+  background: transparent;
+}
+.backup-codes-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+@media (max-width: 480px) {
+  .backup-codes-grid { grid-template-columns: 1fr; }
+}

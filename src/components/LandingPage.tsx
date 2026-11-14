@@ -246,7 +246,7 @@ export default function LandingPage() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { n: "1", title: "Sign up in seconds", body: "We generate an encryption key from your password and a 24-word recovery phrase. No setup wizard." },
+              { n: "1", title: "Sign up in seconds", body: "We generate an encryption key from your password and give you backup codes to save. No setup wizard." },
               { n: "2", title: "Add your tasks", body: "Type a title, press Enter. Set times, assign teammates — even ones without accounts yet." },
               { n: "3", title: "Report and share", body: "Pick a period, generate a stand-up report, export to PDF or Word. Send it to your team." },
             ].map(({ n, title, body }) => (
@@ -323,7 +323,7 @@ export default function LandingPage() {
             {[
               { title: "End-to-end encryption", body: "Task titles and blockers encrypted in your browser before they leave your device." },
               { title: "Password-derived keys", body: "Your password secures your data. No plaintext keys on the server." },
-              { title: "Recovery phrase", body: "A recovery phrase brings everything back. Lose your password, keep your data." },
+              { title: "Backup codes", body: "Backup codes bring everything back. Lose your password, keep your data." },
               { title: "Team access", body: "Owners grant access; members receive it. Access is scoped, not open." },
               { title: "Works offline", body: "Encrypted local mirror. Create, edit, complete with no connection." },
               { title: "Seamless migration", body: "Older data auto-upgrades. No migration step required." },
@@ -402,7 +402,7 @@ export default function LandingPage() {
               },
               {
                 q: "What if I forget my password?",
-                a: "Use your 24-word recovery phrase to restore access. Password-less accounts get an auto-generated sign-in key you can copy.",
+                a: "Use one of your backup codes to restore access. Password-less accounts get an auto-generated sign-in key you can copy.",
               },
               {
                 q: "Is there a mobile app?",

@@ -1,11 +1,10 @@
-"use client";
+﻿"use client";
 
 /**
  * Choose a new password from the emailed reset link.
  *
- * With the recovery phrase: the existing key package is unwrapped and
- * re-wrapped under the new password — every task stays readable and the
- * phrase keeps working (the salt is deliberately unchanged).
+ * With a backup code (or legacy recovery phrase): the existing key package
+ * is unwrapped and re-wrapped under the new password - tasks stay readable.
  *
  * Without it: a fresh package is installed. Old ciphertext becomes
  * permanently unreadable (the warning says so before they submit).
@@ -17,12 +16,12 @@ import { resetPasswordWithCrypto } from "@/app/actions/crypto";
 import { AuthLoading } from "@/components/AuthLoading";
 import {
   createAccountMaterial,
+  isValidBackupCodeFormat,
   isValidMnemonic,
-  openWithRecovery,
   rewrapPackage,
   type KeyPackage,
 } from "@/lib/crypto";
-import { fetchMaterial, persistNewAccount } from "@/lib/keys";
+import { fetchMaterial, openWithRecoveryCode, persistNewAccount } from "@/lib/keys";
 
 export function ResetPasswordForm({
   notice,
@@ -34,36 +33,31 @@ export function ResetPasswordForm({
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [phrase, setPhrase] = useState("");
+  const [code, setCode] = useState("");
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
 
-  const hasPhrase = phrase.trim().length > 0;
+  const hasCode = code.trim().length > 0;
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-
-    if (busy) {
-      return;
-    }
+    if (busy) return;
 
     if (password.length < 8) {
       setError("Your new password must be at least 8 characters.");
       return;
     }
-
     if (new TextEncoder().encode(password).length > 72) {
       setError("Your password is too long (max 72 characters).");
       return;
     }
-
     if (password !== confirm) {
       setError("The two new passwords do not match.");
       return;
     }
 
-    if (hasPhrase && !isValidMnemonic(phrase)) {
-      setError("That recovery phrase is not valid — check the 24 words.");
+    if (hasCode && !isValidMnemonic(code) && !isValidBackupCodeFormat(code)) {
+      setError("Enter a valid backup code (or a legacy 24-word recovery phrase).");
       return;
     }
 
@@ -72,9 +66,8 @@ export function ResetPasswordForm({
 
     try {
       const fetched = await fetchMaterial();
-
       if (fetched.source === "none") {
-        setError("You are offline — reconnect and try again.");
+        setError("You are offline - reconnect and try again.");
         setBusy(false);
         return;
       }
@@ -85,26 +78,27 @@ export function ResetPasswordForm({
       let pub: string | null = null;
       let store: { salt: string; pub: string; pkg: KeyPackage };
 
-      if (hasPhrase && material?.salt && material.wrapped) {
-        let opened: { pkg: KeyPackage; keys: { dek: CryptoKey; priv: CryptoKey } };
-
+      if (hasCode && material?.salt && material.recovery) {
         try {
-          opened = await openWithRecovery(phrase, {
+          const opened = await openWithRecoveryCode(code, {
             salt: material.salt,
-            wrapped: material.wrapped,
+            recovery: material.recovery,
           });
-        } catch {
-          setError("That recovery phrase does not unlock this account.");
+          const rewrapped = await rewrapPackage(opened.pkg, password, material.salt);
+          salt = material.salt;
+          wrapped = rewrapped.wrapped;
+          store = { salt: material.salt, pub: material.pub ?? "", pkg: opened.pkg };
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "That backup code does not work for this account.");
           setBusy(false);
           return;
         }
-
-        // Same package, same salt → the phrase keeps working afterwards.
-        const rewrapped = await rewrapPackage(opened.pkg, password, material.salt);
-        salt = material.salt;
-        wrapped = rewrapped.wrapped;
-        store = { salt: material.salt, pub: material.pub ?? "", pkg: opened.pkg };
       } else {
+        if (hasCode && material?.salt && !material.recovery) {
+          setError("No backup codes are saved for this account. Reset without a code (existing encrypted tasks may become unreadable).");
+          setBusy(false);
+          return;
+        }
         const fresh = await createAccountMaterial(password);
         salt = fresh.salt;
         wrapped = fresh.wrapped;
@@ -141,17 +135,8 @@ export function ResetPasswordForm({
       <h1 className="auth-title">Choose a new password</h1>
       <p className="auth-sub">Set a password you will remember for next time.</p>
 
-      {notice ? (
-        <p className="auth-note" role="status">
-          {notice}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p className="auth-error" role="alert">
-          {error}
-        </p>
-      ) : null}
+      {notice ? <p className="auth-note" role="status">{notice}</p> : null}
+      {error ? <p className="auth-error" role="alert">{error}</p> : null}
 
       <form className="auth-form" onSubmit={submit}>
         <label className="field">
@@ -185,18 +170,19 @@ export function ResetPasswordForm({
         </label>
 
         <label className="field">
-          <span>Recovery phrase (optional)</span>
-          <textarea
+          <span>Backup code (optional)</span>
+          <input
             className="input"
+            type="text"
             name="recovery"
-            rows={2}
-            placeholder="Paste your 24-word recovery phrase to keep your existing tasks readable"
-            value={phrase}
-            onChange={(event) => setPhrase(event.target.value)}
+            placeholder="Enter one of your backup codes to keep existing tasks readable"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            autoComplete="off"
+            spellCheck={false}
           />
           <span className="field-hint">
-            With the phrase, your tasks stay readable. Without it, previously
-            encrypted tasks can no longer be opened.
+            With a backup code, your tasks stay readable. Without it, previously encrypted tasks can no longer be opened.
           </span>
         </label>
 
@@ -208,7 +194,7 @@ export function ResetPasswordForm({
           type="submit"
           disabled={busy}
         >
-          {busy ? "Saving…" : "Save password"}
+          {busy ? "Saving..." : "Save password"}
         </button>
       </form>
     </div>

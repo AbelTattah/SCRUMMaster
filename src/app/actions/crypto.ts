@@ -31,7 +31,7 @@ const LIMITS: Record<string, number> = {
   crypto_salt: 64,
   crypto_wrapped: 4096,
   crypto_pub: 128,
-  crypto_recovery: 8192,
+  crypto_recovery: 20000,
   crypto_org_wrapped: 512,
   crypto_org_grant: 2048,
 };
@@ -137,8 +137,25 @@ export async function saveCryptoMaterial(patch: {
     }
 
     const limit = LIMITS[metaKey];
+    if (typeof value !== "string" || value.length > limit) {
+      return { error: "Invalid encryption material." };
+    }
 
-    if (typeof value !== "string" || value.length > limit || !B64.test(value)) {
+    if (metaKey === "crypto_recovery") {
+      // Accept a JSON array of wrapped blobs (backup codes) or a single legacy blob.
+      if (value.startsWith("[")) {
+        try {
+          const arr = JSON.parse(value);
+          if (!Array.isArray(arr) || arr.some((x) => typeof x !== "string" || x.length > 4096 || !B64.test(x))) {
+            return { error: "Invalid encryption material." };
+          }
+        } catch {
+          return { error: "Invalid encryption material." };
+        }
+      } else if (!B64.test(value)) {
+        return { error: "Invalid encryption material." };
+      }
+    } else if (!B64.test(value)) {
       return { error: "Invalid encryption material." };
     }
 

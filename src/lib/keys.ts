@@ -10,13 +10,18 @@
 import {
   createAccountMaterial,
   createOrgKey,
+  deriveBackupCodeKek,
   deriveKek,
   deriveRecoveryKek,
+  b64ToBytes,
   decryptJson,
   encryptJson,
   grantOrgKey,
   importDek,
   importPrivateKey,
+  isValidBackupCodeFormat,
+  isValidMnemonic,
+  normalizeBackupCode,
   openAccountMaterial,
   openOrgGrant,
   openOrgKey,
@@ -510,7 +515,20 @@ export async function persistNewAccount(
   await deleteMeta("material");
 }
 
-/** The 24-word phrase waits on this device until step 2 stores it server-side. */
+/** Backup codes wait on this device until step 2 stores them server-side. */
+export async function stashRecoveryCodes(codes: string[]): Promise<void> {
+  await setMeta("pending_recovery_codes", codes);
+}
+
+export async function takeRecoveryCodes(): Promise<string[] | null> {
+  return (await getMeta<string[]>("pending_recovery_codes")) ?? null;
+}
+
+export async function clearRecoveryCodes(): Promise<void> {
+  await deleteMeta("pending_recovery_codes");
+}
+
+// Legacy mnemonic helpers (kept for compatibility).
 export async function stashMnemonic(mnemonic: string): Promise<void> {
   await setMeta("pending_mnemonic", mnemonic);
 }
@@ -524,19 +542,25 @@ export async function clearMnemonic(): Promise<void> {
 }
 
 /**
- * The recovery blob for step 2: the key package wrapped under
- * PBKDF2(mnemonic, salt) — the same package the password unwraps, so either
- * secret restores the same tasks.
+ * Recovery blobs for step 2: wrap the key package under each backup code.
+ * Returns a JSON array string of wrapped blobs (one per code).
  */
+export async function createRecoveryBlobs(codes: string[]): Promise<string | null> {
+  const stored = await readStoredKeys();
+  if (!stored) return null;
+  const wrapped: string[] = [];
+  for (const code of codes) {
+    const kek = await deriveBackupCodeKek(code, stored.salt);
+    wrapped.push(await encryptJson(kek, stored.pkg));
+  }
+  return JSON.stringify(wrapped);
+}
+
+/** Legacy: single recovery blob for a 24-word mnemonic. */
 export async function createRecoveryBlob(mnemonic: string): Promise<string | null> {
   const stored = await readStoredKeys();
-
-  if (!stored) {
-    return null;
-  }
-
+  if (!stored) return null;
   const kek = await deriveRecoveryKek(mnemonic, stored.salt);
-
   return encryptJson(kek, stored.pkg);
 }
 
@@ -559,7 +583,54 @@ export function passwordChanged(): void {
   void requireKeys();
 }
 
-/** Recovery unlock used by the reset screen (returns the opened package). */
+/**
+ * Unlock with a backup code (tries all stored wrapped blobs) or a legacy
+ * 24-word recovery phrase.
+ */
+export async function openWithRecoveryCode(
+  code: string,
+  material: { salt: string; recovery: string },
+): Promise<{ pkg: KeyPackage; keys: { dek: CryptoKey; priv: CryptoKey } }> {
+  const input = code.trim();
+
+  // Legacy 24-word mnemonic path.
+  if (isValidMnemonic(input)) {
+    const rec = material.recovery || "";
+    if (rec.startsWith("[")) {
+      throw new Error("This account uses backup codes, not a recovery phrase.");
+    }
+    if (!rec) throw new Error("No recovery data on file for this account.");
+    return openWithRecovery(input, { salt: material.salt, wrapped: rec });
+  }
+
+  // Backup code path.
+  if (!isValidBackupCodeFormat(input)) {
+    throw new Error("Enter a valid backup code or recovery phrase.");
+  }
+  let blobs: string[];
+  try {
+    const parsed = JSON.parse(material.recovery || "[]");
+    blobs = Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    blobs = [];
+  }
+  if (blobs.length === 0) {
+    throw new Error("No backup codes on file for this account.");
+  }
+  const normalized = normalizeBackupCode(input);
+  for (const blob of blobs) {
+    try {
+      const kek = await deriveBackupCodeKek(normalized, material.salt);
+      const pkg = await decryptJson<KeyPackage>(kek, blob);
+      return { pkg, keys: { dek: await importDek(pkg.dek), priv: await importPrivateKey(pkg.priv) } };
+    } catch {
+      // try next
+    }
+  }
+  throw new Error("That backup code does not work for this account.");
+}
+
+/** Legacy alias. */
 export async function openWithPhrase(
   mnemonic: string,
   material: { salt: string; wrapped: string },

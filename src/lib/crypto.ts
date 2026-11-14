@@ -88,7 +88,7 @@ export function deriveKek(password: string, saltB64: string): Promise<CryptoKey>
   return pbkdf2(password, saltB64);
 }
 
-/** Canonical form of a typed-in recovery phrase. */
+/** Canonical form of a typed-in recovery phrase (legacy 24-word mnemonic). */
 export function normalizeMnemonic(input: string): string {
   return input.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -101,14 +101,57 @@ export function isValidMnemonic(input: string): boolean {
   }
 }
 
-/** The recovery key-encryption key derived from the 24-word phrase. */
+/** The recovery key-encryption key derived from a 24-word phrase (legacy). */
 export function deriveRecoveryKek(mnemonic: string, saltB64: string): Promise<CryptoKey> {
   return pbkdf2(normalizeMnemonic(mnemonic), saltB64);
 }
 
-/** A fresh 24-word recovery phrase (256 bits of entropy). */
+/** A fresh 24-word recovery phrase (256 bits of entropy). Legacy format. */
 export function newMnemonic(): string {
   return generateMnemonic(wordlist, 256);
+}
+
+/* ----------------------------------------------------------- backup codes */
+
+const BACKUP_CODE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789"; // no ambiguous chars
+
+function randomCodeString(length: number): string {
+  const bytes = randomBytes(length);
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += BACKUP_CODE_ALPHABET[bytes[i] % BACKUP_CODE_ALPHABET.length];
+  }
+  return out;
+}
+
+/** Generate standard backup codes (GitHub-style): 10 codes, each xxxx-xxxx. */
+export function newBackupCodes(count = 10): string[] {
+  const codes: string[] = [];
+  const seen = new Set<string>();
+  while (codes.length < count) {
+    const raw = randomCodeString(8);
+    const code = raw.slice(0, 4) + "-" + raw.slice(4);
+    if (!seen.has(code)) {
+      seen.add(code);
+      codes.push(code);
+    }
+  }
+  return codes;
+}
+
+/** Normalize a user-entered backup code for comparison/derivation. */
+export function normalizeBackupCode(input: string): string {
+  return input.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export function isValidBackupCodeFormat(input: string): boolean {
+  const n = normalizeBackupCode(input);
+  return n.length >= 8 && n.length <= 16 && /^[a-z0-9]+$/.test(n);
+}
+
+/** KEK derived from a single backup code (same salt as the account). */
+export function deriveBackupCodeKek(code: string, saltB64: string): Promise<CryptoKey> {
+  return pbkdf2("backup:" + normalizeBackupCode(code), saltB64);
 }
 
 /* ------------------------------------------------------------- AES-GCM */

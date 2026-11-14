@@ -4,7 +4,7 @@
  * Registration step 1. The encryption keys are generated here, from the
  * password the user just typed: the wrapped results are stored with the
  * account (user_metadata) and the package is kept on this device, so step 2
- * can wrap the recovery phrase and the app opens already unlocked.
+ * can wrap backup codes and the app opens already unlocked.
  */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,8 +12,8 @@ import { useState, type FormEvent } from "react";
 
 import { registerStepOne } from "@/app/actions/auth";
 import { AuthLoading } from "@/components/AuthLoading";
-import { createAccountMaterial } from "@/lib/crypto";
-import { persistNewAccount, stashMnemonic } from "@/lib/keys";
+import { createAccountMaterial, newBackupCodes } from "@/lib/crypto";
+import { persistNewAccount, stashRecoveryCodes } from "@/lib/keys";
 
 export function RegisterForm({ notice, initialError }: { notice: string; initialError: string }) {
   const router = useRouter();
@@ -80,7 +80,7 @@ export function RegisterForm({ notice, initialError }: { notice: string; initial
       }
 
       await persistNewAccount(material);
-      await stashMnemonic(material.mnemonic);
+      await stashRecoveryCodes(newBackupCodes(10));
 
       router.push("/register/type");
     } catch {
