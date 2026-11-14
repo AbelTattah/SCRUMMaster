@@ -259,7 +259,7 @@ export function Sidebar({
   );
 }
 
-export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) {
+export function Tabbar({ user, counts, isGuest }: { user: CurrentUser; counts: Counts; isGuest?: boolean }) {
   const { view, page, q } = useLocation();
   const links = hrefs(page, q);
   const active = activeState(view, page);
@@ -302,26 +302,39 @@ export function Tabbar({ user, counts }: { user: CurrentUser; counts: Counts }) 
         <span className="tab-label">Now</span>
       </Link>
 
-      <Link
-        className={`tab${active.reports ? " is-active" : ""}`}
-        href={links.reports}
-        aria-current={active.reports ? "page" : undefined}
-      >
-        <span className="tab-icon">
-          <Icon name="report" />
-        </span>
-        <span className="tab-label">Reports</span>
-      </Link>
+      {!isGuest ? (
+        <Link
+          className={`tab${active.reports ? " is-active" : ""}`}
+          href={links.reports}
+          aria-current={active.reports ? "page" : undefined}
+        >
+          <span className="tab-icon">
+            <Icon name="report" />
+          </span>
+          <span className="tab-label">Reports</span>
+        </Link>
+      ) : (
+        <Link
+          className={`tab${active.sprints ? " is-active" : ""}`}
+          href="/sprints"
+          aria-current={active.sprints ? "page" : undefined}
+        >
+          <span className="tab-icon">
+            <Icon name="sprint" />
+          </span>
+          <span className="tab-label">Sprints</span>
+        </Link>
+      )}
 
       <Link
         className={`tab${active.profile ? " is-active" : ""}`}
-        href={links.profile}
+        href={isGuest ? "/" : links.profile}
         aria-current={active.profile ? "page" : undefined}
       >
         <span className="tab-icon">
           <Icon name="user" />
         </span>
-        <span className="tab-label">Profile</span>
+        <span className="tab-label">{isGuest ? "Guest" : "Profile"}</span>
       </Link>
     </nav>
   );
@@ -331,10 +344,12 @@ export function Topbar({
   user,
   unread,
   notifications,
+  isGuest,
 }: {
   user: CurrentUser;
   unread: number;
   notifications: NotificationItem[];
+  isGuest?: boolean;
 }) {
   const { view, page, q } = useLocation();
   const team = view === "team";
@@ -365,18 +380,20 @@ export function Topbar({
       <div className="topbar-right">
         <NetworkPill />
 
-        <NotificationBell unread={unread} notifications={notifications} />
+        {!isGuest ? <NotificationBell unread={unread} notifications={notifications} /> : null}
 
-        <Link
-          className="icon-btn topbar-settings"
-          href="/settings"
-          aria-label="Settings"
-          title="Settings"
-        >
-          <Icon name="settings" />
-        </Link>
+        {!isGuest ? (
+          <Link
+            className="icon-btn topbar-settings"
+            href="/settings"
+            aria-label="Settings"
+            title="Settings"
+          >
+            <Icon name="settings" />
+          </Link>
+        ) : null}
 
-        <Link className="avatar" href="/account" title="Your profile">
+        <Link className="avatar" href={isGuest ? "/" : "/account"} title={isGuest ? "Guest mode" : "Your profile"}>
           <img
             src={avatarUrl(user.profile.avatar_url, user.profile.name, user.profile.id)}
             alt="Profile picture"
@@ -387,11 +404,6 @@ export function Topbar({
   );
 }
 
-/**
- * Header-only connection status. The offline-first app keeps working with no
- * network (the local mirror serves everything), so a bad connection is a
- * quiet pill in the top bar — never a screen-covering page.
- */
 function NetworkPill() {
   const [online, setOnline] = useState(true);
 
@@ -427,7 +439,7 @@ function NetworkPill() {
     <span
       className="net-pill"
       role="status"
-      title="Working offline — your changes are saved on this device and sync when the connection is back."
+      title="Working offline - your changes are saved on this device and sync when the connection is back."
     >
       <span className="net-pill-dot" aria-hidden="true" />
       Offline

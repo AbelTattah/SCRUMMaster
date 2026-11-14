@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+﻿import { cookies } from "next/headers";
 import { Suspense, type ReactNode } from "react";
 
 import { Sidebar, Tabbar, Topbar } from "@/components/AppShell";
@@ -15,8 +15,9 @@ import { safeServer } from "@/lib/netSafe";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const cookieStore = await cookies();
-  const isGuest = cookieStore.get("scrum-guest")?.value === "1";
+  const guestCookie = cookieStore.get("scrum-guest")?.value === "1";
   const current = await getCurrentUser();
+  const isGuest = guestCookie && !current;
 
   // Signed-out visitors get no shell: each page decides what happens next.
   // "/" sends them silently to the sign-in screen, the other routes ask them
@@ -63,12 +64,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <>
       {current ? <OfflineSessionSync user={current} /> : null}
       <Suspense fallback={null}>
-        <Sidebar user={user} counts={counts} isGuest={isGuest && !current} />
+        <Sidebar user={user} counts={counts} isGuest={isGuest} />
       </Suspense>
 
       <div className="main">
         <Suspense fallback={null}>
-          <Topbar user={user} unread={unread} notifications={notifications} />
+          <Topbar user={user} unread={unread} notifications={notifications} isGuest={isGuest} />
         </Suspense>
 
         <OfflineBanner />
@@ -77,7 +78,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <Suspense fallback={null}>
-        <Tabbar user={user} counts={counts} />
+        <Tabbar user={user} counts={counts} isGuest={isGuest} />
       </Suspense>
 
       <Suspense fallback={null}>

@@ -1,46 +1,41 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
-import { ReportClient } from "@/components/ReportClient";
-import { requireOnboardedUser } from "@/lib/auth";
-import { buildReport, type ReportTask } from "@/lib/data/reports";
-import { appTimezone } from "@/lib/env";
-import {
-  parseDateKey,
-  parsePeriod,
-  reportWindow,
-  type ReportScope,
-} from "@/lib/reportPeriods";
-import { firstParam } from "@/lib/utils";
+import { GuestSignInRequired } from "@/components/GuestSignInRequired";
+import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = { title: "Reports" };
 
-function longDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: appTimezone(),
-  }).format(date);
-}
-
-/**
- * Task titles are encrypted — the report body (rows + PDF) renders in the
- * browser where they can be decrypted; only the query and the summary
- * numbers stay server-side.
- */
 export default async function ReportsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const current = await getCurrentUser();
+  const isGuest = !current && (await cookies()).get("scrum-guest")?.value === "1";
+
+  if (isGuest) {
+    return (
+      <GuestSignInRequired
+        title="Reports"
+        description="Sign in to generate and download stand-up reports. Guest mode keeps your tasks local on this device."
+      />
+    );
+  }
+
+  const { requireOnboardedUser } = await import("@/lib/auth");
+  const { buildReport } = await import("@/lib/data/reports");
+  const { appTimezone } = await import("@/lib/env");
+  const { parseDateKey, parsePeriod, reportWindow } = await import("@/lib/reportPeriods");
+  const { firstParam } = await import("@/lib/utils");
+  const { ReportClient } = await import("@/components/ReportClient");
+
   const user = await requireOnboardedUser();
   const params = await searchParams;
 
   const period = parsePeriod(firstParam(params.period));
   const dateKey = parseDateKey(firstParam(params.date));
-  // Owners default to the whole organization (they asked for org downloads);
-  // members only ever see their own working set.
-  const scope: ReportScope =
+  const scope =
     user.isOwner && user.organization && firstParam(params.scope) !== "mine"
       ? "org"
       : "mine";
@@ -57,12 +52,19 @@ export default async function ReportsPage({
 
   const { summary } = data;
 
-  // Header fields for the stand-up document (computed here so the client
-  // never needs the app timezone).
+  function longDate(date: Date): string {
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: appTimezone(),
+    }).format(date);
+  }
+
   const rangeEnd = new Date(window.end.getTime() - 86_400_000);
   const startText = longDate(window.start);
   const endText = longDate(rangeEnd);
-  const periodRange = startText === endText ? startText : `${startText} – ${endText}`;
+  const periodRange = startText === endText ? startText : `${startText} - ${endText}`;
   const meetingDate = longDate(new Date());
 
   return (
@@ -71,7 +73,7 @@ export default async function ReportsPage({
         <div className="page-heading">
           <h1 className="greeting">Reports</h1>
           <p className="date-line">
-            {window.label} · {data.scopeLabel}
+            {window.label} • {data.scopeLabel}
           </p>
         </div>
       </header>
@@ -118,7 +120,7 @@ export default async function ReportsPage({
         meetingDate={meetingDate}
         orgName={user.organization?.name ?? "Personal account"}
         authorName={user.profile.name}
-        tasks={data.tasks as ReportTask[]}
+        tasks={data.tasks}
         summary={summary}
       />
     </>

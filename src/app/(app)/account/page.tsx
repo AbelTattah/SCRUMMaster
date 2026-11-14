@@ -1,5 +1,6 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 
 import {
   associateMember,
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { requireOnboardedUser } from "@/lib/auth";
+import { getCurrentUser, requireOnboardedUser } from "@/lib/auth";
 import { listMembers } from "@/lib/data/profiles";
 import { avatarUrl, firstParam } from "@/lib/utils";
 
@@ -35,6 +36,41 @@ export default async function AccountPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const current = await getCurrentUser();
+  const isGuest = !current && (await cookies()).get("scrum-guest")?.value === "1";
+
+  if (isGuest) {
+    return (
+      <div className="page">
+        <header className="page-header">
+          <div className="page-heading">
+            <h1 className="greeting">Guest mode</h1>
+            <p className="date-line">Your data is stored locally on this device.</p>
+          </div>
+        </header>
+
+        <section className="panel">
+          <h2 className="card-title">Export your data</h2>
+          <p className="hint-text" style={{ marginBottom: 12 }}>
+            Download your local tasks as JSON. If you create an account later, you can keep this backup.
+          </p>
+          <ExportDataButton />
+        </section>
+
+        <section className="panel" style={{ marginTop: 16 }}>
+          <h2 className="card-title">Want to sync across devices?</h2>
+          <p className="hint-text" style={{ marginBottom: 16 }}>
+            Sign in to sync tasks, join teams, generate reports, and access all features.
+          </p>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Link className="btn-add" href="/login">Sign in</Link>
+            <Link className="btn-small" href="/register">Create account</Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   const user = await requireOnboardedUser();
   const params = await searchParams;
   const tab = firstParam(params.tab) === "organization" ? "organization" : "account";
