@@ -21,6 +21,7 @@ import {
   visibleHomeRows,
   visibleTeamRows,
 } from "@/lib/sync";
+import { filterTasks } from "@/lib/taskBuckets";
 import type { Assignee, PageFilter, TeamTodo } from "@/lib/types";
 
 interface TaskBoardProps {
@@ -42,16 +43,6 @@ interface TaskBoardProps {
 }
 
 const PAGE_SIZE = 20;
-
-function isCreatedToday(createdAt: string): boolean {
-  const created = new Date(createdAt);
-  const now = new Date();
-  return (
-    created.getFullYear() === now.getFullYear() &&
-    created.getMonth() === now.getMonth() &&
-    created.getDate() === now.getDate()
-  );
-}
 
 export function TaskBoard({
   scope,
@@ -125,58 +116,10 @@ export function TaskBoard({
     };
   }, [scope, guestMode]);
 
-  const visible = useMemo(() => {
-    const needles = [q, localQ]
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-
-    return rows
-      .filter((row) => {
-        const isCompleted = Boolean(row.completed);
-        // A task is "scheduled" (committed to a time) when it carries a start
-        // or end time. Unscheduled captures are drafts that live in the
-        // backlog until they are planned.
-        const scheduled = Boolean(row.start_time || row.end_time);
-
-        if (page === "completed" && !isCompleted) {
-          return false;
-        }
-
-        // Now: scheduled work that has not been finished yet.
-        if (page === "in-progress" && (isCompleted || !scheduled)) {
-          return false;
-        }
-
-        // Backlog: drafts - captured but never scheduled, and not done.
-        if (page === "backlog" && (isCompleted || scheduled)) {
-          return false;
-        }
-
-        // Today: today's captures (any state) plus outstanding scheduled work.
-        if (page === "today") {
-          const createdToday = isCreatedToday(row.created_at);
-          const underway = !isCompleted && scheduled;
-
-          if (!createdToday && !underway) {
-            return false;
-          }
-        }
-
-        if (needles.some((needle) => !row.title.toLowerCase().includes(needle))) {
-          return false;
-        }
-
-        // Sprint filter: when a sprint is selected, only show tasks in that sprint.
-        if (sprintId && row.sprint_id !== sprintId) {
-          return false;
-        }
-
-        // Product Backlog view: when no sprint selected, show tasks with no sprint.
-        // (Only applies on the home page when explicitly filtering.)
-        return true;
-      })
-      .sort((a, b) => a.created_at.localeCompare(b.created_at));
-  }, [rows, page, q, localQ, sprintId]);
+  const visible = useMemo(
+    () => filterTasks(rows, { page, queries: [q, localQ], sprintId }),
+    [rows, page, q, localQ, sprintId],
+  );
 
   // Filters changed -> back to the first page.
   useEffect(() => {
