@@ -4937,8 +4937,10 @@ button.chip:disabled {
 }
 
 [data-slot="dialog-content"] .btn-add,
-[data-slot="dialog-footer"] .btn-add {
+[data-slot="dialog-footer"] .btn-add,
+[data-slot="dialog-footer"] .btn-small {
     margin-top: 0;
+    align-self: center;
 }
 
 .sprint-list {
