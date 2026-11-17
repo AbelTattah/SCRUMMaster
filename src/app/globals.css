@@ -350,6 +350,10 @@ svg {
     margin-top: auto;
     padding: 16px 20px 22px;
     border-top: 1px solid var(--sidebar-line);
+    position: sticky;
+    bottom: 0;
+    background: var(--surface);
+    z-index: 1;
 }
 
 .sidebar-user {
