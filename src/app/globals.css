@@ -2318,7 +2318,8 @@ svg {
     display: flex;
     flex-direction: column;
     gap: 22px;
-    max-width: 780px;
+    width: 100%;
+    max-width: min(100%, 1100px);
 }
 
 .card {
@@ -2867,7 +2868,8 @@ svg {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 780px;
+    width: 100%;
+    max-width: min(100%, 1100px);
     margin-top: 22px;
 }
 
@@ -3004,7 +3006,8 @@ svg {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 860px;
+    width: 100%;
+    max-width: min(100%, 1200px);
     margin-top: 22px;
 }
 
@@ -3142,7 +3145,8 @@ svg {
 }
 
 .empty-card {
-    max-width: 640px;
+    width: 100%;
+    max-width: min(100%, 900px);
     margin-top: 22px;
     padding: 42px 28px;
     text-align: center;
