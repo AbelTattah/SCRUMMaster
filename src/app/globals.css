@@ -3,7 +3,7 @@
 
 /* Dark variant: follow both the system preference and the explicit choice
    stored as data-theme on <html> (see the theme-init script in layout.tsx). */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *), @media (prefers-color-scheme: dark));
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /* ==========================================================================
    Scrum Master — homepage styles
@@ -166,22 +166,39 @@
    Base
    -------------------------------------------------------------------------- */
 
-/* Render scale: the whole app (auth included) renders 10% smaller.
-   Applied uniformly to <html> — no page is exempt, so proportions stay
-   consistent everywhere (the old hack's flaw was exempting the auth screens).
-
-   IMPORTANT: under root zoom, `100vh` resolves against the *unzoomed*
-   viewport and is then scaled down — full-height surfaces would stop short
-   of the window bottom (a cut-off strip). Every viewport-height rule must
-   therefore use var(--vh) (= 100vh / zoom), which fills the window exactly.
-   Fixed/anchored elements (position: fixed, inset/bottom) are unaffected. */
+/* Render scale: the whole app renders slightly smaller on larger screens.
+   Disabled on small screens for readability and touch targets. */
 :root {
-    --app-zoom: 0.9;
-    --vh: calc(100vh / var(--app-zoom));
+    --app-zoom: 1;
+    --vh: 100vh;
 }
 
-html {
-    zoom: var(--app-zoom);
+@media (min-width: 768px) {
+    :root {
+        --app-zoom: 0.9;
+        --vh: calc(100vh / var(--app-zoom));
+    }
+    html {
+        zoom: var(--app-zoom);
+    }
+}
+
+@supports not (zoom: 1) {
+    html { zoom: 1; }
+}
+/* Global responsiveness safeguards */
+html, body {
+    max-width: 100%;
+    overflow-x: clip;
+}
+img, video, canvas, svg {
+    max-width: 100%;
+}
+table {
+    max-width: 100%;
+}
+input, select, textarea, button {
+    font: inherit;
 }
 
 *,
@@ -1187,8 +1204,7 @@ svg {
 }
 
 /* --------------------------------------------------------------------------
-   Responsive fallback (the design is desktop-first; keep it usable below
-   the 1512 px reference width)
+   Responsive fallback (desktop-first, usable across all widths/platforms)
    -------------------------------------------------------------------------- */
 @media (max-width: 1100px) {
     .search {
@@ -1196,11 +1212,16 @@ svg {
     }
 
     .content {
-        padding: 28px 32px 40px;
+        padding: 24px 24px 32px;
     }
 
     .panel {
         margin-left: 0;
+    }
+
+    .page-header {
+        flex-wrap: wrap;
+        gap: 12px;
     }
 }
 
@@ -1434,7 +1455,31 @@ svg {
 
     /* --- content --- */
     .content {
-        padding: 18px 16px calc(84px + env(safe-area-inset-bottom));
+        padding: 16px 12px calc(84px + env(safe-area-inset-bottom));
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .page-header-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .todo-item {
+        height: auto;
+        min-height: 56px;
+        padding: 10px 12px;
+        align-items: flex-start;
+    }
+
+    .panel,
+    .card,
+    .section-card {
+        max-width: 100%;
     }
 
     .greeting {
@@ -2265,9 +2310,11 @@ svg {
     align-items: start;
 }
 
-/* Both account tabs show a single card, kept at a comfortable reading width. */
+/* Both account tabs show a single card/stack, kept at a comfortable reading width. */
 .profile-grid--single {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
     max-width: 780px;
 }
 
@@ -3802,7 +3849,7 @@ button.chip:disabled {
     padding: 10px 12px;
     border: 1px solid var(--danger-line);
     border-radius: 10px;
-    background: #FFF8F8;
+    background: var(--danger-soft);
 }
 
 .blocker-editor textarea {
@@ -5150,6 +5197,12 @@ textarea.input {
     margin-top: 22px;
 }
 
+.profile-grid--single > .dod-card,
+.settings-stack > .dod-card,
+.profile-grid > .dod-card {
+    margin-top: 0;
+}
+
 /* ------------------------------------------------------------------ nexus */
 .nexus-board {
     margin-top: 22px;
@@ -5254,4 +5307,25 @@ textarea.input {
 }
 @media (max-width: 480px) {
   .backup-codes-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Cross-platform responsive helpers */
+.table-wrap, .table-container, [class*="table"] {
+  max-width: 100%;
+}
+pre, code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+@media (max-width: 767px) {
+  .modal, .dialog, [role="dialog"] {
+    max-width: calc(100vw - 24px);
+  }
+  .page-header h1, .greeting {
+    font-size: clamp(18px, 5vw, 24px);
+  }
+  .content h1, .content h2 {
+    overflow-wrap: anywhere;
+  }
 }

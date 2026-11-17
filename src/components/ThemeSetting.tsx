@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -12,17 +12,24 @@ const MODES: { id: Mode; label: string }[] = [
   { id: "dark", label: "Dark" },
 ];
 
+function systemTheme(): "light" | "dark" {
+  if (typeof window === "undefined" || !window.matchMedia) return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function resolve(mode: Mode): "light" | "dark" {
+  return mode === "system" ? systemTheme() : mode;
+}
+
 function readMode(): Mode {
   try {
     const stored = localStorage.getItem(KEY);
-
     if (stored === "dark" || stored === "light" || stored === "system") {
       return stored;
     }
   } catch {
-    // Storage unavailable — fall back to the system preference.
+    // Storage unavailable - fall back to the system preference.
   }
-
   return "system";
 }
 
@@ -36,32 +43,40 @@ function apply(mode: Mode) {
   } catch {
     // Preference still applies for this page view even if it cannot persist.
   }
-
-  if (mode === "dark" || mode === "light") {
-    document.documentElement.dataset.theme = mode;
-  } else {
-    delete document.documentElement.dataset.theme;
-  }
+  const theme = resolve(mode);
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
 }
 
-/**
- * System / Light / Dark picker. "System" is the default and needs no JS —
- * the dark values live behind prefers-color-scheme; choosing Light or Dark
- * pins it via data-theme on <html> (set before paint by the root layout).
- */
 export function ThemeSetting() {
   const [mode, setMode] = useState<Mode>("system");
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    setMode(readMode());
+    const m = readMode();
+    setMode(m);
+    apply(m);
     setChecked(true);
+
+    const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    if (!mq) return;
+    const onChange = () => {
+      const current = readMode();
+      if (current === "system") apply("system");
+    };
+    try {
+      mq.addEventListener("change", onChange);
+      return () => mq.removeEventListener("change", onChange);
+    } catch {
+      mq.addListener(onChange);
+      return () => mq.removeListener(onChange);
+    }
   }, []);
 
   const hint = !checked
-    ? "Checking…"
+    ? "Checking..."
     : mode === "system"
-      ? "Follows your device's light/dark setting."
+      ? "Follows your device (" + resolve("system") + " now)."
       : mode === "dark"
         ? "Dark theme is on for this browser."
         : "Light theme is on for this browser.";

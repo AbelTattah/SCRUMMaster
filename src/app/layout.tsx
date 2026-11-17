@@ -39,7 +39,7 @@ export const viewport: Viewport = {
 
 // Applies the stored theme before first paint so the right palette is there
 // from frame one (no flash). System preference is handled purely in CSS.
-const THEME_INIT = `try{var t=localStorage.getItem("scrum-master.theme");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;}}catch(e){}`;
+const THEME_INIT = `try{var s=localStorage.getItem("scrum-master.theme");var t=(s==="dark"||s==="light")?s:(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;}catch(e){}`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
