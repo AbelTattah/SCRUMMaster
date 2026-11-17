@@ -257,6 +257,9 @@ svg {
     background: var(--surface);
     border-right: 1px solid var(--sidebar-line);
     z-index: 20;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
 }
 
 .logo {
