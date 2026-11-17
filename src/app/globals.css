@@ -574,8 +574,10 @@ svg {
 }
 
 .topbar {
-    position: sticky;
+    position: fixed;
     top: 0;
+    right: 0;
+    left: var(--sidebar-w);
     z-index: 40; /* above page content; below modals (100+) and the gate (300) */
     display: flex;
     align-items: center;
@@ -727,9 +729,11 @@ svg {
    Page header: greeting, date line and the Add Todo button
    -------------------------------------------------------------------------- */
 .content {
-    /* -20% vertical padding */
-    padding: 19px 32px 26px;
-    max-width: 1440px;
+    /* vertical padding + fixed header offset */
+    padding: calc(19px + var(--topbar-h)) 32px 26px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
 }
 
 .page-header {
@@ -956,6 +960,9 @@ svg {
     right: -4px;
     z-index: 60; /* above the phone tab bar */
     min-width: 132px;
+    max-height: min(60vh, 320px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 6px;
     background: var(--surface);
     border-radius: var(--radius-sm);
@@ -1401,6 +1408,7 @@ svg {
 
     /* --- two-row app header: brand + actions, then full-width search --- */
     .topbar {
+        left: 0;
         display: grid;
         grid-template-columns: 1fr auto;
         align-items: center;
@@ -1468,7 +1476,7 @@ svg {
 
     /* --- content --- */
     .content {
-        padding: 16px 12px calc(84px + env(safe-area-inset-bottom));
+        padding: calc(16px + 108px) 12px calc(84px + env(safe-area-inset-bottom));
     }
 
     .page-header {
