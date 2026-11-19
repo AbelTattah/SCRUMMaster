@@ -67,7 +67,15 @@ export function LoginForm({
           await provisionAndUnlock(password, ctx);
         }
       } catch {
-        // Key problems surface on the gate after navigation instead.
+        // The gate retries with this password once if device restore fails.
+      }
+
+      // Hand the password to the app shell for a one-shot transparent unlock.
+      // It is consumed and removed on first use; no second prompt is shown.
+      try {
+        sessionStorage.setItem("scrum-master.pending-unlock", password);
+      } catch {
+        // ignore
       }
 
       router.push(result.onboardingComplete ? result.next : "/register/type");

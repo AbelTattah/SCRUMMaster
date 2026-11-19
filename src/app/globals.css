@@ -5824,3 +5824,28 @@ pre, code {
 .auth-card--modern .auth-divider { margin: 20px 0 16px; }
 .auth-card--modern .auth-help { margin-top: 34px; }
 
+
+/* Non-blocking encryption notice (replaces the old second sign-in screen) */
+.gate-notice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 18px;
+    background: var(--amber-soft);
+    color: var(--amber-text);
+    border-bottom: 1px solid var(--field-line);
+    font-size: 13px;
+}
+.gate-notice button {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
