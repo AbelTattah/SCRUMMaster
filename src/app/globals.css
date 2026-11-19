@@ -5802,3 +5802,18 @@ pre, code {
     border-radius: 0;
 }
 
+
+/* The legacy wide-screen split set a fixed flex-basis on .auth-side. With the
+   branded half now hidden, that basis pins the form to the left of the page. */
+@media (min-width: 1000px) {
+    .auth-body { flex-direction: column; }
+    .auth-side {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
+        height: auto;
+        min-height: var(--vh);
+        overflow-y: visible;
+    }
+}
+
