@@ -5817,3 +5817,10 @@ pre, code {
     }
 }
 
+
+/* Spacing after moving the form above the social buttons */
+.auth-card--modern .auth-sub--signup { margin-bottom: 24px; }
+.auth-card--modern .auth-switch--forgot { margin-top: 14px; }
+.auth-card--modern .auth-divider { margin: 20px 0 16px; }
+.auth-card--modern .auth-help { margin-top: 34px; }
+
