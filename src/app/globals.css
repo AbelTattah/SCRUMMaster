@@ -5694,3 +5694,111 @@ pre, code {
     }
 }
 
+
+/* ---- login screen refinements to match the new design -------------------- */
+.auth-wrap { max-width: 432px; margin: 0 auto; padding: 48px 16px 40px; }
+.auth-foot { display: none; }
+.auth-body {
+    background:
+        radial-gradient(900px 260px at 50% -90px, rgba(255, 184, 199, .55), transparent 70%),
+        radial-gradient(800px 240px at 88% -110px, rgba(143, 196, 255, .55), transparent 70%),
+        radial-gradient(700px 240px at 8% -110px, rgba(214, 180, 255, .55), transparent 70%),
+        var(--page-bg);
+}
+[data-theme="dark"] .auth-body {
+    background:
+        radial-gradient(900px 280px at 50% -100px, rgba(126, 101, 214, .26), transparent 70%),
+        radial-gradient(800px 240px at 88% -110px, rgba(64, 120, 200, .18), transparent 70%),
+        var(--page-bg);
+}
+.auth-card--modern {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    text-align: center;
+}
+.auth-mark { width: 34px; height: 34px; margin: 0 auto 14px; }
+.auth-card--modern .auth-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.auth-sub--signup { margin: 0 0 22px; font-size: 13px; }
+.auth-alt-actions { gap: 10px; }
+.auth-provider {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border: 1.5px solid var(--field-line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--nav-ink);
+    text-decoration: none;
+}
+.auth-provider:hover { border-color: var(--border-strong); }
+.provider-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.provider-avatar {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--tint-purple);
+    color: var(--purple-ink);
+}
+.provider-avatar svg { width: 14px; height: 14px; }
+.provider-copy { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; line-height: 1.25; }
+.provider-copy strong { font-size: 13px; font-weight: 600; }
+.provider-copy small { color: var(--muted); font-size: 11px; }
+.provider-g { width: 18px; height: 18px; flex: none; }
+.auth-sso { justify-content: center; height: 46px; font-size: 13px; }
+.auth-divider { margin: 16px 0; }
+.auth-card--modern .auth-form .input { height: 42px; border-radius: 8px; }
+.auth-submit { height: 42px; }
+.auth-switch--forgot { margin-top: 16px; }
+.auth-help { margin-top: 60px; }
+@media (max-width: 767px) {
+    .auth-wrap { padding: 32px 16px 24px; }
+}
+
+
+/* ---- home tasks section: flat list, no enclosing border (new design) ----- */
+.tasks-panel {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+.tasks-panel .add-task-placeholder {
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    padding-left: 16px;
+    background: transparent;
+}
+.tasks-panel .add-task-placeholder:hover {
+    border-color: var(--line);
+    background: var(--hover-faint);
+}
+.tasks-panel .add-task {
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+    padding-left: 16px;
+    background: transparent;
+}
+
+
+/* Flatten the sprint toolbar to match the borderless task list */
+.tasks-panel .sprint-selector {
+    margin: 0 0 12px;
+    padding: 2px 0 12px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+}
+

@@ -195,7 +195,7 @@ export default async function HomePage({
         </Link>
       </nav>
 
-      <section className="panel" aria-label="Todos">
+      <section className="panel tasks-panel" aria-label="Todos">
         <SprintBoard
           scope="home"
           page={page}
