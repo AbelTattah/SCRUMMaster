@@ -92,19 +92,27 @@ export function Sidebar({
 
   return (
     <aside className="sidebar">
-      <div className="logo">
-        <img className="brand-img brand-img--light" src="/logo-wordmark.png" alt="Scrum Master" />
-        <img className="brand-img brand-img--dark" src="/logo-wordmark-white.png" alt="Scrum Master" />
+      <div className="sidebar-workspace">
+        <span className="workspace-avatar"><Icon name="sprint" /></span>
+        <span className="workspace-meta">
+          <strong>{user.organization?.name ?? "Scrum Master"}</strong>
+          <small>Workspace</small>
+        </span>
+        <Link className="workspace-add" href="/?add=1" aria-label="New task" title="New task">
+          <Icon name="plus" />
+        </Link>
       </div>
 
-      <nav className="nav" aria-label="Primary">
+      <div className="sidebar-scroll">
+      <nav className="nav nav--tasks" aria-label="Tasks">
+        <p className="nav-section-label">Tasks</p>
         <Link
           className={`nav-item${active.home ? " is-active" : ""}`}
           href={links.home}
           aria-current={active.home ? "page" : undefined}
         >
           <Icon name="home" />
-          <span className="nav-label">Home</span>
+          <span className="nav-label">All Tasks</span>
         </Link>
 
         <Link
@@ -149,6 +157,10 @@ export function Sidebar({
           ) : null}
         </Link>
 
+      </nav>
+
+      <nav className="nav nav--workspace" aria-label="Workspace">
+        <p className="nav-section-label">Workspace</p>
         <Link
           className={`nav-item${active.reports ? " is-active" : ""}`}
           href={links.reports}
@@ -166,9 +178,6 @@ export function Sidebar({
           <Icon name="sprint" />
           <span className="nav-label">Sprints</span>
         </Link>
-      </nav>
-
-      <nav className="nav nav--account" aria-label="Account">
         {user.isOwner ? (
           <Link
             className={`nav-item${active.team ? " is-active" : ""}`}
@@ -179,7 +188,10 @@ export function Sidebar({
             <span className="nav-label">Team</span>
           </Link>
         ) : null}
+      </nav>
 
+      <nav className="nav nav--account" aria-label="Account">
+        <p className="nav-section-label">Account</p>
         <Link
           className={`nav-item${active.profile ? " is-active" : ""}`}
           href={links.profile}
@@ -189,6 +201,7 @@ export function Sidebar({
           <span className="nav-label">Profile</span>
         </Link>
       </nav>
+      </div>
 
       <div className="sidebar-footer">
         <Link className="sidebar-user" href={links.profile} title="Your account">

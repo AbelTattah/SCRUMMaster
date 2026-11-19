@@ -2,6 +2,8 @@
 import { Suspense, type ReactNode } from "react";
 
 import { Sidebar, Tabbar, Topbar } from "@/components/AppShell";
+import { IconRail } from "@/components/IconRail";
+import { NotificationsBanner } from "@/components/NotificationsBanner";
 import { BrowserNotifications } from "@/components/BrowserNotifications";
 import { CryptoGate } from "@/components/CryptoGate";
 import { FlashToast } from "@/components/FlashToast";
@@ -64,6 +66,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <>
       {current ? <OfflineSessionSync user={current} /> : null}
       <Suspense fallback={null}>
+        <IconRail counts={counts} isGuest={isGuest} />
+      </Suspense>
+      <Suspense fallback={null}>
         <Sidebar user={user} counts={counts} isGuest={isGuest} />
       </Suspense>
 
@@ -72,6 +77,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           <Topbar user={user} unread={unread} notifications={notifications} isGuest={isGuest} />
         </Suspense>
 
+        {!isGuest ? <NotificationsBanner /> : null}
         <OfflineBanner />
 
         <main className="content">{children}</main>

@@ -13,6 +13,22 @@ import { avatarUrl } from "@/lib/utils";
 type RowTodo = Todo &
   Partial<Pick<TeamTodo, "owner_name" | "owner_avatar" | "assignee_name" | "assignee_avatar">>;
 
+type TaskStatus = { label: string; key: "done" | "blocked" | "progress" | "todo" };
+
+/** Status badge for the new table view, derived from the task's own state. */
+function statusOf(todo: RowTodo): TaskStatus {
+  if (todo.completed) return { label: "DONE", key: "done" };
+  if (todo.blocker) return { label: "BLOCKED", key: "blocked" };
+  if (todo.start_time) return { label: "IN PROGRESS", key: "progress" };
+  return { label: "TO DO", key: "todo" };
+}
+
+function createdLabel(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" });
+}
+
 interface Props {
   todo: RowTodo;
   returnTo: string;
@@ -212,6 +228,7 @@ export function TaskRow({
     : null;
 
   const expanded = editingBlocker || error !== null;
+  const status = statusOf(todo);
 
   const timeEditor = (
     <span className="inline-times" onKeyDown={timeKeyDown}>
@@ -477,6 +494,14 @@ export function TaskRow({
           </span>
         ) : null}
       </div>
+
+      <span className="task-status-cell">
+        <span className={`task-status task-status--${status.key}`}>
+          <Icon name={status.key === "done" ? "completed" : status.key === "blocked" ? "kebab" : "in-progress"} />
+          {status.label}
+        </span>
+      </span>
+      <span className="task-date-cell">{createdLabel(todo.created_at)}</span>
     </div>
   );
 }

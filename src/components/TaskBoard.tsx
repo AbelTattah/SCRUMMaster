@@ -189,18 +189,29 @@ export function TaskBoard({
         </p>
       ) : null}
 
-      {paged.map((todo) => (
-        <TaskRow
-          key={todo.id}
-          todo={todo}
-          returnTo={returnTo}
-          variant={scope === "team" ? "team" : "home"}
-          currentUserId={currentUserId}
-          members={members}
-          canAssign={canAssign}
-          focus={focusId !== "" && todo.id === focusId}
-        />
-      ))}
+      {booted && visible.length > 0 ? (
+        <div className="task-table-head" aria-hidden="true">
+          <span />
+          <span>Task Name</span>
+          <span>Status</span>
+          <span>Date created</span>
+        </div>
+      ) : null}
+
+      <div className="task-table-body">
+        {paged.map((todo) => (
+          <TaskRow
+            key={todo.id}
+            todo={todo}
+            returnTo={returnTo}
+            variant={scope === "team" ? "team" : "home"}
+            currentUserId={currentUserId}
+            members={members}
+            canAssign={canAssign}
+            focus={focusId !== "" && todo.id === focusId}
+          />
+        ))}
+      </div>
 
       {totalPages > 1 ? (
         <nav className="pager" aria-label="Tasks pages">

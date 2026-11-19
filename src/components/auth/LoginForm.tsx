@@ -11,6 +11,7 @@ import { useState, type FormEvent } from "react";
 
 import { signIn } from "@/app/actions/auth";
 import { AuthLoading } from "@/components/AuthLoading";
+import { GoogleButton } from "@/components/GoogleButton";
 import { fetchMaterial, provisionAndUnlock, unlockWithPassword } from "@/lib/keys";
 
 export function LoginForm({
@@ -27,6 +28,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState(initialError);
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -76,9 +78,15 @@ export function LoginForm({
   }
 
   return (
-    <div className="auth-card">
-      <h1 className="auth-title">Welcome back</h1>
-      <p className="auth-sub">Sign in to pick up where you left off.</p>
+    <div className="auth-card auth-card--modern">
+      <div className="auth-mark">
+        <img src="/logo.png" alt="Scrum Master" />
+      </div>
+
+      <h1 className="auth-title">Welcome back!</h1>
+      <p className="auth-sub auth-sub--signup">
+        Don&rsquo;t have an account? <Link href="/register">Sign up</Link>
+      </p>
 
       {notice ? (
         <p className="auth-note" role="status">
@@ -92,15 +100,30 @@ export function LoginForm({
         </p>
       ) : null}
 
+      <div className="auth-alt-actions">
+        <GoogleButton />
+
+        <a className="auth-sso" href="/guest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+            <path d="M17.5 19H9a7 7 0 0 1-6.7-9 7.5 7.5 0 0 1 14.4 2" />
+            <path d="M7 19h10a4 4 0 0 0 .8-7.9" />
+          </svg>
+          Continue as guest
+        </a>
+      </div>
+
+      <div className="auth-divider"><span>or</span></div>
+
       <form className="auth-form" onSubmit={submit}>
         <input type="hidden" name="next" value={next} />
 
         <label className="field">
-          <span>Email</span>
+          <span>Work email</span>
           <input
             className="input"
             type="email"
             name="email"
+            placeholder="Work email"
             autoComplete="email"
             required
             autoFocus
@@ -109,44 +132,43 @@ export function LoginForm({
           />
         </label>
 
-        <label className="field">
+        <label className="field auth-password-field">
           <span>Password</span>
           <input
             className="input"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="password"
+            placeholder="Password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
+          <button
+            type="button"
+            className="auth-eye"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            onClick={() => setShowPassword((value) => !value)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
         </label>
 
         <AuthLoading active={busy} />
 
-        <button
-          className="inline-flex w-full items-center justify-center rounded-full bg-[#21005D] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2E0480] disabled:opacity-50"
-          style={{ height: "38px", marginTop: "4px" }}
-          type="submit"
-          disabled={busy}
-        >
-          {busy ? "Signing in…" : "Sign in"}
+        <button className="auth-submit" type="submit" disabled={busy}>
+          {busy ? "Logging in…" : "Log In"}
         </button>
       </form>
 
-      <p className="auth-switch">
-        <Link href="/forgot-password">Forgot your password?</Link>
+      <p className="auth-switch auth-switch--forgot">
+        <Link href="/forgot-password">Forgot Password?</Link>
       </p>
 
-      <p className="auth-switch">
-        New to Scrum Master? <Link href="/register">Create an account</Link>
-      </p>
-
-      <p className="auth-switch">
-        <a href="/guest" className="auth-link-button">
-          Continue as guest
-        </a>
-      </p>
+      <p className="auth-help">Need help?</p>
     </div>
   );
 }
