@@ -54,8 +54,8 @@ export function IconRail({ counts, isGuest }: { counts: Counts; isGuest?: boolea
 
   return (
     <aside className="icon-rail" aria-label="Workspace navigation">
-      <Link className="rail-logo" href="/" title="Scrum Master">
-        <img src="/logo.png" alt="" />
+      <Link className="rail-logo" href="/" title="Scrum Master" aria-label="Scrum Master home">
+        <img src="/favicon.png" alt="" />
       </Link>
 
       <nav className="rail-nav">

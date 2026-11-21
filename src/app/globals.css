@@ -5849,3 +5849,11 @@ pre, code {
     cursor: pointer;
 }
 
+
+/* Left rail: compact app icon (no wordmark) */
+.rail-logo img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
