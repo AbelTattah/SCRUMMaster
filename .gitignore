@@ -31,3 +31,6 @@ desktop/dist/
 # Legacy PHP app (contains personal data, not for public repo)
 legacy/
 desktop/resources/
+
+# UI design references (local only — not part of the source repo)
+ui-design/
