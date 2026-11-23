@@ -5857,3 +5857,24 @@ pre, code {
     object-fit: contain;
 }
 
+
+/* Empty task table â€” an empty row in place of an add button */
+.task-table-empty {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 130px 110px;
+    column-gap: 12px;
+    align-items: center;
+    min-height: 56px;
+    padding: 0 16px 0 15px;
+    color: var(--muted);
+    font-size: 14px;
+}
+@media (max-width: 900px) {
+    .task-table-empty { grid-template-columns: 28px minmax(0, 1fr) auto; }
+    .task-table-empty > :last-child { display: none; }
+}
+@media (max-width: 767px) {
+    .task-table-empty { grid-template-columns: 28px minmax(0, 1fr); }
+    .task-table-empty > :nth-child(3) { display: none; }
+}
+

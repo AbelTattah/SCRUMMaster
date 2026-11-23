@@ -10,7 +10,6 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { AddTaskRow } from "@/components/AddTask";
 import { TaskRow } from "@/components/TaskRow";
 import {
   decryptRows,
@@ -33,7 +32,8 @@ interface TaskBoardProps {
   members: Assignee[];
   currentUserId: string;
   canAssign: boolean;
-  autoFocusAdd: boolean;
+  /** Kept for callers; the inline add row is no longer rendered. */
+  autoFocusAdd?: boolean;
   /** Shown instead of the default empty-state line. */
   emptyHint?: ReactNode;
   /** Guest mode: no account, local-only, no server sync. */
@@ -53,7 +53,6 @@ export function TaskBoard({
   members,
   currentUserId,
   canAssign,
-  autoFocusAdd,
   emptyHint,
   guestMode,
   sprintId,
@@ -179,17 +178,7 @@ export function TaskBoard({
 
       {!booted ? <p className="empty">Loading your tasks…</p> : null}
 
-      {booted && visible.length === 0 ? (
-        <p className="empty">
-          {searching ? (
-            <>No todos match &ldquo;{(localQ || q).trim()}&rdquo;.</>
-          ) : (
-            (emptyHint ?? <>Nothing here yet — add your first task below.</>)
-          )}
-        </p>
-      ) : null}
-
-      {booted && visible.length > 0 ? (
+      {booted ? (
         <div className="task-table-head" aria-hidden="true">
           <span />
           <span>Task Name</span>
@@ -211,6 +200,21 @@ export function TaskBoard({
             focus={focusId !== "" && todo.id === focusId}
           />
         ))}
+
+        {booted && visible.length === 0 ? (
+          <div className="task-table-empty">
+            <span />
+            <span>
+              {searching ? (
+                <>No todos match &ldquo;{(localQ || q).trim()}&rdquo;.</>
+              ) : (
+                (emptyHint ?? <>No tasks yet.</>)
+              )}
+            </span>
+            <span />
+            <span />
+          </div>
+        ) : null}
       </div>
 
       {totalPages > 1 ? (
@@ -236,8 +240,6 @@ export function TaskBoard({
           </button>
         </nav>
       ) : null}
-
-      <AddTaskRow returnTo={returnTo} autoFocus={autoFocusAdd} />
     </>
   );
 }

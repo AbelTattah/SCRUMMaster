@@ -14,7 +14,7 @@ interface SprintBoardProps {
   members: any[];
   currentUserId: string;
   canAssign: boolean;
-  autoFocusAdd: boolean;
+  autoFocusAdd?: boolean;
   emptyHint?: React.ReactNode;
   guestMode?: boolean;
 }
