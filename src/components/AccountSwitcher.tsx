@@ -8,6 +8,7 @@
  */
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { signOutToAddAccount, switchAccountSession } from "@/app/actions/accounts";
 import { ConfirmForm } from "@/components/ConfirmForm";
@@ -29,7 +30,10 @@ export function AccountSwitcher({
   const [accounts, setAccounts] = useState<SavedAccount[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isGuest && user.id) {
@@ -39,13 +43,38 @@ export function AccountSwitcher({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, isGuest]);
 
+  function placePopup() {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) {
+      return;
+    }
+
+    const width = 300;
+    const gap = 8;
+    const margin = 12;
+    // Prefer opening to the right of the button; fall back to the left.
+    let left = rect.right + gap;
+    if (left + width > window.innerWidth - margin) {
+      left = rect.left - width - gap;
+    }
+    left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+
+    setPosition({ top: Math.min(rect.top, window.innerHeight - 400 - margin), left });
+  }
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    placePopup();
+
     function onMouseDown(event: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        rootRef.current && !rootRef.current.contains(target) &&
+        popRef.current && !popRef.current.contains(target)
+      ) {
         setOpen(false);
       }
     }
@@ -56,13 +85,22 @@ export function AccountSwitcher({
       }
     }
 
+    function onReposition() {
+      placePopup();
+    }
+
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
 
     return () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   function switchTo(account: SavedAccount) {
@@ -124,6 +162,7 @@ export function AccountSwitcher({
   return (
     <div className="account-switcher" ref={rootRef}>
       <button
+        ref={buttonRef}
         type="button"
         className="workspace-add"
         aria-label="Switch or add account"
@@ -137,8 +176,15 @@ export function AccountSwitcher({
         <Icon name="plus" />
       </button>
 
-      {open ? (
-        <div className="account-pop" role="dialog" aria-label="Accounts">
+      {open && typeof document !== "undefined"
+        ? createPortal(
+        <div
+          ref={popRef}
+          className="account-pop"
+          role="dialog"
+          aria-label="Accounts"
+          style={{ top: position.top, left: position.left }}
+        >
           <div className="account-pop-head">
             <strong>Accounts</strong>
           </div>
@@ -204,8 +250,10 @@ export function AccountSwitcher({
               <Icon name="user" /> Continue as guest
             </button>
           </div>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+        : null}
     </div>
   );
 }

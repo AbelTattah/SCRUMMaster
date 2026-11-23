@@ -5912,11 +5912,11 @@ button.task-table-empty:focus-visible {
 .account-switcher .workspace-add { cursor: pointer; }
 
 .account-pop {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 90;
-    width: min(300px, calc(100vw - 32px));
+    position: fixed;
+    z-index: 200;
+    width: min(300px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
     padding: 6px;
     border: 1px solid var(--line);
     border-radius: var(--radius-lg);

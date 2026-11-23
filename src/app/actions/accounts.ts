@@ -58,10 +58,17 @@ export async function signOutToAddAccount(): Promise<void> {
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut().catch(() => undefined);
 
+  // Clear every Supabase auth cookie (same as the full sign-out) — otherwise
+  // the stale session keeps requireGuest() from showing the sign-in screen.
   const store = await cookies();
   store.delete("scrum-guest");
   store.delete("scrum-offline-session");
   store.delete("scrum-offline-hint");
+  for (const cookie of store.getAll()) {
+    if (cookie.name.startsWith("sb-")) {
+      store.delete(cookie.name);
+    }
+  }
 
   redirect("/login?next=/");
 }
