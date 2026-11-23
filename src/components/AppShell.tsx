@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { signOut } from "@/app/actions/auth";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { NotificationBell } from "@/components/NotificationBell";
@@ -98,9 +99,7 @@ export function Sidebar({
           <strong>{user.organization?.name ?? "Scrum Master"}</strong>
           <small>Workspace</small>
         </span>
-        <Link className="workspace-add" href="/?add=1" aria-label="New task" title="New task">
-          <Icon name="plus" />
-        </Link>
+        <AccountSwitcher user={user} isGuest={isGuest} />
       </div>
 
       <div className="sidebar-scroll">

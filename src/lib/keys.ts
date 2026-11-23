@@ -85,6 +85,43 @@ export function isUnlocked(): boolean {
   return true;
 }
 
+/* ------------------------------------------------- account switch snapshots */
+
+/** Serializable copy of this device's key material for one account. */
+export interface AccountKeySnapshot {
+  keys: StoredKeys | null;
+  material: CryptoMaterial | null;
+}
+
+/** Read the active key slots so they can be stored under an account id. */
+export async function snapshotAccountKeys(): Promise<AccountKeySnapshot> {
+  const keysRow = await readStoredKeys();
+  const material = (await getMeta<CryptoMaterial>("material")) ?? materialCache ?? null;
+
+  return { keys: keysRow, material };
+}
+
+/**
+ * Make another account's saved keys the active ones, then drop this tab's
+ * in-memory copies so the next unlock restores from the freshly written slots.
+ */
+export async function activateAccountKeys(snapshot: AccountKeySnapshot): Promise<void> {
+  session = null;
+  materialCache = null;
+
+  if (snapshot.keys) {
+    await setMeta("keys", snapshot.keys);
+  } else {
+    await deleteMeta("keys");
+  }
+
+  if (snapshot.material) {
+    await setMeta("material", snapshot.material);
+  } else {
+    await deleteMeta("material");
+  }
+}
+
 function requireKeys(): UnlockedSession {
   if (!session) {
     throw new Error("The app is locked.");

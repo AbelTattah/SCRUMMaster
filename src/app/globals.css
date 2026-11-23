@@ -5906,3 +5906,138 @@ button.task-table-empty:focus-visible {
     font-weight: 600;
 }
 
+
+/* ---- account switcher (workspace "+") ------------------------------------ */
+.account-switcher { position: relative; flex: none; }
+.account-switcher .workspace-add { cursor: pointer; }
+
+.account-pop {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 90;
+    width: min(300px, calc(100vw - 32px));
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    color: var(--nav-ink);
+}
+.account-pop-head { padding: 8px 10px 6px; font-size: 13px; color: var(--muted); }
+
+.account-current,
+.account-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.account-current {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--hover-faint);
+}
+.account-current > img,
+.account-avatar-fallback > svg,
+.account-select > img {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.account-avatar-fallback {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--tint-purple);
+    color: var(--purple-ink);
+}
+.account-avatar-fallback svg { width: 15px; height: 15px; }
+.account-info { display: flex; flex: 1; flex-direction: column; min-width: 0; line-height: 1.3; }
+.account-info strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.account-info small { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.account-current-tag {
+    flex: none;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--tint-purple);
+    color: var(--purple-ink);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.account-list { margin: 4px 0 0; padding: 0; list-style: none; }
+.account-row { border-radius: var(--radius-sm); }
+.account-row:hover { background: var(--hover-faint); }
+.account-select {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.account-select:disabled { opacity: .6; cursor: default; }
+.account-remove-form { margin: 0; }
+.account-remove {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    margin-right: 4px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+.account-remove:hover { background: var(--danger-soft); color: var(--danger-text); }
+
+.account-error {
+    margin: 6px 10px;
+    color: var(--danger-text);
+    font-size: 12px;
+}
+
+.account-pop-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+}
+.account-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    color: var(--nav-ink);
+    font-size: 13px;
+    text-decoration: none;
+}
+.account-action:hover { background: var(--hover-faint); }
+.account-action svg { width: 15px; height: 15px; color: var(--purple-ink); }
+
+
+/* Action rows are buttons in the signed-in state; reset their native chrome. */
+button.account-action {
+    width: 100%;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
