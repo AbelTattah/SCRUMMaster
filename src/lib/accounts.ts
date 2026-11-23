@@ -9,10 +9,10 @@
  * Nothing sensitive leaves the device: the server only receives the token of
  * the account being switched to (via the server action), and never sees keys.
  */
+import { getCurrentSessionTokens } from "@/app/actions/accounts";
 import { getMeta, setMeta, deleteMeta } from "@/lib/localdb";
 import { snapshotAccountKeys, type AccountKeySnapshot } from "@/lib/keys";
 import type { CurrentUser } from "@/lib/types";
-import { createClientSupabaseClient } from "@/lib/supabase/browser";
 
 export interface SavedAccount {
   id: string;
@@ -56,9 +56,7 @@ export async function rememberCurrentAccount(user: CurrentUser): Promise<void> {
   }
 
   try {
-    const supabase = createClientSupabaseClient();
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
+    const session = await getCurrentSessionTokens();
 
     if (!session?.refresh_token) {
       return;

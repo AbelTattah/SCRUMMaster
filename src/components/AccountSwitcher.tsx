@@ -19,6 +19,11 @@ import { clearOfflineSession } from "@/lib/offlineSession";
 import type { CurrentUser } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
 
+function safeAvatar(value: string | null): string | null {
+  if (!value) return null;
+  return value.startsWith("data:") || value.startsWith("http") ? value : null;
+}
+
 export function AccountSwitcher({
   user,
   isGuest,
@@ -35,13 +40,26 @@ export function AccountSwitcher({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  async function refreshAccounts() {
     if (!isGuest && user.id) {
-      void rememberCurrentAccount(user);
+      // Save this account FIRST, then read the registry so the current one
+      // is present. Previously these ran together and the list read stale data.
+      await rememberCurrentAccount(user);
     }
-    void listAccounts().then(setAccounts);
+    setAccounts(await listAccounts());
+  }
+
+  useEffect(() => {
+    void refreshAccounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id, isGuest]);
+
+  useEffect(() => {
+    if (open) {
+      void refreshAccounts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function placePopup() {
     const rect = buttonRef.current?.getBoundingClientRect();
@@ -136,7 +154,7 @@ export function AccountSwitcher({
 
   async function remove(id: string) {
     await forgetAccount(id);
-    setAccounts(await listAccounts());
+    await refreshAccounts();
   }
 
   function addAccount() {
@@ -155,9 +173,27 @@ export function AccountSwitcher({
     void signOutToAddAccount();
   }
 
-  const currentName = isGuest ? "Guest" : user.profile.name;
-  const currentAvatar = isGuest ? null : avatarUrl(user.profile.avatar_url, user.profile.name, user.profile.id);
-  const others = accounts.filter((account) => !isGuest && account.id !== user.id);
+  // Build the visible list from the registry, always including the current
+  // account so the list is never empty. Fall back to the live user when the
+  // registry has not been written yet.
+  const displayed: SavedAccount[] = isGuest
+    ? []
+    : accounts.length > 0
+      ? accounts
+      : [
+          {
+            id: user.id,
+            email: user.email,
+            name: user.profile.name,
+            avatarUrl: safeAvatar(user.profile.avatar_url),
+            orgName: user.organization?.name ?? null,
+            isOwner: user.isOwner,
+            refreshToken: "",
+            accessToken: "",
+            keys: { keys: null, material: null },
+            savedAt: Date.now(),
+          },
+        ];
 
   return (
     <div className="account-switcher" ref={rootRef}>
@@ -189,50 +225,63 @@ export function AccountSwitcher({
             <strong>Accounts</strong>
           </div>
 
-          <div className="account-current">
-            {currentAvatar ? <img src={currentAvatar} alt="" /> : <span className="account-avatar-fallback"><Icon name="user" /></span>}
-            <span className="account-info">
-              <strong>{currentName}</strong>
-              <small>{isGuest ? "Local guest data" : user.email}</small>
-            </span>
-            <span className="account-current-tag">Current</span>
-          </div>
-
-          {others.length > 0 ? (
-            <ul className="account-list">
-              {others.map((account) => (
-                <li key={account.id} className="account-row">
-                  <button
-                    type="button"
-                    className="account-select"
-                    onClick={() => switchTo(account)}
-                    disabled={pending}
-                  >
-                    {account.avatarUrl ? (
-                      <img src={account.avatarUrl} alt="" />
-                    ) : (
-                      <span className="account-avatar-fallback"><Icon name="user" /></span>
-                    )}
-                    <span className="account-info">
-                      <strong>{account.name}</strong>
-                      <small>{account.email}</small>
-                    </span>
-                  </button>
-                  <ConfirmForm
-                    action={() => remove(account.id)}
-                    className="account-remove-form"
-                    confirmTitle="Remove account?"
-                    confirmMessage={`Remove ${account.name} from this device? Their local copy can be added again by signing in.`}
-                    confirmLabel="Remove"
-                  >
-                    <button type="submit" className="account-remove" aria-label={`Remove ${account.name}`} title="Remove from this device">
-                      ×
-                    </button>
-                  </ConfirmForm>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          {isGuest ? (
+            <div className="account-current">
+              <span className="account-avatar-fallback"><Icon name="user" /></span>
+              <span className="account-info">
+                <strong>Guest</strong>
+                <small>Local guest data</small>
+              </span>
+              <span className="account-current-tag">Current</span>
+            </div>
+          ) : (
+            <>
+              <p className="account-list-label">Saved on this device</p>
+              <ul className="account-list">
+                {displayed.map((account) => {
+                  const isCurrent = account.id === user.id;
+                  return (
+                    <li
+                      key={account.id}
+                      className={`account-row${isCurrent ? " is-current" : ""}`}
+                    >
+                      <button
+                        type="button"
+                        className="account-select"
+                        onClick={() => !isCurrent && switchTo(account)}
+                        disabled={isCurrent || pending || !account.refreshToken}
+                        title={isCurrent ? "This is the active account" : `Switch to ${account.name}`}
+                      >
+                        {account.avatarUrl ? (
+                          <img src={account.avatarUrl} alt="" />
+                        ) : (
+                          <span className="account-avatar-fallback"><Icon name="user" /></span>
+                        )}
+                        <span className="account-info">
+                          <strong>{account.name}</strong>
+                          <small>{account.email}</small>
+                        </span>
+                        {isCurrent ? <span className="account-current-tag">Current</span> : null}
+                      </button>
+                      {!isCurrent && account.refreshToken ? (
+                        <ConfirmForm
+                          action={() => remove(account.id)}
+                          className="account-remove-form"
+                          confirmTitle="Remove account?"
+                          confirmMessage={`Remove ${account.name} from this device? Their local copy can be added again by signing in.`}
+                          confirmLabel="Remove"
+                        >
+                          <button type="submit" className="account-remove" aria-label={`Remove ${account.name}`} title="Remove from this device">
+                            ×
+                          </button>
+                        </ConfirmForm>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
 
           {error ? <p className="account-error" role="alert">{error}</p> : null}
 

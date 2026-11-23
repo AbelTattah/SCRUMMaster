@@ -6069,3 +6069,22 @@ button.account-action {
 .import-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .import-data .auth-error { margin-top: 8px; }
 
+.account-list-label {
+    margin: 12px 10px 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+.account-empty-hint {
+    margin: 10px 10px 4px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.account-row.is-current { background: var(--hover-faint); }
+.account-row.is-current .account-select { cursor: default; }
+.account-row.is-current .account-current-tag { margin-right: 4px; }
+

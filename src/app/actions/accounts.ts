@@ -19,6 +19,24 @@ export interface SwitchResult {
   error: string | null;
 }
 
+/** Current browser session tokens, read on the server from the auth cookies. */
+export async function getCurrentSessionTokens(): Promise<{
+  access_token: string;
+  refresh_token: string;
+} | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getSession();
+
+  if (!data.session?.refresh_token) {
+    return null;
+  }
+
+  return {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
+  };
+}
+
 /** Replace the current Supabase session with the supplied account's tokens. */
 export async function switchAccountSession(formData: FormData): Promise<SwitchResult> {
   const refreshToken = String(formData.get("refresh_token") ?? "");
