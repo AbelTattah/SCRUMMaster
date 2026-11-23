@@ -315,6 +315,99 @@ export async function createTodoLocal(draft: {
   return { error: null, id };
 }
 
+/**
+ * Import tasks from a data-export JSON file. The export contains decrypted
+ * rows; here they are re-encrypted with the current account's content key (or
+ * kept plaintext for guests) before entering the local mirror, so the normal
+ * offline/outbox pipeline syncs them exactly like any other task.
+ *
+ * Returns counts so the UI can report what actually happened.
+ */
+export async function importTodosLocal(rows: Array<Record<string, unknown>>): Promise<{
+  imported: number;
+  skipped: number;
+  error: string | null;
+}> {
+  const key = contentKey();
+  const isGuest = guestViewer();
+
+  if (!key && !isGuest) {
+    return { imported: 0, skipped: 0, error: "The app is locked - unlock it to import tasks." };
+  }
+
+  const seen = new Set<string>();
+  let imported = 0;
+  let skipped = 0;
+
+  for (const raw of rows) {
+    const title = typeof raw.title === "string" ? raw.title.trim() : "";
+
+    if (!title || title.length > 200 || seen.has(title.toLowerCase())) {
+      skipped += 1;
+      continue;
+    }
+    seen.add(title.toLowerCase());
+
+    const blocker = typeof raw.blocker === "string" ? raw.blocker.trim().slice(0, 500) : "";
+    const existingId = typeof raw.id === "string" ? raw.id : "";
+    const duplicate = existingId ? Boolean(await getTodo(existingId)) : false;
+
+    if (duplicate) {
+      skipped += 1;
+      continue;
+    }
+
+    const storedTitle = isGuest ? title : await encryptField(key!, title);
+    const storedBlocker = blocker ? (isGuest ? blocker : await encryptField(key!, blocker)) : null;
+
+    const start = typeof raw.start_time === "string" ? raw.start_time.slice(0, 5) : null;
+    const end = typeof raw.end_time === "string" ? raw.end_time.slice(0, 5) : null;
+    const sprintId = typeof raw.sprint_id === "string" ? raw.sprint_id : null;
+    const storyPoints =
+      typeof raw.story_points === "number" && Number.isFinite(raw.story_points)
+        ? raw.story_points
+        : null;
+    const completed = raw.completed === true;
+    const assigneeId = typeof raw.assignee_id === "string" ? raw.assignee_id : null;
+    const createdAt = typeof raw.created_at === "string" ? raw.created_at : undefined;
+
+    const id = existingId || crypto.randomUUID();
+
+    await applyUpsert(
+      id,
+      {
+        title: storedTitle,
+        blocker: storedBlocker,
+        start_time: start,
+        end_time: end,
+        assignee_id: assigneeId,
+        completed,
+        sprint_id: sprintId,
+        story_points: storyPoints,
+      },
+      {
+        assignee_name: typeof raw.assignee_name === "string" ? raw.assignee_name : null,
+        assignee_avatar: typeof raw.assignee_avatar === "string" ? raw.assignee_avatar : null,
+      },
+    );
+
+    // Preserve the original creation date for faithful ordering.
+    if (createdAt) {
+      await localdb.todos.update(id, { created_at: createdAt });
+    }
+
+    imported += 1;
+  }
+
+  if (!isGuest) {
+    await flush();
+  } else {
+    notify();
+  }
+
+  return { imported, skipped, error: null };
+}
+
 /** Save a task's identity (title, times, assignee) from an inline editor. */
 export async function saveTodoLocal(
   id: string,

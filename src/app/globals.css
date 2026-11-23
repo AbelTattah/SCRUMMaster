@@ -6041,3 +6041,31 @@ button.account-action {
     cursor: pointer;
 }
 
+
+/* ---- data import --------------------------------------------------------- */
+.import-data { margin-top: 4px; }
+.import-file-input { display: none; }
+.import-trigger { display: inline-flex; align-items: center; gap: 8px; }
+.import-trigger svg { width: 15px; height: 15px; }
+.export-import-divider {
+    height: 1px;
+    margin: 18px 0;
+    background: var(--line);
+}
+.import-review {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--panel-bg);
+}
+.import-file-name {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.import-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.import-data .auth-error { margin-top: 8px; }
+

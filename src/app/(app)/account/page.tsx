@@ -14,6 +14,7 @@ import {
 import { ChangePasswordForm, SetPasswordForm } from "@/components/account/PasswordForms";
 import { AvatarForm } from "@/components/AvatarForm";
 import { ExportDataButton } from "@/components/ExportDataButton";
+import { ImportDataButton } from "@/components/ImportDataButton";
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,9 +53,11 @@ export default async function AccountPage({
         <section className="panel">
           <h2 className="card-title">Export your data</h2>
           <p className="hint-text" style={{ marginBottom: 12 }}>
-            Download your local tasks as JSON. If you create an account later, you can keep this backup.
+            Download your local tasks as JSON, or import a previous export to restore them on this device.
           </p>
           <ExportDataButton />
+          <div className="export-import-divider" />
+          <ImportDataButton />
         </section>
 
         <section className="panel" style={{ marginTop: 16 }}>
@@ -364,11 +367,13 @@ export default async function AccountPage({
               <CardTitle>Data export</CardTitle>
               <CardDescription>
                 Download all your tasks (titles and blockers decrypted locally) as
-                a JSON file. Your data, your copy.
+                a JSON file, or import a previous export to restore your tasks.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ExportDataButton />
+              <div className="export-import-divider" />
+              <ImportDataButton />
             </CardContent>
           </Card>
         </div>
