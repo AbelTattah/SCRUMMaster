@@ -13,7 +13,8 @@ function addParam(path: string): string {
   return `${path}${separator}add=1`;
 }
 
-function dispatchAdd() {
+/** Opens the inline composer from anywhere on the task screen. */
+export function openAddTask() {
   window.dispatchEvent(new CustomEvent(ADD_EVENT));
 }
 
@@ -25,7 +26,7 @@ export function AddTodoButton({ returnTo }: { returnTo: string }) {
       href={addParam(returnTo)}
       onClick={(event) => {
         event.preventDefault();
-        dispatchAdd();
+        openAddTask();
       }}
     >
       <Icon name="plus" strokeWidth={2.4} />
@@ -43,7 +44,7 @@ export function AddTodoFab({ returnTo }: { returnTo: string }) {
       aria-label="Add todo"
       onClick={(event) => {
         event.preventDefault();
-        dispatchAdd();
+        openAddTask();
       }}
     >
       <Icon name="plus" strokeWidth={2.4} />
@@ -183,12 +184,7 @@ export function AddTaskRow({
   }
 
   if (!open) {
-    return (
-      <button type="button" className="add-task-placeholder" onClick={() => setOpen(true)}>
-        <Icon name="plus" strokeWidth={2.4} />
-        Add task
-      </button>
-    );
+    return null;
   }
 
   return (

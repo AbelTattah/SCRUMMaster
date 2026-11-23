@@ -5878,3 +5878,31 @@ pre, code {
     .task-table-empty > :nth-child(3) { display: none; }
 }
 
+
+/* Clickable empty table row */
+.task-table-empty {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+button.task-table-empty:hover {
+    background: var(--hover-faint);
+}
+button.task-table-empty:focus-visible {
+    outline: 2px solid var(--purple-ink);
+    outline-offset: -2px;
+}
+.task-table-empty-plus {
+    display: inline-grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--tint-purple);
+    color: var(--purple-ink);
+    font-size: 15px;
+    font-weight: 600;
+}
+

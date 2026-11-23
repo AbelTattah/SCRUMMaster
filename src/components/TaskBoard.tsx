@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { AddTaskRow, openAddTask } from "@/components/AddTask";
 import { TaskRow } from "@/components/TaskRow";
 import {
   decryptRows,
@@ -201,16 +202,19 @@ export function TaskBoard({
           />
         ))}
 
-        {booted && visible.length === 0 ? (
+        {booted && visible.length === 0 && !searching ? (
+          <button type="button" className="task-table-empty" onClick={openAddTask}>
+            <span className="task-table-empty-plus">+</span>
+            <span>{emptyHint ?? <>No tasks yet — click to add your first one.</>}</span>
+            <span />
+            <span />
+          </button>
+        ) : null}
+
+        {booted && visible.length === 0 && searching ? (
           <div className="task-table-empty">
             <span />
-            <span>
-              {searching ? (
-                <>No todos match &ldquo;{(localQ || q).trim()}&rdquo;.</>
-              ) : (
-                (emptyHint ?? <>No tasks yet.</>)
-              )}
-            </span>
+            <span>No todos match &ldquo;{(localQ || q).trim()}&rdquo;.</span>
             <span />
             <span />
           </div>
@@ -240,6 +244,8 @@ export function TaskBoard({
           </button>
         </nav>
       ) : null}
+
+      <AddTaskRow returnTo={returnTo} />
     </>
   );
 }
