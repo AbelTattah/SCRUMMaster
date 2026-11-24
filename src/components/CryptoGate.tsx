@@ -11,14 +11,11 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { rememberCurrentAccount, type AccountIdentity } from "@/lib/accounts";
 import { fetchMaterial, provisionAndUnlock, restoreFromDevice, unlockWithPassword } from "@/lib/keys";
 import { initSync, pullSprints, startSync, syncNow } from "@/lib/sync";
 
-interface GateUser {
-  id: string;
-  email: string;
-  name: string;
-  isOwner: boolean;
+interface GateUser extends AccountIdentity {
   inOrg: boolean;
   hasPassword: boolean;
 }
@@ -28,6 +25,19 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
   const [dismissed, setDismissed] = useState(false);
   const startedRef = useRef(false);
   const ctx = { isOwner: user.isOwner, inOrg: user.inOrg };
+  const identity: AccountIdentity = {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    avatarUrl: user.avatarUrl,
+    orgName: user.orgName,
+    isOwner: user.isOwner,
+  };
+
+  /** Save this account only once keys are actually unlocked on this device. */
+  function remember() {
+    void rememberCurrentAccount(identity);
+  }
 
   useEffect(() => {
     if (startedRef.current) {
@@ -52,6 +62,7 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
       try {
         if (await restoreFromDevice(ctx)) {
           setNotice(null);
+          remember();
           void syncNow();
           return;
         }
@@ -83,6 +94,9 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
 
           if (!result.error || result.waiting) {
             setNotice(result.waiting ? "Waiting for the organization key." : null);
+            if (!result.waiting) {
+              remember();
+            }
             void syncNow();
             return;
           }

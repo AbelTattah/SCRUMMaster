@@ -14,7 +14,14 @@ import { signOutToAddAccount, switchAccountSession } from "@/app/actions/account
 import { ConfirmForm } from "@/components/ConfirmForm";
 import { Icon } from "@/components/icons";
 import { activateAccountKeys } from "@/lib/keys";
-import { forgetAccount, listAccounts, rememberCurrentAccount, type SavedAccount } from "@/lib/accounts";
+import {
+  forgetAccount,
+  getAccountKeys,
+  listAccounts,
+  rememberCurrentAccount,
+  type AccountIdentity,
+  type SavedAccount,
+} from "@/lib/accounts";
 import { clearOfflineSession } from "@/lib/offlineSession";
 import type { CurrentUser } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
@@ -41,11 +48,8 @@ export function AccountSwitcher({
   const popRef = useRef<HTMLDivElement>(null);
 
   async function refreshAccounts() {
-    if (!isGuest && user.id) {
-      // Save this account FIRST, then read the registry so the current one
-      // is present. Previously these ran together and the list read stale data.
-      await rememberCurrentAccount(user);
-    }
+    // The current account is persisted by CryptoGate after its keys unlock —
+    // not here, where the snapshot would be empty. Just read the registry.
     setAccounts(await listAccounts());
   }
 
@@ -128,7 +132,24 @@ export function AccountSwitcher({
 
     void (async () => {
       try {
-        await activateAccountKeys(account.keys);
+        // Persist the current account (with its freshly unlocked keys) before
+        // replacing the active key slots and the Supabase session.
+        if (!isGuest) {
+          const identity: AccountIdentity = {
+            id: user.id,
+            email: user.email,
+            name: user.profile.name,
+            avatarUrl: user.profile.avatar_url,
+            orgName: user.organization?.name ?? null,
+            isOwner: user.isOwner,
+          };
+          await rememberCurrentAccount(identity);
+        }
+
+        const targetKeys = await getAccountKeys(account.id);
+        if (targetKeys) {
+          await activateAccountKeys(targetKeys);
+        }
         clearOfflineSession();
 
         const data = new FormData();
@@ -190,7 +211,6 @@ export function AccountSwitcher({
             isOwner: user.isOwner,
             refreshToken: "",
             accessToken: "",
-            keys: { keys: null, material: null },
             savedAt: Date.now(),
           },
         ];

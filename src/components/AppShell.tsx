@@ -11,7 +11,6 @@ import { Icon } from "@/components/icons";
 import { NotificationBell } from "@/components/NotificationBell";
 import { clearOfflineSession } from "@/lib/offlineSession";
 import { clearKeys } from "@/lib/keys";
-import { wipeLocal } from "@/lib/localdb";
 import { drainBeforeSignOut } from "@/lib/sync";
 import type { Counts, CurrentUser, NotificationItem, PageFilter } from "@/lib/types";
 import { avatarUrl } from "@/lib/utils";
@@ -247,7 +246,10 @@ export function Sidebar({
                 const { clearOfflineSession } = await import("@/lib/offlineSession");
                 clearOfflineSession();
                 await drainBeforeSignOut().catch(() => undefined);
-                await wipeLocal().catch(() => undefined);
+                // Clear the active account's data but KEEP the saved-account
+                // registry and per-account key snapshots so switching works.
+                const { clearActiveAccountData } = await import("@/lib/accounts");
+                await clearActiveAccountData().catch(() => undefined);
                 clearKeys();
                 await signOut();
               }}

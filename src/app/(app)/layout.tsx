@@ -99,5 +99,20 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     return shell;
   }
 
-  return <CryptoGate user={{ id: user.id, email: user.email, name: user.profile.name, isOwner: user.isOwner, inOrg: Boolean(user.organization), hasPassword: user.hasPassword }}>{shell}</CryptoGate>;
+  return (
+    <CryptoGate
+      user={{
+        id: user.id,
+        email: user.email,
+        name: user.profile.name,
+        avatarUrl: user.profile.avatar_url,
+        orgName: user.organization?.name ?? null,
+        isOwner: user.isOwner,
+        inOrg: Boolean(user.organization),
+        hasPassword: user.hasPassword,
+      }}
+    >
+      {shell}
+    </CryptoGate>
+  );
 }
