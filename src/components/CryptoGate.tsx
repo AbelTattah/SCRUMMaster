@@ -11,8 +11,14 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import { rememberCurrentAccount, type AccountIdentity } from "@/lib/accounts";
-import { fetchMaterial, provisionAndUnlock, restoreFromDevice, unlockWithPassword } from "@/lib/keys";
+import { getAccountKeys, rememberCurrentAccount, type AccountIdentity } from "@/lib/accounts";
+import {
+  activateAccountKeys,
+  fetchMaterial,
+  provisionAndUnlock,
+  restoreFromDevice,
+  unlockWithPassword,
+} from "@/lib/keys";
 import { initSync, pullSprints, startSync, syncNow } from "@/lib/sync";
 
 interface GateUser extends AccountIdentity {
@@ -60,6 +66,16 @@ export function CryptoGate({ user, children }: { user: GateUser; children: React
 
     void (async () => {
       try {
+        // This device may already hold this account's keys from a previous
+        // sign-in with a different method (e.g. email/password → Google via
+        // Supabase automatic identity linking). Promote that saved snapshot to
+        // the active slots before restoring, so the Google session unlocks the
+        // same encrypted tasks without asking for a password again.
+        const savedKeys = await getAccountKeys(user.id);
+        if (savedKeys?.keys) {
+          await activateAccountKeys(savedKeys);
+        }
+
         if (await restoreFromDevice(ctx)) {
           setNotice(null);
           remember();
