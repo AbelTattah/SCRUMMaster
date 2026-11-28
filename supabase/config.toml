@@ -1,2 +1,26 @@
 # Supabase local development / CLI
 project_id = "scrum-master"
+
+[auth]
+site_url = "https://scrum-master-two.vercel.app"
+additional_redirect_urls = [
+  "https://scrum-master-two.vercel.app/auth/callback",
+  "http://localhost:3000/auth/callback",
+  "http://127.0.0.1:4556/auth/callback",
+]
+
+[auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[auth.external.google]
+enabled = true
+client_id = "328539505677-54j6actpheu4iqmjhscdi6hudv1sscb0.apps.googleusercontent.com"
+# Secret is supplied via SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET at push time;
+# never commit the raw secret.
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
