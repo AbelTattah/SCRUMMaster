@@ -5,6 +5,7 @@ project_id = "scrum-master"
 site_url = "https://scrum-master-two.vercel.app"
 additional_redirect_urls = [
   "https://scrum-master-two.vercel.app/auth/callback",
+  "https://scrum-master-two.vercel.app/auth/callback?next=%2F",
   "http://localhost:3000/auth/callback",
   "http://127.0.0.1:4556/auth/callback",
 ]
